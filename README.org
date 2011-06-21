@@ -32,6 +32,12 @@ It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
 whatever canvas library. This means that Grandalf will help you find _where_ to 
 draw things like nodes and edges, but it's up to you to perform the drawing...
 
+* Screenshot
+
+See examples listed in the Wiki here: https://github.com/bdcht/grandalf/wiki
+All videos have been made with grandalf and a simple testing-purpose gtk/cairo 
+canvas.
+
 * Quickstart
 
 Look for examples in =tests/=. Here is a very simple example :
