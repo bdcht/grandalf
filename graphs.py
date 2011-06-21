@@ -73,14 +73,21 @@ class  edge_core(object):
 #  data: anything else associated with the vertex.
 #------------------------------------------------------------------------------
 class  Vertex(vertex_core):
+    counter=0
     def __init__(self,data=None):
         vertex_core.__init__(self)
+        self.index=Vertex.counter
+        Vertex.counter += 1
         # by default, a new vertex belongs to its own component
         # but when the vertex is added to a graph, c points to the
         # connected component where it belongs.
         self.c = None
         self.data = data
-
+    @classmethod
+    def count(cls):
+        return cls.counter
+    def __hash__(self):
+        return self.index
 
 #------------------------------------------------------------------------------
 #  Edge class:
@@ -88,12 +95,20 @@ class  Vertex(vertex_core):
 #  data: anything else associated with the edge.
 #------------------------------------------------------------------------------
 class  Edge(edge_core):
+    counter=0
     def __init__(self,x,y,w=1,data=None):
         edge_core.__init__(self,x,y)
+        self.index=Edge.counter
+        Edge.counter += 1
         # w is an optional weight associated with the edge.
         self.w = w
         self.data = data
         self.feedback = False
+    @classmethod
+    def count(cls):
+        return cls.counter
+    def __hash__(self):
+        return self.index
 
     def attach(self):
         if not self in self.v[0].e : self.v[0].e.append(self)
