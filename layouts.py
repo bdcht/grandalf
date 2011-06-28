@@ -58,7 +58,10 @@ class  DummyVertex(_sugiyama_vertex_attr):
         return [self.ctrl[self.rank+dir]]
     def inner(self,dir):
         assert dir==+1 or dir==-1
-        return isinstance(self.ctrl[self.rank+dir],DummyVertex)
+        try:
+          return self.grx[self.ctrl[self.rank+dir]].dummy==1
+        except AttributeError:
+          return False
 
 # TODO: make it more that just a wrapper of list by precomputing neighbors
 # and possibly linking with above-below layers to avoid accessing the layers
