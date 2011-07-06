@@ -5,7 +5,7 @@
 # published under GPLv2 license
 
 from  numpy import array,matrix,linalg
-from  math  import atan2,cos,sin
+from  math  import atan2,cos,sin,sqrt
 
 #------------------------------------------------------------------------------
 class  Poset(object):
@@ -202,56 +202,41 @@ def  intersectC(view, r, topt):
 
 
 #------------------------------------------------------------------------------
-#  setcontrols find the bezier control points associated to the rhs vector:
-def  setcontrols(rhs):
-    b=2.0
-    n=len(rhs)
-    x=range(n)
-    t=range(n)
-    x[0]=rhs[0]/b
-    for i in range(1,n-1):
-        t[i]=1./b
-        b = 4.0-t[i]
-        x[i] = (rhs[i]-x[i-1])/b
-    t[n-1]=1./b
-    b = 3.5-t[n-1]
-    x[n-1]=(rhs[n-1]-x[n-2])/b
-    for i in range(1,n):
-        x[n-i-1] -= t[n-i]*x[n-i]
-    return x
-
-
-#------------------------------------------------------------------------------
 #  setcurve returns the spline curve that path through the list of points P.
 #  The spline curve is a list of cubic bezier curves (nurbs) that have
 #  matching tangents at their extreme points.
-def  setcurve(P):
-    n = len(P)-1
-    assert n>0
-    if n==1:
-        P0=P[0]
-        P1=P[1]
-        C1=((2*P0[0]+P1[0])/3.,(2*P0[1]+P1[1])/3.)
-        C2=(2*C1[0]-P0[0],2*C1[1]-P0[1])
-        return [[P0,C1,C2,P1]]
-    else:
-        rhs = range(n)
-        rhs[0] = P[0][0]+2.*P[1][0]
-        for i in range(1,n-1):
-            rhs[i]=4*P[i][0]+2*P[i+1][0]
-        rhs[n-1] = (8*P[n-1][0]+P[n][0])/2.
-        x = setcontrols(rhs)
-        rhs[0] = P[0][1]+2.*P[1][1]
-        for i in range(1,n-1):
-            rhs[i]=4*P[i][1]+2*P[i+1][1]
-        rhs[n-1] = (8*P[n-1][1]+P[n][1])/2.
-        y = setcontrols(rhs)
-        C1 = zip(x,y)
-        C2 = []
-        for i in range(0,n-1):
-            C2.append((2*P[i+1][0]-x[i+1],2*P[i+1][1]-y[i+1]))
-        C2.append(((P[n][0]+x[n-1])/2.,(P[n][1]+y[n-1])/2.))
-        splines=[]
-        for i in range(n):
-            splines.append([P[i],C1[i],C2[i],P[i+1]])
-        return splines
+#  The method considered here is taken from "The NURBS book" (Les A. Piegl,
+#  Wayne Tiller, Springer, 1997) and implements a local interpolation rather
+#  than a global interpolation.
+def setcurve(self,pts):
+    P = map(array,pts)
+    n = len(P)
+    assert n>=2
+    # tangent estimation
+    Q = [P[1]-P[0]]
+    T = [array((0.,1.))]
+    for k in xrange(1,n-1):
+        q = P[k+1]-P[k]
+        t = q/sqrt(q.dot(q))
+        Q.append(q)
+        T.append(t)
+    Q.append(P[n-1]-P[n-2])
+    T.append(array((0.,1.)))
+    splines=[]
+    for k in xrange(n-1):
+        t = T[k]+T[k+1]
+        a = 16. - (t.dot(t))
+        b = 12.*(Q[k].dot(t))
+        c = -36. * Q[k].dot(Q[k])
+        D = (b*b) - 4.*a*c
+        assert D>=0
+        sd = sqrt(D)
+        s1,s2 = (-b-sd)/(2.*a),(-b+sd)/(2.*a)
+        s = s2
+        if s1>=0: s=s1
+        C0 = tuple(P[k])
+        C1 = tuple(P[k] + (s/3.)*T[k])
+        C2 = tuple(P[k+1] -(s/3.)*T[k+1])
+        C3 = tuple(P[k+1])
+        splines.append([C0,C1,C2,C3])
+    return splines
