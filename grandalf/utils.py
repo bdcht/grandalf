@@ -201,6 +201,13 @@ def  intersectC(view, r, topt):
     return (x,y)
 
 
+def median_wh(views):
+    mw = [v.w for v in views]
+    mh = [v.h for v in views]
+    mw.sort()
+    mh.sort()
+    return (mw[len(mw)/2],mh[len(mh)/2])
+
 #------------------------------------------------------------------------------
 #  setcurve returns the spline curve that path through the list of points P.
 #  The spline curve is a list of cubic bezier curves (nurbs) that have
@@ -208,20 +215,16 @@ def  intersectC(view, r, topt):
 #  The method considered here is taken from "The NURBS book" (Les A. Piegl,
 #  Wayne Tiller, Springer, 1997) and implements a local interpolation rather
 #  than a global interpolation.
-def setcurve(self,pts):
+def setcurve(e,pts,tgs=None):
     P = map(array,pts)
     n = len(P)
-    assert n>=2
     # tangent estimation
-    Q = [P[1]-P[0]]
-    T = [array((0.,1.))]
-    for k in xrange(1,n-1):
-        q = P[k+1]-P[k]
-        t = q/sqrt(q.dot(q))
-        Q.append(q)
-        T.append(t)
-    Q.append(P[n-1]-P[n-2])
-    T.append(array((0.,1.)))
+    if tgs:
+      assert len(tgs)==n
+      T = map(array,tgs)
+      Q = [ P[k+1]-P[k] for k in range(0,n-1)]
+    else:
+      Q,T = tangents(P,n)
     splines=[]
     for k in xrange(n-1):
         t = T[k]+T[k+1]
@@ -240,3 +243,45 @@ def setcurve(self,pts):
         C3 = tuple(P[k+1])
         splines.append([C0,C1,C2,C3])
     return splines
+
+def tangents(P,n):
+    assert n>=2
+    Q = []
+    T = []
+    for k in xrange(0,n-1):
+        q = P[k+1]-P[k]
+        t = q/sqrt(q.dot(q))
+        Q.append(q)
+        T.append(t)
+    T.append(t)
+    return (Q,T)
+
+#------------------------------------------------------------------------------
+def setroundcorner(e,pts):
+    P = map(array,pts)
+    n = len(P)
+    Q,T = tangents(P,n)
+    c0 = P[0]
+    t0 = T[0]
+    k0 = 0
+    splines = []
+    k  = 1
+    while k<n:
+        z = abs(t0[0]*T[k][1]-(t0[1]*T[k][0]))
+        if z<1.e-6:
+            k+=1
+            continue
+        if (k-1)>k0: splines.append([c0,P[k-1]])
+        if (k+1)<n:
+            splines.extend(setcurve(e,[P[k-1],P[k+1]],tgs=[T[k-1],T[k+1]]))
+        else:
+            splines.extend(setcurve(e,[P[k-1],P[k]],tgs=[T[k-1],T[k]]))
+            break
+        if (k+2)<n:
+            c0 = P[k+1]
+            t0 = T[k+1]
+            k0 = k+1
+            k+=2
+        else:
+            break
+    return splines or [[P[0],P[-1]]]

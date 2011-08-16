@@ -14,7 +14,7 @@
 #  shall be performed by the drawing engine associated with 'views'.
 #  (e.g. look at intersectC when the node shape is a circle)
 
-from  utils import intersectR,getangle,setcurve
+from  utils import intersectR,getangle,setcurve,setroundcorner
 
 #------------------------------------------------------------------------------
 class  EdgeViewer(object):
@@ -35,13 +35,10 @@ def  route_with_lines(e,pts):
     e.view.head_angle = getangle(pts[-2],pts[-1])
 
 #------------------------------------------------------------------------------
-#  edge routing with nurbs : 
-def  route_with_nurbs(e,pts):
-    # first adjust points for tail and head:
+#  enhanced edge routing where 'corners' of the above polyline route are
+#  rounded with a bezier curve.
+def route_with_splines(e,pts):
     route_with_lines(e,pts)
-    # now do the routing job to provide the spline (list of nurbs):
-    # basically this routine computes bezier curve coefficients that will
-    # go through the provided points.
-    splines = setcurve(pts)
+    splines = setroundcorner(e,pts)
     e.view.splines = splines
 

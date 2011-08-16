@@ -12,7 +12,7 @@
 #  acyclic and so on, are all kept inside the layout object.
 # 
 from  numpy   import array,matrix,linalg
-from  utils   import rand_ortho1
+from  utils   import rand_ortho1,median_wh
 
 #  the VertexViewer class is responsible of providing
 #  graphical attributes associated with a Vertex.
@@ -95,6 +95,8 @@ class  SugiyamaLayout(object):
         for v in self.g.V():
             assert hasattr(v,'view')
             self.grx[v] = _sugiyama_vertex_attr()
+        self.xspace,self.yspace = median_wh([v.view for v in self.g.V()])
+        self.dw,self.dh = self.xspace/2, self.yspace/2
 
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic

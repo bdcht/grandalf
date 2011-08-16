@@ -32,7 +32,7 @@ It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
 whatever canvas library. This means that Grandalf will help you find _where_ to 
 draw things like nodes and edges, but it's up to you to perform the drawing...
 
-* Screenshot
+* Screenshots and Videos
 
 See examples listed in the Wiki here: https://github.com/bdcht/grandalf/wiki
 All videos have been made with grandalf and a simple testing-purpose gtk/cairo 
@@ -199,17 +199,58 @@ Look for examples in =tests/=. Here is a very simple example :
   - route_with_lines
   - route_with_splines
              
+*** EdgeViewer.
+  This class provides a default 'view' for edges. Edges with no view will be
+  ignored by the draw_edge method of the layouts. If a view is provided it must
+  be equiped with a 'setpath' method to which a list of waypoints will be
+  passed.
+
+*** route_with_lines.
+  This function allows to adjust the waypoints of the edge. It allows to
+  draw a poly-line edge going through all points computed by the layout engine
+  and adjusts the tail head position on the boundary of their nodes and
+  precomputes the head angle.
+  To use this routing method,  set the route_edge field of the layout instance
+  to this function (sug.route_edge = route_with_lines).
+
+*** route_with_splines.
+  This function allows to draw edges by a combination of lines and bezier
+  curves. The curves are computed such that corners of a poly-line edge given
+  by route_with_lines are rounded.
+  To use this routing method,  set the route_edge field of the layout instance
+  to this function (sug.route_edge = route_with_splines) and use the values
+  returned in the .splines field of the edge view :
+  an array of 2 points defines a line
+  an array of 4 points defines a bezier curve.
 
 ** =utils.py= : 
-  Provides utilities like partially ordered sets, linear programming 
-  solvers, etc. For now, this module only defines the class:
+  Provides utilities like partially ordered sets, linear programming solvers,
+  etc. For now, this module only defines the class:
   - Poset
+  and some general purpose functions like:
+  - intersect2lines
+  - intersectR
+  - getangle (computing the atan2 value for directed edge heading)
+  - intersectC
+  - setcurve (computing a nurbs locally interpolating a given set of points)
+  - setroundcorner
      
 *** Poset.
   This class is used by graph_core for both efficiently detecting if a Vertex 
   or Edge is in a graph (using builtin set()) and ensuring that elements of 
   the set are iterated always in the same order (using builtin list()).
   Basically, a Poset is pair (set,list) that is kept synchronized.
+
+*** setcurve.
+  This function is used internally for edge routing. It is based on an method
+  described in "The NURBS Book" (Les A. Piegl, Wayne Tiller, Springer 1997)
+  implementing local interpolation of a given set of points with a set of
+  non-uniform b-splines of degree 3. The non-uniform knots are ignored.
+
+*** setroundcorner.
+  This function uses setcurve to smooth the polyline edge at each corner. This
+  method provides the best result for edge routing with the SugiyamaLayout.
+  It is used in the route_with_splines function in routing.py.
 
 ** tests/ : 
   Contains many testing procedures as well as some graph samples. 
@@ -417,11 +458,22 @@ If you want to be able to draw the graph while the engine is running, you can
 use the draw_step() iterator which yields at each layer during the forward and 
 backward trip.
 
+Then, drawing the graph with a graphical canvas can be done by drawing each
+views at their xy positions, and providing appropriate setpath methods to draw
+each edge, or using the route_with_splines function and use the e.view.splines
+attribute.
 
 *** DigcoLayout
 
-**** TODO
+* TODO
 
+ - commit the constrained routing function (forces edge connectors to be placed
+   on the bottom/top depending on wether the edge is outgoing/incoming)
+ - import basic dot file parser (no record) in the grandalf tree
+ - add support for GraphML format import/export
+ - add support for pgf/tikz export
+ - commit/merge the DigcoLayout devel branch
+ - provide facilities for efficient edge re-routing
 
 * FAQ
 
