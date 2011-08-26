@@ -343,7 +343,7 @@ class Dot:
         def t_comment_multline(self,t):
             r'(/\*)'
             start=t.lexer.lexpos
-            t.lexer.lexpos += t.lexer.lexdata.index('*/',start)+2
+            t.lexer.lexpos = t.lexer.lexdata.index('*/',start)+2
       
         def t_string(self,t):
             r'"'
