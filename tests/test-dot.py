@@ -30,6 +30,9 @@ def test_lexer():
     }
     ''')
 
+def test_utf8():
+    print Dot().read('samples/utf8.dot')
+
 if __name__ == '__main__':
 
     L  = Dot().read('samples/dg10.dot')

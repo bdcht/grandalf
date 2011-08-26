@@ -432,11 +432,12 @@ class Dot:
                                 self.nodes[n.name] = n
 
         def __repr__(self):
-                return '<%s instance at %x, name: %s, %d nodes>'%(
-                       self.__class__,
-                       id(self),
-                       self.name,
-                       len(self.nodes))
+            u = u'<%s instance at %x, name: %s, %d nodes>'%(
+                   self.__class__,
+                   id(self),
+                   self.name,
+                   len(self.nodes))
+            return u.encode('utf-8')
 
     class attr(object):
         def __init__(self,type,D):
