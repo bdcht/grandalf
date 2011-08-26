@@ -34,9 +34,13 @@ draw things like nodes and edges, but it's up to you to perform the drawing...
 
 * Screenshots and Videos
 
-See examples listed in the Wiki here: https://github.com/bdcht/grandalf/wiki
+See examples listed in the [[https://github.com/bdcht/grandalf/wiki][Wiki]].
 All videos have been made with grandalf and a simple testing-purpose gtk/cairo 
 canvas.
+
+* Links
+  - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to render (on a
+  Qt canvas) the control flow graph of a disassembled binary program.
 
 * Quickstart
 
@@ -476,7 +480,6 @@ attribute.
 
  - commit the constrained routing function (forces edge connectors to be placed
    on the bottom/top depending on wether the edge is outgoing/incoming)
- - import basic dot file parser (no record) in the grandalf tree
  - add support for GraphML format import/export
  - add support for pgf/tikz export
  - commit/merge the DigcoLayout devel branch
