@@ -137,7 +137,7 @@ class  SugiyamaLayout(object):
                       print v.data[1:13],self.grx[v]
                 except AttributeError: print
             print '+'*20
-       
+
     # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
     # dirvh=1 -> dirh=-1, dirv=-1: rightmost upper
     # dirvh=2 -> dirh=+1, dirv=+1: leftmost lower
@@ -286,7 +286,7 @@ class  SugiyamaLayout(object):
     # experiments show that meanvalue heuristic performs better than median.
     def _meanvalueattr(self,v,l,dirv,att='bar'):
         assert self.dag
-        if not (0<=(l+dirv)<self.nlayers): 
+        if not (0<=(l+dirv)<self.nlayers):
             return getattr(self.grx[v],att)
         pos = [getattr(self.grx[x],att) for x in self._neighbors(v,dirv)]
         if len(pos)==0:
@@ -400,7 +400,7 @@ class  SugiyamaLayout(object):
                         k1=self.grx[v.N(-1)[0]].pos
                     for vl in L[l:l1+1]:
                         for vk in self._neighbors(vl,-1):
-                            k = self.grx[vk].pos 
+                            k = self.grx[vk].pos
                             if (k<k0 or k>k1):
                                     self.conflicts.append((vk,vl))
                     l=l1+1
@@ -433,7 +433,7 @@ class  SugiyamaLayout(object):
     # median heuristic is proven to achieve at most 3 times the minimum
     # of crossings (while barycenter achieve in theory the order of |V|) 
     def _medianindex(self,v,l,dirv,dirh):
-        if not (0<=(l+dirv)<self.lens): return None 
+        if not (0<=(l+dirv)<self.lens): return None
         pos = [self.grx[x].pos for x in self._neighbors(v,dirv)]
         if len(pos)==0:
             return None
@@ -526,7 +526,7 @@ class  SugiyamaLayout(object):
                         l.insert(-1,D[r].view.xy)
                 try:
                     self.route_edge(e,l)
-                except AttributeError: 
+                except AttributeError:
                     pass
                 e.view.setpath(l)
 
@@ -760,7 +760,7 @@ class  DigcoLayout(object):
                 print 'stress=%.10f'%FZ
                 count += 1
         return Z
-    
+
 
 #------------------------------------------------------------------------------
 class  DwyerLayout(object):

@@ -131,7 +131,7 @@ def  rand_ortho1(n):
     pos = [r.random() for x in xrange(n)]
     s = sum(pos)
     return array(pos,dtype=float)-(s/len(pos))
-  
+
 
 #------------------------------------------------------------------------------
 #TODO:  this was imported here from masr, but since we have
@@ -317,7 +317,7 @@ class Dot:
             self.tokens = Dot._tokens
             self.literals = Dot._literals
             self.t_ignore = self.whitespace
-    
+
         def t_regulars(self,t):
             r'[-]?[\w.]+'
             v = t.value.lower()
@@ -334,7 +334,7 @@ class Dot:
             elif '.' in v: # forbidden in non-numeric
                 raise SyntaxError
             return t
-      
+
         def t_comment_online(self,t):
             r'(//(.*)\n)|\\\n'
             pass
@@ -342,12 +342,12 @@ class Dot:
         def t_comment_macro(self,t):
             r'(\#(.*)\n)'
             pass
-      
+
         def t_comment_multline(self,t):
             r'(/\*)'
             start=t.lexer.lexpos
             t.lexer.lexpos = t.lexer.lexdata.index('*/',start)+2
-      
+
         def t_string(self,t):
             r'"'
             start=t.lexer.lexpos-1
@@ -371,21 +371,21 @@ class Dot:
             t.value = t.lexer.lexdata[start:i]
             t.lexer.lexpos = i
             return t
-      
+
         def t_ANY_error(self,t):
             print "Illegal character '%s'" % t.value[0]
             t.lexer.skip(1)
-    
+
         def build(self,**kargs):
             self._lexer = lex.lex(module=self, **kargs)
-    
+
         def test(self,data):
             self._lexer.input(data)
             while 1:
                 tok = self._lexer.token()
                 if not tok: break
                 print tok
-    
+
     # Classes for the AST returned by Parser: 
     class graph(object):
         def __init__(self,name,data,strict=None,direct=None):
@@ -455,7 +455,7 @@ class Dot:
             self.name = name
             self.port = port
             self.attr = {}
-    
+
     class Parser(object):
         def __init__(self):
             self.tokens = Dot._tokens
@@ -475,7 +475,7 @@ class Dot:
             '''Data : Data Graph
                     | Graph'''
             self.__makelist(p)
-    
+
         def p_Graph_strict(self,p):
             '''Graph : strict graph name Block'''
             p[0] = Dot.graph(name=p[3],data=p[4],strict=1,direct=0)
@@ -592,7 +592,6 @@ class Dot:
             '''stmt : N attrs '''
             p[1].attr = p[2]
             p[0] = p[1]
-        
 
         def p_stmt_EN(self,p):
             '''stmt : E
@@ -649,7 +648,7 @@ class Dot:
             opt=dict(debug=0,write_tables=0)
             opt.update(**kargs)
             self._parser = yacc.yacc(module=self,**opt)
-    
+
     def __init__(self,**kargs):
         self.lexer  = Dot.Lexer()
         self.parser = Dot.Parser()
@@ -670,7 +669,7 @@ class Dot:
         L=self.parser._parser.parse(s,
                                     lexer=self.lexer._lexer)
         return L
-    
+
     def read(self,filename):
         f = file(filename,'r')
         return self.parse(f.read())

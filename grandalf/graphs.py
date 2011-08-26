@@ -15,33 +15,33 @@ class  vertex_core(object):
     def __init__(self):
         # will hold list of edges for this vertex (adjacency list)
         self.e = []
-    
+
     def deg(self): return len(self.e)
-    
+
     def e_in(self):
-        return filter( (lambda e:e.v[1]==self), self.e ) 
-    
+        return filter( (lambda e:e.v[1]==self), self.e )
+
     def e_out(self):
-        return filter( (lambda e:e.v[0]==self), self.e ) 
-    
+        return filter( (lambda e:e.v[0]==self), self.e )
+
     def e_dir(self,dir):
         if dir>0: return self.e_out()
         if dir<0: return self.e_in()
         return self.e
-    
+
     def N(self,f_io=0):
         N = []
         if f_io<=0: N += [ e.v[0] for e in self.e_in()  ]
         if f_io>=0: N += [ e.v[1] for e in self.e_out() ]
         return N
-    
+
     def e_to(self,y):
-        for e in self.e_out(): 
+        for e in self.e_out():
             if e.v[1]==y: return e
         return None
-    
+
     def e_from(self,x):
-        for e in self.e_in(): 
+        for e in self.e_in():
             if e.v[0]==x: return e
         return None
 
@@ -155,7 +155,7 @@ class  graph_core(object):
             x = e.v[0]
             y = e.v[1]
             if (x in V) and (y in V):
-                if e.deg==0: 
+                if e.deg==0:
                     e.detach()
                     self.degenerated_edges.append(e)
                     continue
@@ -170,18 +170,18 @@ class  graph_core(object):
             else:
                 raise ValueError,'unknown Vertex (%s or %s)'%(x.data,y.data)
         #check if graph is connected:
-        for v in self.V(): 
+        for v in self.V():
             if v.c is None or (v.c!=s):
                 raise ValueError,'unconnected Vertex %s'%v.data
             else:
                 v.c = self
-  
+
     # allow a graph_core to hold a single vertex:
     def add_single_vertex(self,v):
-        if len(self.sE)==0 and len(self.sV)==0: 
+        if len(self.sE)==0 and len(self.sV)==0:
             self.sV.add(v)
             v.c = self
- 
+
     # add edge e. At least one of its vertex must belong to the graph,
     # the other being added automatically. 
     def add_edge(self,e):
@@ -196,7 +196,7 @@ class  graph_core(object):
             self.sE.add(e)
             x.c = self
             y.c = self
-    
+
     # remove Edge :
     # this procedure checks that the resulting graph is connex.
     def remove_edge(self,e):
@@ -234,7 +234,7 @@ class  graph_core(object):
     def V(self,cond=None):
         V = self.sV
         if cond is None: cond=(lambda x:True)
-        for v in V: 
+        for v in V:
             if cond(v):
                 yield v
 
@@ -242,7 +242,7 @@ class  graph_core(object):
     def E(self,cond=None):
         E = self.sE
         if cond is None: cond=(lambda x:True)
-        for e in E: 
+        for e in E:
             if cond(e):
                 yield e
 
@@ -251,19 +251,19 @@ class  graph_core(object):
     # returns number of vertices
     def order(self):
         return len(self.sV)
-    
+
     # returns number of edges
     def norm(self):
         return len(self.sE)
-    
+
     # returns the minimum degree
     def deg_min(self):
         return min(map(vertex_core.deg,self.sV))
-    
+
     # returns the maximum degree
     def deg_max(self):
         return max(map(vertex_core.deg,self.sV))
-    
+
     # returns the average degree d(G)
     def deg_avg(self):
         return sum(map(vertex_core.deg,self.sV))/float(self.order())
@@ -374,7 +374,7 @@ class  graph_core(object):
         scs = []
         Vertex.ncur=1
         for v in self.sV: v.ind=0
-        for v in roots: 
+        for v in roots:
             if v.ind==0: _visit(v,scs)
         # clean up Tarjan-specific data:
         for v in self.sV:
@@ -391,7 +391,7 @@ class  graph_core(object):
     # f_io= 0 : all (default)
     def N(self,v,f_io=0):
         return v.N(f_io)
-    
+
     # general graph properties:
     # -------------------------
 
@@ -456,7 +456,7 @@ class  Graph(object):
                 assert y in V
                 assert x.c in CV
                 assert y.c in CV
-            except AssertionError: 
+            except AssertionError:
                 mypdb.set_trace()
             e.attach()
             if x.c!=y.c:
@@ -473,7 +473,7 @@ class  Graph(object):
             s = set()
             for v in c: s.update(v.e)
             self.C.append(graph_core(c,s))
-    
+
     # add vertex v into the Graph as a new (unconnected) component
     def add_vertex(self,v):
         for c in self.C:
@@ -482,7 +482,7 @@ class  Graph(object):
         g.add_single_vertex(v)
         self.C.append(g)
         return 1
-    
+
     # add edge e and its vertices into the Graph possibly merging the
     # associated graph_core components
     def add_edge(self,e):
@@ -538,7 +538,7 @@ class  Graph(object):
         assert c in self.C
         try:
             c.remove_vertex(x)
-            if c.order()==0: self.C.remove(c) 
+            if c.order()==0: self.C.remove(c)
         except ValueError:
             for e in x.detach(): c.sE.remove(e)
             c.sV.remove(x)
@@ -552,16 +552,16 @@ class  Graph(object):
 
     def order(self):
         return sum(map(graph_core.order,self.C))
- 
+
     def norm(self):
         return sum(map(graph_core.norm,self.C))
-  
+
     def deg_min(self):
         return min(map(graph_core.deg_min,self.C))
-   
+
     def deg_max(self):
         return max(map(graph_core.deg_max,self.C))
-    
+
     def deg_avg(self):
         t = 0.0
         for c in self.C: t += sum(map(vertex_core.deg,c.sV))
@@ -591,7 +591,7 @@ class  Graph(object):
     # returns connectivity (kappa)
     def connectivity(self):
         raise NotImplementedError
-  
+
     # returns edge-connectivity (lambda)
     def e_connectivity(self):
         raise NotImplementedError

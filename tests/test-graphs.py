@@ -93,7 +93,7 @@ def  test_remove():
     assert ''.join([v.data for v in g.C[0].sV])=='b'
     assert [v.data for v in g.C[1].sV]==['c',4,5]
 
-  
+
 def  test_cycles():
     v = ('a','b','c','d','e','f','g','h')
     V = [Vertex(x) for x in v]
@@ -108,14 +108,8 @@ def  test_cycles():
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
     return g1
 
-  
-
 test_vertex()
 test_edge()
 test_graph()
 test_remove()
 test_cycles()
-
-  
-
-

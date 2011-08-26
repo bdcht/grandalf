@@ -16,26 +16,26 @@
 
 * Description
 
-Grandalf is a python module made for experimentations with graphs and drawing 
-algorithms. Since it relies only on python code it is not meant to be used as 
-a replacement for /graphviz/ or other libraries like /OGDF/ (C++), 
+Grandalf is a python module made for experimentations with graphs and drawing
+algorithms. Since it relies only on python code it is not meant to be used as
+a replacement for /graphviz/ or other libraries like /OGDF/ (C++),
 /GDToolkit/ (C), /tulip/ (Java), etc.
-The idea was to provide a way to *draw* and *navigate* graphs no larger than 
-thousands of nodes, while keeping the source code simple enough (now less than 
-1500 lines of python) to make it possible to easily tweak and hack any part of 
-it for experimental purpose. 
-Grandalf does only two things: 
- - computing the nodes (x,y) coordinates (based on provided dimensions, and a 
+The idea was to provide a way to *draw* and *navigate* graphs no larger than
+thousands of nodes, while keeping the source code simple enough (now less than
+1500 lines of python) to make it possible to easily tweak and hack any part of
+it for experimental purpose.
+Grandalf does only two things:
+ - computing the nodes (x,y) coordinates (based on provided dimensions, and a
     chosen layout)
  - routing the edges with lines or nurbs
 It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
-whatever canvas library. This means that Grandalf will help you find _where_ to 
+whatever canvas library. This means that Grandalf will help you find _where_ to
 draw things like nodes and edges, but it's up to you to perform the drawing...
 
 * Screenshots and Videos
 
 See examples listed in the [[https://github.com/bdcht/grandalf/wiki][Wiki]].
-All videos have been made with grandalf and a simple testing-purpose gtk/cairo 
+All videos have been made with grandalf and a simple testing-purpose gtk/cairo
 canvas.
 
 * Links
@@ -114,14 +114,14 @@ Look for examples in =tests/=. Here is a very simple example :
   - Graph (and graph_core)
      
 *** Vertex.
-  A Vertex object is defined by a data field holding whatever you want 
-  associated to that vertex. It inherits from a vertex_core that --- when the 
-  Vertex is added into a graph --- is holding the list of edges connected to 
-  this Vertex and provides all methods associated to the properties of the 
-  vertex inside the graph (degree, list of neigbors, list of input edges, 
+  A Vertex object is defined by a data field holding whatever you want
+  associated to that vertex. It inherits from a vertex_core that --- when the
+  Vertex is added into a graph --- is holding the list of edges connected to
+  this Vertex and provides all methods associated to the properties of the
+  vertex inside the graph (degree, list of neigbors, list of input edges,
   output edges, etc).
-  Of course, unless a Vertex belongs to a graph, all properties are empty or 
-  None. 
+  Of course, unless a Vertex belongs to a graph, all properties are empty or
+  None.
   Example:
   #+BEGIN_EXAMPLE
   >>> v1 = Vertex('a')
@@ -132,7 +132,7 @@ Look for examples in =tests/=. Here is a very simple example :
   #+END_EXAMPLE
 
 *** Edge.
-  An Edge is defined by a pair of Vertex objects. If the graph is directed, the 
+  An Edge is defined by a pair of Vertex objects. If the graph is directed, the
   direction of the edge is induced by the e.v list order otherwise the order is
   irrelevant. See Usage section for details.
   Example:
@@ -140,39 +140,39 @@ Look for examples in =tests/=. Here is a very simple example :
   >>> e1 = Edge(v1,v2)
   >>> e2 = Edge(v1,v3,w=2)
   #+END_EXAMPLE
-  Optional arguments includes a weight (defaults to 1) and a data holding 
-  whatever you want associated with the edge (defaults to None). Edge weight 
-  are used by the Dijkstra algorithm for finding 'shortest' paths with 
+  Optional arguments includes a weight (defaults to 1) and a data holding
+  whatever you want associated with the edge (defaults to None). Edge weight
+  are used by the Dijkstra algorithm for finding 'shortest' paths with
   respect to these weights.
 
 *** graph_core.
-  A graph_core is used to hold a connected graph only. If the graph is not 
-  connected (ie there exists two vertex that can't be connected by an 
-  undirected path), then an exception is raised. 
-  Use of the Graph class is preferable unless you really know that your graph 
+  A graph_core is used to hold a connected graph only. If the graph is not
+  connected (ie there exists two vertex that can't be connected by an
+  undirected path), then an exception is raised.
+  Use of the Graph class is preferable unless you really know that your graph
   is connected.
   Example:
   #+BEGIN_EXAMPLE
   >>> g  = graph_core([v1,v2,v3],[e1,e2])
   #+END_EXAMPLE
-  The graph object can be updated by g.add_edge(e), g.remove_edge(e) or 
-  g.remove_vertex(v) which all raise an exception if connectivity is lost. Note 
-  that add_edge() will possibly extend the graph's vertex set with at most one 
+  The graph object can be updated by g.add_edge(e), g.remove_edge(e) or
+  g.remove_vertex(v) which all raise an exception if connectivity is lost. Note
+  that add_edge() will possibly extend the graph's vertex set with at most one
   new Vertex found in the added edge.
   See the Usage section for further details.
 
 *** Graph.
-  This is the main class for graphs. The resulting graph is stored as "Disjoint 
-  Sets" by processing the input lists of Vertex and Edge objects into a list of 
+  This is the main class for graphs. The resulting graph is stored as "Disjoint
+  Sets" by processing the input lists of Vertex and Edge objects into a list of
   graph_core components.
   Example:
   #+BEGIN_EXAMPLE
   >>> v4,v5 = Vertex(4),Vertex(5)
   >>> g = Graph([v1,v2,v3,v4],[e1,e2])
   #+END_EXAMPLE
-  The graph object can be updated by g.add_vertex(v), g.add_edge(e), 
-  g.remove_vertex(v) and g.remove_edge(e) which all may result in updating a 
-  graph_core, creating a new graph_core, or removing a graph_core from the 
+  The graph object can be updated by g.add_vertex(v), g.add_edge(e),
+  g.remove_vertex(v) and g.remove_edge(e) which all may result in updating a
+  graph_core, creating a new graph_core, or removing a graph_core from the
   graph's internal list.
 
 
@@ -182,18 +182,18 @@ Look for examples in =tests/=. Here is a very simple example :
   - SugiyamaLayout
 
 *** SugiyamaLayout.
-  This class performs a 2D hierarchical placement of a connected graph. 
-  The algorithm works only for directed acyclic graphs (DAG), so that a 
+  This class performs a 2D hierarchical placement of a connected graph.
+  The algorithm works only for directed acyclic graphs (DAG), so that a
   "feedback acyclic set" of edges is needed.
   To create a graph layout, you need to provide:
-  - a graph_core object where every Vertex has been equiped with a '.view' 
-    interface providing the width and height of the graphical representation of 
-    the Vertex (in our terminology, a Vertex equiped with a '.view' is a "node" 
+  - a graph_core object where every Vertex has been equiped with a '.view'
+    interface providing the width and height of the graphical representation of
+    the Vertex (in our terminology, a Vertex equiped with a '.view' is a "node"
     of the graph)
   To initiate the drawing (init_all) procedure you'll need to provide:
-  - the list of "root" nodes (see test/test-dot.py for example of how to find 
+  - the list of "root" nodes (see test/test-dot.py for example of how to find
     these nodes)
-  - the list of feedback acyclic edges (see test/test-dot.py for example) 
+  - the list of feedback acyclic edges (see test/test-dot.py for example)
 
 
 ** =routing.py= : 
@@ -241,8 +241,8 @@ Look for examples in =tests/=. Here is a very simple example :
   - setroundcorner
      
 *** Poset.
-  This class is used by graph_core for both efficiently detecting if a Vertex 
-  or Edge is in a graph (using builtin set()) and ensuring that elements of 
+  This class is used by graph_core for both efficiently detecting if a Vertex
+  or Edge is in a graph (using builtin set()) and ensuring that elements of
   the set are iterated always in the same order (using builtin list()).
   Basically, a Poset is pair (set,list) that is kept synchronized.
 
@@ -266,14 +266,14 @@ Look for examples in =tests/=. Here is a very simple example :
   It is used in the route_with_splines function in routing.py.
 
 ** tests/ : 
-  Contains many testing procedures as well as some graph samples. 
+  Contains many testing procedures as well as some graph samples.
 
 
 * Usage and Pitfalls
 
-Rather than an exhaustive library reference with all methods for all classes, 
-(see Python help() for that) we focus on a typical usage of grandalf and try to 
-also emphasize important notes. 
+Rather than an exhaustive library reference with all methods for all classes,
+(see Python help() for that) we focus on a typical usage of grandalf and try to
+also emphasize important notes.
 
 
 ** Graph creation
@@ -282,8 +282,8 @@ Lets start by creating an empty graph:
   #+BEGIN_EXAMPLE
   >>> g = Graph()
   #+END_EXAMPLE
-Wether you first create the graph and add elements in it or create it after all 
-Vertex and Edge objects have been defined, is up to you. 
+Wether you first create the graph and add elements in it or create it after all
+Vertex and Edge objects have been defined, is up to you.
 For the moment the graph has no components :
   #+BEGIN_EXAMPLE
   >>> g.order()
@@ -291,7 +291,7 @@ For the moment the graph has no components :
   >>> g.C
   []
   #+END_EXAMPLE
-Lets create some vertices now. 
+Lets create some vertices now.
   #+BEGIN_EXAMPLE
   >>> v1 = Vertex('a')
   >>> v2 = Vertex('b')
@@ -300,19 +300,19 @@ Lets create some vertices now.
   >>> v1.data
   'a'
   #+END_EXAMPLE
-First, note that the 'data' field is optional and can be added anytime in the 
-vertex. We are associating a string to this field so that it is easy to 
-identify a given vertex, but keep in mind that this data is not needed for 
-graph computations and drawings. 
-For the moment, the vertex objects are "free" in the sense that they are not 
-associated with any graph_core object. When a vertex belongs to a graph_core, 
+First, note that the 'data' field is optional and can be added anytime in the
+vertex. We are associating a string to this field so that it is easy to
+identify a given vertex, but keep in mind that this data is not needed for
+graph computations and drawings.
+For the moment, the vertex objects are "free" in the sense that they are not
+associated with any graph_core object. When a vertex belongs to a graph_core,
 the reference to this graph_core is found in the 'c' field (component field).
 
 To insert a Vertex in a Graph object we do:
   #+BEGIN_EXAMPLE
   >>> g.add_vertex(v1)
   #+END_EXAMPLE
-or we can add a new edge, then any new vertex it the edge will be attached to 
+or we can add a new edge, then any new vertex it the edge will be attached to
 the graph also:
   #+BEGIN_EXAMPLE
   >>> e1 = Edge(v1,v2)
@@ -322,8 +322,8 @@ the graph also:
   >>> v2 in g.C[0]
   True
   #+END_EXAMPLE
-Warning: Vertex and Edge objects MUST belong to only one graph_core object at a 
-time. So you should never use the same Vertex/Edge into another graph without 
+Warning: Vertex and Edge objects MUST belong to only one graph_core object at a
+time. So you should never use the same Vertex/Edge into another graph without
 removing it first from the current one !
 Of course, removing a vertex also removes all edges linked to it.
   #+BEGIN_EXAMPLE
@@ -331,9 +331,9 @@ Of course, removing a vertex also removes all edges linked to it.
   >>> e1 in g
   False
   >>> len(g.C)
-  3 
+  3
   #+END_EXAMPLE
-Removing v1 here has removed e1 and e2, and the graph g is now cut in 3 
+Removing v1 here has removed e1 and e2, and the graph g is now cut in 3
 components holding each one vertex only. Lets rebuild the graph and extend it:
   #+BEGIN_EXAMPLE
   >>> g.add_edge(e1)
@@ -350,96 +350,96 @@ the cores are merged in one component only.
 
 ** Graph drawing
 
-There are many possible layouts when it comes to graph drawings. 
-The current layout implemented is a hierarchical 2D layout suited for 
-*directed* graphs based on an method proposed by Sugiyama et al. 
-Our implementation is derived from the paper by Brandes & Kopf (GD 2001.) 
-This method is quite efficient but is based on many heuristics that are not 
-easy to tweak when you want to add some constraints like for example 
+There are many possible layouts when it comes to graph drawings.
+The current layout implemented is a hierarchical 2D layout suited for
+*directed* graphs based on an method proposed by Sugiyama et al.
+Our implementation is derived from the paper by Brandes & Kopf (GD 2001.)
+This method is quite efficient but is based on many heuristics that are not
+easy to tweak when you want to add some constraints like for example
 "I want that nodes with property P to be placed near each others."
 
-The "dig-cola" method is based on a different approach where graph properties 
-are expressed as constraints on node's coordinates, reducing the problem to 
-solving a set of inequalities with unknowns being the x,y coords of every 
-nodes. With this approach, adding new contraints is very simple. 
-The dig-cola method is implemented in old commits and is currently being 
+The "dig-cola" method is based on a different approach where graph properties
+are expressed as constraints on node's coordinates, reducing the problem to
+solving a set of inequalities with unknowns being the x,y coords of every
+nodes. With this approach, adding new contraints is very simple.
+The dig-cola method is implemented in old commits and is currently being
 rewritten to match the design of SugiyamaLayout.
 
-In Grandalf, a layout engine only applies on a graph_core object. 
-Basically drawing a Graph() requires that you draw all its connex components 
-and decide how to organize the entire drawing by moving each component where 
-you want. Since some methods involve "dummy" nodes inserted in the graph, it is 
-important to note that layout classes are completely separated from the 
-original : the underlying graph_core topology is never permanently modified. 
-This means that redrawing a graph for whatever reason (vertex added, edges 
-added, etc) is as simple as creating a new layout instance. 
-Of course, if you know what you are doing, you can try to update the drawing 
-based on the current layout instance but unless modifications of the topology 
-are very simple, this can be very difficult (enhancing this adaptative drawing 
+In Grandalf, a layout engine only applies on a graph_core object.
+Basically drawing a Graph() requires that you draw all its connex components
+and decide how to organize the entire drawing by moving each component where
+you want. Since some methods involve "dummy" nodes inserted in the graph, it is
+important to note that layout classes are completely separated from the
+original : the underlying graph_core topology is never permanently modified.
+This means that redrawing a graph for whatever reason (vertex added, edges
+added, etc) is as simple as creating a new layout instance.
+Of course, if you know what you are doing, you can try to update the drawing
+based on the current layout instance but unless modifications of the topology
+are very simple, this can be very difficult (enhancing this adaptative drawing
 part is definetly in the TODO list!).
 
-Before creating a layout engine associated with a graph_core, each vertex MUST 
-be equiped with what we call a 'view'. For a vertex v, such view must be an 
-object with attributes 
-   - =w= (width) and 
+Before creating a layout engine associated with a graph_core, each vertex MUST
+be equiped with what we call a 'view'. For a vertex v, such view must be an
+object with attributes
+   - =w= (width) and
    - =h= (height),
    - =xy= (position)
 and the layout engine will set the v.view.xy field with a (x,y) tuple value
 corresponding to the center of the node.
-In practice, this allows to use =view= objects that inherits from graphic 
-widgets (e.g. a rectangle in a Canvas) which will position the widget in the 
+In practice, this allows to use =view= objects that inherits from graphic
+widgets (e.g. a rectangle in a Canvas) which will position the widget in the
 canvas when the xy attribute is set.
 
-If you want the layout to perform also edge routing, you MAY equipe edges also 
-with a 'view' attribute. For an edge e, the view must have a =setpath= method 
+If you want the layout to perform also edge routing, you MAY equipe edges also
+with a 'view' attribute. For an edge e, the view must have a =setpath= method
 taking a list of points as argument.
-The layout engine will provide the list of (x,y) routing points, starting by 
-the =e.v[0].view.xy=, then all intermediate dummy vertices position through 
+The layout engine will provide the list of (x,y) routing points, starting by
+the =e.v[0].view.xy=, then all intermediate dummy vertices position through
 which the edge drawing should go, including the e.v[1].view.xy last point.
-The routing.py module provides enhanced routing functions as well as a 
-representative EdgeViewer class to help finding the exact position where 
-drawing the 'tail' or the 'arrowhead' or define a set of splines made of Bezier 
+The routing.py module provides enhanced routing functions as well as a
+representative EdgeViewer class to help finding the exact position where
+drawing the 'tail' or the 'arrowhead' or define a set of splines made of Bezier
 curves so that almost any curve Canvas primitive can be used.
 
 
 *** SugiyamaLayout
 
-The Sugiyama layout draws a graph by separating the nodes in several layers. 
-These layers are stacked one under the others. The first layer contains the 
+The Sugiyama layout draws a graph by separating the nodes in several layers.
+These layers are stacked one under the others. The first layer contains the
 "root" nodes.
 
 **** the root nodes and the feedback edges sets
 
-The first requirement for this layout is to provide the list of inverted edges 
-(aka the feedback acyclic set needed to make the graph acyclic when needed.) 
-These edges are inverted in the graph_core only during some specific operations 
+The first requirement for this layout is to provide the list of inverted edges
+(aka the feedback acyclic set needed to make the graph acyclic when needed.)
+These edges are inverted in the graph_core only during some specific operations
 and are reverted immediately after these computations.
 For example, the graph is made acyclic for ranking the nodes into hierarchical
 layers.
-The graph_core class contains a method that computes the "strongly connected 
-sets" of the graph_core by using the Tarjan algorithm (get_scs_with_feedback). 
-A strongly connected set is a subset of vertex where for any two vertices A B, 
-there exist a directed path from A to B. 
-Of course a cycle is a strongly connected set, but such set may contain several 
-interlaced cycles. The algorithm constructs the "feedback acyclic set" by 
+The graph_core class contains a method that computes the "strongly connected
+sets" of the graph_core by using the Tarjan algorithm (get_scs_with_feedback).
+A strongly connected set is a subset of vertex where for any two vertices A B,
+there exist a directed path from A to B.
+Of course a cycle is a strongly connected set, but such set may contain several
+interlaced cycles. The algorithm constructs the "feedback acyclic set" by
 tagging the edges with the 'feedback' field set to True. It performs a DFS
 starting from the given set of nodes.
 A good choice is of course to start with the set of nodes that have no incoming
 edges, but if this set is empty (because the graph is cyclic) you will have to
 choose a preferred set :
-Hence, 
+Hence,
  #+BEGIN_EXAMPLE
  >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
  >>> if len(r)==0: r = [my_guessed_root_node]
  >>> L = gr.get_scs_with_feedback(r)
  >>> inverted_edges=filter(lambda x:x.feedback, gr.sE)
  #+END_EXAMPLE
-leads to L containing the SCS of the =gr= component, and the feedback set is 
+leads to L containing the SCS of the =gr= component, and the feedback set is
 then obtained by filter edges with the feedback flag.
 
 As mentioned before, drawing with the SugiyamaLayout engine also requires that
 you provide the list of "root" nodes.
-Its up to you to decide which nodes are the "roots", but the natural definition 
+Its up to you to decide which nodes are the "roots", but the natural definition
 is as stated before :
  #+BEGIN_EXAMPLE
  >>> gr = g.C[0]
@@ -457,16 +457,16 @@ Now, drawing the gr component just resumes to:
  >>> sug.init_all(r,inverted_edges)
  >>> sug.draw()
  #+END_EXAMPLE
-which performs completely ONE pass of the drawing algorithm. Doing a single 
-pass means that the node placement has been performed from the top layer to the 
-bottom layer and back to top. This may not be sufficient to reduce the edge 
-crossings, so you can draw again or simply provide the number of pass to 
+which performs completely ONE pass of the drawing algorithm. Doing a single
+pass means that the node placement has been performed from the top layer to the
+bottom layer and back to top. This may not be sufficient to reduce the edge
+crossings, so you can draw again or simply provide the number of pass to
 perform:
  #+BEGIN_EXAMPLE
  >>> sug.draw(3)
  #+END_EXAMPLE
-If you want to be able to draw the graph while the engine is running, you can 
-use the draw_step() iterator which yields at each layer during the forward and 
+If you want to be able to draw the graph while the engine is running, you can
+use the draw_step() iterator which yields at each layer during the forward and
 backward trip.
 
 Then, drawing the graph with a graphical canvas can be done by drawing each
@@ -491,7 +491,7 @@ attribute.
 
 Because graph_core are connected graphs, only add_single_vertex() makes sense.
 If you want to add a vertex directly into a graph_core, the vertex must be
-connected with an edge to another vertex already in the graph_core 
+connected with an edge to another vertex already in the graph_core
 (use add_edge()).
 However, if the graph is empty, the first vertex can be attached to the graph
 by using add_single_vertex().
