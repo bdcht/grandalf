@@ -225,8 +225,9 @@ Look for examples in =tests/=. Here is a very simple example :
 
 ** =utils.py= : 
   Provides utilities like partially ordered sets, linear programming solvers,
-  etc. For now, this module only defines the class:
+  parsers for external formats (Dot, etc.) This module defines :
   - Poset
+  - Dot
   and some general purpose functions like:
   - intersect2lines
   - intersectR
@@ -241,6 +242,14 @@ Look for examples in =tests/=. Here is a very simple example :
   the set are iterated always in the same order (using builtin list()).
   Basically, a Poset is pair (set,list) that is kept synchronized.
 
+*** Dot.
+  This class contains a PLY lexer and parser for the graphviz dot format.
+  The now parser supports all example graphs currently defined in the graphviz
+  mercurial tree here:
+    graphviz/graphs/{directed,undirected}/*.gv
+  as well as the dg.dot and ug.dot databases (> 5000 graph defs parsed OK .)
+  This includes latin1 and utf8 support (see russian.gv or Latin1.gv).
+
 *** setcurve.
   This function is used internally for edge routing. It is based on an method
   described in "The NURBS Book" (Les A. Piegl, Wayne Tiller, Springer 1997)
@@ -254,8 +263,6 @@ Look for examples in =tests/=. Here is a very simple example :
 
 ** tests/ : 
   Contains many testing procedures as well as some graph samples. 
-  Note that test/test-dot.py requires a dot file parser found in /iod/ project 
-  (not included in grandalf).
 
 
 * Usage and Pitfalls
