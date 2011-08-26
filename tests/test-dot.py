@@ -42,7 +42,7 @@ if __name__ == '__main__':
         E = []
         for k,x in ast.nodes.iteritems():
             try:
-                v = Vertex(x.atr['label'])
+                v = Vertex(x.attr['label'])
             except (KeyError,AttributeError):
                 v = Vertex(x.name)
             v.view = VertexViewer(10,10)
