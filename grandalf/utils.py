@@ -301,6 +301,7 @@ class Dot:
     _tokens = (
         'regulars',
         'string',
+        'html',
         'comment',
     )+_reserved
 
@@ -315,15 +316,28 @@ class Dot:
             self.t_ignore = self.whitespace
     
         def t_regulars(self,t):
-            r'[A-Za-z0-9_]+'
+            r'[\w_.]+'
             v = t.value.lower()
             if v in self.reserved:
                 t.type = v
                 return t
+            # check numeric string
+            if v[0].isdigit() or v[0] in ['-','.']:
+                try:
+                    float(v)
+                except ValueError:
+                    print 'invalid numeral token: %s'%v
+                    raise SyntaxError
+            elif '.' in v: # forbidden in non-numeric
+                raise SyntaxError
             return t
       
         def t_comment_online(self,t):
             r'(//(.*)\n)|\\\n'
+            pass
+
+        def t_comment_macro(self,t):
+            r'(\#(.*)\n)'
             pass
       
         def t_comment_multline(self,t):
@@ -339,6 +353,20 @@ class Dot:
                 i = t.lexer.lexdata.index('"',i+1)
             t.value = t.lexer.lexdata[start:i+1]
             t.lexer.lexpos = i+1
+            return t
+
+        def t_html(self,t):
+            r'<'
+            start=t.lexer.lexpos-1
+            level=1
+            i=start+1
+            while level>0:
+                c = t.lexer.lexdata[i]
+                if c=='<': level += 1
+                if c=='>': level -= 1
+                i += 1
+            t.value = t.lexer.lexdata[start:i]
+            t.lexer.lexpos = i
             return t
       
         def t_ANY_error(self,t):
