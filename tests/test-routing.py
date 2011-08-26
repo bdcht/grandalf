@@ -18,7 +18,7 @@ for  s in sug.draw_step():
     i+=1
 for  e in gr.E():
     e.view = EdgeViewer()
-sug.route_edge  = route_with_nurbs
+sug.route_edge  = route_with_splines
 sug.draw_edges()
 for  e in sug.g.E():
     print 'edge (%s -> %s) :'%e.v

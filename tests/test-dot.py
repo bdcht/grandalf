@@ -49,7 +49,7 @@ if __name__ == '__main__':
             V[x.name] = v
         print len(V)
         edgelist = []
-        for e in ast.edges: edgelist.extend(e)
+        for e in ast.edges: edgelist.append(e)
         for edot in edgelist:
             v1 = V[edot.n1.name]
             v2 = V[edot.n2.name]
