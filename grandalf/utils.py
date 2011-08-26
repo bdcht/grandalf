@@ -319,7 +319,7 @@ class Dot:
             self.t_ignore = self.whitespace
     
         def t_regulars(self,t):
-            r'[\w_.]+'
+            r'[-]?[\w.]+'
             v = t.value.lower()
             if v in self.reserved:
                 t.type = v
