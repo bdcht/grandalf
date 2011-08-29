@@ -31,12 +31,14 @@ Grandalf does only two things:
 It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
 whatever canvas library. This means that Grandalf will help you find _where_ to
 draw things like nodes and edges, but it's up to you to perform the drawing...
+Take a look at [[http://github.com/bdcht/masr][masr]] (masr/plugins/graph/README) to see
+how Grandalf can be used to render some graphs (dot format) on a cairo canvas.
 
 * Screenshots and Videos
 
 See examples listed in the [[https://github.com/bdcht/grandalf/wiki][Wiki]].
-All videos have been made with grandalf and a simple testing-purpose gtk/cairo
-canvas.
+All videos have been made with grandalf and the [[http://github.com/bdcht/masr][masr]]
+canvas application template.
 
 * Links
   - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to render (on a
@@ -202,7 +204,7 @@ Look for examples in =tests/=. Here is a very simple example :
   - EdgeViewer
   - route_with_lines
   - route_with_splines
-             
+
 *** EdgeViewer.
   This class provides a default 'view' for edges. Edges with no view will be
   ignored by the draw_edge method of the layouts. If a view is provided it must
@@ -239,7 +241,7 @@ Look for examples in =tests/=. Here is a very simple example :
   - intersectC
   - setcurve (computing a nurbs locally interpolating a given set of points)
   - setroundcorner
-     
+
 *** Poset.
   This class is used by graph_core for both efficiently detecting if a Vertex
   or Edge is in a graph (using builtin set()) and ensuring that elements of
