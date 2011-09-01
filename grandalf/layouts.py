@@ -106,7 +106,7 @@ class  SugiyamaLayout(object):
         # so we must provide a list of root nodes and a list of inverted edges.
         self.alt_e = inverted_edges
         # assign rank to all vertices:
-        self.rank_all(roots) 
+        self.rank_all(roots)
         # add dummy vertex/edge for 'long' edges:
         for e in self.g.E():
             self.setdummies(e)
@@ -151,9 +151,10 @@ class  SugiyamaLayout(object):
     # The initial rank is based on precedence relationships,
     # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots):
-        assert len(roots)>0
         self.__edge_inverter()
-        self._rank_init(roots)
+        r = filter(lambda x: len(x.e_in())==0 and x not in roots,
+                   self.g.sV)
+        self._rank_init(roots+r)
         self._rank_optimize()
         self.__edge_inverter()
 

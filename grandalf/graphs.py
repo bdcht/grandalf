@@ -212,7 +212,7 @@ class  graph_core(object):
             self.sE.remove(e)
 
     # remove Vertex:
-    # this procedure chacks that the resulting graph is connex.
+    # this procedure checks that the resulting graph is connex.
     def remove_vertex(self,x):
         V = x.N() #get all neighbor vertices to check paths
         E = x.detach() #remove the edges from x and neighbors list
@@ -374,7 +374,11 @@ class  graph_core(object):
         scs = []
         Vertex.ncur=1
         for v in self.sV: v.ind=0
+        # start exploring tree from roots:
         for v in roots:
+            if v.ind==0: _visit(v,scs)
+        # now possibly unvisited vertices:
+        for v in self.sV:
             if v.ind==0: _visit(v,scs)
         # clean up Tarjan-specific data:
         for v in self.sV:
