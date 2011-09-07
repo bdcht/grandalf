@@ -101,9 +101,16 @@ class  SugiyamaLayout(object):
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
     #  -list of root nodes.
-    def init_all(self,roots,inverted_edges):
+    def init_all(self,roots=None,inverted_edges=None):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
+        if roots==None:
+            roots = filter(lambda x: len(x.e_in())==0, self.g.sV)
+            print "%d verts, %d root(s)"%(self.g.order(),len(roots))
+        if inverted_edges==None:
+            print 'using tarjan algorithm to find inverted_edges...'
+            L = self.g.get_scs_with_feedback(roots)
+            inverted_edges = filter(lambda x:x.feedback, self.g.sE)
         self.alt_e = inverted_edges
         # assign rank to all vertices:
         self.rank_all(roots)
