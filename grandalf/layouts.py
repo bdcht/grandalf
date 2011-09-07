@@ -546,6 +546,7 @@ class  DigcoLayout(object):
         # drawing parameters:
         self.xspace = 10
         self.yspace = 10
+        self.debug=False
 
         self.g = g
         self.levels = []
@@ -743,16 +744,18 @@ class  DigcoLayout(object):
         count=0
         b  = self.__Lij_Z_Z(Z)
         while count<limit:
-            print "count %d"%count
-            print "Z = ",Z
-            print "b = ",b
+            if self.debug:
+                print "count %d"%count
+                print "Z = ",Z
+                print "b = ",b
             # find next Z by solving Lw.Z = b in every direction:
             x,xerr = self._cg_Lw(Lw[1:,1:],Z[1:,0],b[1:,0])
             y,yerr = self._cg_Lw(Lw[1:,1:],Z[1:,1],b[1:,1])
             Z[1:,0] = x
             Z[1:,1] = y
-            print " cg -> "
-            print Z,xerr,yerr
+            if self.debug:
+                print " cg -> "
+                print Z,xerr,yerr
             # compute new stress:
             FZ = K-float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # precompute new b:
