@@ -546,6 +546,7 @@ class  DigcoLayout(object):
         # drawing parameters:
         self.xspace = 10
         self.yspace = 10
+        self.dr     = 10
         self.debug=False
 
         self.g = g
@@ -553,6 +554,7 @@ class  DigcoLayout(object):
         for i,v in enumerate(self.g.V()):
             assert hasattr(v,'view')
             v.i = i
+            self.dr = max((self.dr,v.view.w,v.view.h))
         # solver parameters:
         self._cg_max_iter = g.order()
         self._cg_tolerance = 1.0e-6
@@ -694,7 +696,7 @@ class  DigcoLayout(object):
         Dji = []
         for v in self.g.V():
             wd = self.g.dijkstra(v)
-            Di = [wd[w] for w in self.g.V()]
+            Di = [wd[w]*self.dr for w in self.g.V()]
             Dji.append(Di)
         # at this point  D is stored by rows, 
         # but anymway it's a symmetric matrix
