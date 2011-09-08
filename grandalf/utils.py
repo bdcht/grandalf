@@ -674,3 +674,210 @@ class Dot:
         f = file(filename,'r')
         return self.parse(f.read())
 
+#------------------------------------------------------------------------------
+# LALR(1) parser for IDA-Pro wingraph file format.
+class IDA:
+
+    _reserved = (
+        'graph',
+        'node',
+        'edge',
+        'colorentry'
+    )
+    _tokens = (
+        'regulars',
+        'string',
+        'comment',
+    )+_reserved
+
+    _literals = ['-',':','{','}']
+
+    class Lexer(object):
+        def __init__(self):
+            self.whitespace = '\0\t\n\f\r '
+            self.reserved = Dot._reserved
+            self.tokens = Dot._tokens
+            self.literals = Dot._literals
+            self.t_ignore = self.whitespace
+
+        def t_regulars(self,t):
+            r'[-]?[\w.]+'
+            v = t.value.lower()
+            if v in self.reserved:
+                t.type = v
+                return t
+            # check numeric string
+            if v[0].isdigit() or v[0] in ['-','.']:
+                try:
+                    float(v)
+                except ValueError:
+                    print 'invalid numeral token: %s'%v
+                    raise SyntaxError
+            elif '.' in v: # forbidden in non-numeric
+                raise SyntaxError
+            return t
+
+        def t_comment_online(self,t):
+            r'(//(.*)\n)|\\\n'
+            pass
+
+        def t_string(self,t):
+            r'"'
+            start=t.lexer.lexpos-1
+            i = t.lexer.lexdata.index('"',start+1)
+            while t.lexer.lexdata[i-1] =='\\' :
+                i = t.lexer.lexdata.index('"',i+1)
+            t.value = t.lexer.lexdata[start:i+1]
+            t.lexer.lexpos = i+1
+            return t
+
+        def t_ANY_error(self,t):
+            print "Illegal character '%s'" % t.value[0]
+            t.lexer.skip(1)
+
+        def build(self,**kargs):
+            self._lexer = lex.lex(module=self, **kargs)
+
+        def test(self,data):
+            self._lexer.input(data)
+            while 1:
+                tok = self._lexer.token()
+                if not tok: break
+                print tok
+
+    # Classes for the AST returned by Parser: 
+    class graph(object):
+        def __init__(self,data):
+            self.nodes = {}
+            self.edges = []
+            for x in data: # data is a statements (list of stmt)
+                # x is a stmt, ie one of:
+                # a dict object (ID:ID)
+                # a node object
+                # an edge object
+                if isinstance(x,dict):
+                    for k,v in x.iteritems():
+                        setattr(self,k,v)
+                elif isinstance(x,IDA.node):
+                    self.nodes[x.title] = x
+                elif isinstance(x,IDA.edge):
+                    self.edges.append(x)
+            try:
+                self.name = self.title
+            except AttributeError:
+                pass
+
+        def __repr__(self):
+            u = u'<%s instance at %x, name: %s, %d nodes>'%(
+                   self.__class__,
+                   id(self),
+                   self.title,
+                   len(self.nodes))
+            return u.encode('utf-8')
+
+    class edge(object):
+        def __init__(self,data):
+            for x in data:
+                for k,v in x.iteritems():
+                    setattr(self,k,v)
+
+    class node(object):
+        def __init__(self,data):
+            for x in data:
+                for k,v in x.iteritems():
+                    setattr(self,k,v)
+
+    class Parser(object):
+        def __init__(self):
+            self.tokens = Dot._tokens
+
+        def __makelist(self,p):
+            N=len(p)
+            if N>2:
+                L = p[1]
+                L.append(p[N-1])
+            else:
+                L = []
+                if N>1:
+                    L.append(p[N-1])
+            p[0] = L
+
+        def p_Graph(self,p):
+            '''Graph : graph ':' Block'''
+            p[0] = IDA.graph(p[3])
+            print 'IDA.Parser: graph object %s created'%p[0].name
+
+        def p_ID(self,p):
+            '''ID : regulars
+                  | string '''
+            p[0] = p[1]
+
+        def p_Block(self,p):
+            '''Block : '{' statements '}' '''
+            p[0] = p[2]
+
+        def p_statements(self,p):
+            '''statements : statements stmt
+                          | stmt 
+                          | '''
+            self.__makelist(p)
+
+        def p_comment(self,p):
+            '''stmt : comment'''
+            pass  # comment tokens are not outputed by lexer anyway
+
+        def p_color(self,p):
+            '''stmt : colorentry ID ':' ID ID ID'''
+            pass  # ignore colorentry for the moment
+
+        def p_stmt_assign(self,p):
+            '''stmt : affect '''
+            p[0] = p[1]
+
+        def p_affect(self,p):
+            '''affect : ID ':' ID '''
+            p[0] = dict([(p[1],p[3])])
+
+        def p_stmt_node(self,p):
+            '''stmt : node ':' Block '''
+            p[0] = IDA.node(p[3])
+
+        def p_stmt_edge(self,p):
+            '''stmt : edge ':' Block '''
+            p[0] = IDA.edge(p[3])
+
+        def p_error(self,p):
+            print 'Syntax Error',p
+            self._parser.restart()
+
+        def build(self,**kargs):
+            opt=dict(debug=0,write_tables=0)
+            opt.update(**kargs)
+            self._parser = yacc.yacc(module=self,**opt)
+
+    def __init__(self,**kargs):
+        self.lexer  = Dot.Lexer()
+        self.parser = Dot.Parser()
+
+    def parse(self,data):
+        try:
+            self.parser._parser.restart()
+        except AttributeError:
+            self.lexer.build(reflags=lex.re.UNICODE)
+            self.parser.build()
+        except:
+            print 'unexpected error'
+            return None
+        try:
+            s = data.decode('utf-8')
+        except UnicodeDecodeError:
+            s = data
+        L=self.parser._parser.parse(s,
+                                    lexer=self.lexer._lexer)
+        return L
+
+    def read(self,filename):
+        f = file(filename,'r')
+        G = self.parse(f.read())
+        G.name = filename
+        return G
