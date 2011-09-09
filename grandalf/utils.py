@@ -241,8 +241,8 @@ def setcurve(e,pts,tgs=None):
         s = s2
         if s1>=0: s=s1
         C0 = tuple(P[k])
-        C1 = tuple(P[k] + (s/3.)*T[k])
-        C2 = tuple(P[k+1] -(s/3.)*T[k+1])
+        C1 = tuple(P[k] + .5*(s/3.)*T[k])
+        C2 = tuple(P[k+1] -.5*(s/3.)*T[k+1])
         C3 = tuple(P[k+1])
         splines.append([C0,C1,C2,C3])
     return splines
@@ -657,8 +657,8 @@ class Dot:
         try:
             self.parser._parser.restart()
         except AttributeError:
-            self.lexer.build(reflags=lex.re.UNICODE)
-            self.parser.build()
+            self.lexer.build(optimize=1,reflags=lex.re.UNICODE)
+            self.parser.build(optimize=1)
         except:
             print 'unexpected error'
             return None
@@ -695,9 +695,9 @@ class IDA:
     class Lexer(object):
         def __init__(self):
             self.whitespace = '\0\t\n\f\r '
-            self.reserved = Dot._reserved
-            self.tokens = Dot._tokens
-            self.literals = Dot._literals
+            self.reserved = IDA._reserved
+            self.tokens = IDA._tokens
+            self.literals = IDA._literals
             self.t_ignore = self.whitespace
 
         def t_regulars(self,t):
@@ -789,7 +789,7 @@ class IDA:
 
     class Parser(object):
         def __init__(self):
-            self.tokens = Dot._tokens
+            self.tokens = IDA._tokens
 
         def __makelist(self,p):
             N=len(p)
@@ -856,15 +856,15 @@ class IDA:
             self._parser = yacc.yacc(module=self,**opt)
 
     def __init__(self,**kargs):
-        self.lexer  = Dot.Lexer()
-        self.parser = Dot.Parser()
+        self.lexer  = IDA.Lexer()
+        self.parser = IDA.Parser()
 
     def parse(self,data):
         try:
             self.parser._parser.restart()
         except AttributeError:
-            self.lexer.build(reflags=lex.re.UNICODE)
-            self.parser.build()
+            self.lexer.build(optimize=1,reflags=lex.re.UNICODE)
+            self.parser.build(optimize=1)
         except:
             print 'unexpected error'
             return None
