@@ -10,7 +10,7 @@ mypdb  = pdb.Pdb()
 
 def test_lexer():
     ida = IDA()
-    ida.lexer.build(optimize=1)
+    ida.lexer.build(optimize=1,lextab=None)
     ida.lexer.test('''
     graph: {
       title: "ida format"

@@ -657,7 +657,7 @@ class Dot:
         try:
             self.parser._parser.restart()
         except AttributeError:
-            self.lexer.build(optimize=1,reflags=lex.re.UNICODE)
+            self.lexer.build(optimize=1,lextab=None,reflags=lex.re.UNICODE)
             self.parser.build(optimize=1)
         except:
             print 'unexpected error'
@@ -863,7 +863,7 @@ class IDA:
         try:
             self.parser._parser.restart()
         except AttributeError:
-            self.lexer.build(optimize=1,reflags=lex.re.UNICODE)
+            self.lexer.build(optimize=1,lextab=None,reflags=lex.re.UNICODE)
             self.parser.build(optimize=1)
         except:
             print 'unexpected error'
