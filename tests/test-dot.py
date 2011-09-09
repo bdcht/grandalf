@@ -10,7 +10,7 @@ mypdb  = pdb.Pdb()
 
 def test_lexer():
     dot = Dot()
-    dot.lexer.build()
+    dot.lexer.build(optimize=1)
     dot.lexer.test('''
     strict diGRAPH "test" {
       NODE [color="red"]
