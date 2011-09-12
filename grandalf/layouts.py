@@ -124,7 +124,8 @@ class  SugiyamaLayout(object):
 
     # compute every node coordinates after converging to optimal ordering by N
     # rounds, and finally perform the edge routing.
-    def draw(self,N=1):
+    def draw(self,N=None):
+        if not N: N=1
         for i in range(N):
             for s in self.ordering_step(): pass
         self.setxy()
@@ -558,7 +559,7 @@ class  DigcoLayout(object):
         # solver parameters:
         self._cg_max_iter = g.order()
         self._cg_tolerance = 1.0e-6
-        self._eps = 1.0e-3
+        self._eps = 1.0e-5
         self._cv_max_iter = self._cg_max_iter
 
     def init_all(self,alpha=0.1,beta=0.01):
@@ -572,7 +573,8 @@ class  DigcoLayout(object):
         self.Z = self._optimize(self.Z,limit=N)
         # set view xy from near-optimal coords matrix:
         for v in self.g.V():
-            v.view.xy = (self.Z[v.i][0,0],self.Z[v.i][0,1])
+            v.view.xy = (self.Z[v.i][0,0]*self.dr,
+                         self.Z[v.i][0,1]*self.dr)
 
     def draw_step(self):
         for x in xrange(self._cv_max_iter):
@@ -696,7 +698,7 @@ class  DigcoLayout(object):
         Dji = []
         for v in self.g.V():
             wd = self.g.dijkstra(v)
-            Di = [wd[w]*self.dr for w in self.g.V()]
+            Di = [wd[w] for w in self.g.V()]
             Dji.append(Di)
         # at this point  D is stored by rows, 
         # but anymway it's a symmetric matrix
@@ -744,6 +746,7 @@ class  DigcoLayout(object):
         K = self.g.order()*(self.g.order()-1.0)/2.0
         stress = float('inf')
         count=0
+        deep=0
         b  = self.__Lij_Z_Z(Z)
         while count<limit:
             if self.debug:
@@ -765,13 +768,15 @@ class  DigcoLayout(object):
             # update new stress:
             FZ += 2*float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # test convergence:
-            if stress==0.0 or abs((stress-FZ)/stress)<self._eps:
-                print 'stress=%.10f'%FZ
-                break
-            else:
-                stress=FZ
-                print 'stress=%.10f'%FZ
-                count += 1
+            print 'stress=%.10f'%FZ
+            if stress==0.0 : break
+            elif abs((stress-FZ)/stress)<self._eps:
+                if deep==2:
+                    break
+                else:
+                    deep += 1
+            stress=FZ
+            count += 1
         return Z
 
 
