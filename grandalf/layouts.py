@@ -575,11 +575,24 @@ class  DigcoLayout(object):
         for v in self.g.V():
             v.view.xy = (self.Z[v.i][0,0]*self.dr,
                          self.Z[v.i][0,1]*self.dr)
+        self.draw_edges()
 
     def draw_step(self):
         for x in xrange(self._cv_max_iter):
             self.draw(N=1)
+            self.draw_edges()
             yield
+
+    # Basic edge routing with segments
+    def draw_edges(self):
+        for e in self.g.E():
+            if hasattr(e,'view'):
+                l=[e.v[0].view.xy,e.v[1].view.xy]
+                try:
+                    self.route_edge(e,l)
+                except AttributeError:
+                    pass
+                e.view.setpath(l)
 
     # partition the nodes into levels:
     def part_to_levels(self,alpha,beta):
