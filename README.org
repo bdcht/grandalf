@@ -43,8 +43,8 @@ All videos have been made with grandalf and the
 
 * Links
   - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to interactively
-  render the control flow graph of a disassembled binary program
-  (on a Qt canvas).
+    render the control flow graph of a disassembled binary program
+    (on a Qt canvas).
 
 * Quickstart
 
@@ -111,12 +111,13 @@ Look for examples in =tests/=. Here is a very simple example :
 
 * Overview
 
-** =graph.py= : contains the "mathematical" methods related to graphs.
+** =graph.py= :
+  Contains the "mathematical" methods related to graphs.
   This module defines the classes:
   - Vertex (and vertex_core)
   - Edge (and edge_core)
   - Graph (and graph_core)
-     
+
 *** Vertex.
   A Vertex object is defined by a data field holding whatever you want
   associated to that vertex. It inherits from a vertex_core that --- when the
@@ -243,7 +244,8 @@ Look for examples in =tests/=. Here is a very simple example :
 
 ** =utils.py= :
   Provides utilities like partially ordered sets, linear programming solvers,
-  parsers for external formats (Dot, etc.) This module defines :
+  parsers for external formats (Dot, etc.)
+  This module defines :
   - Poset
   - Dot
   and some general purpose functions like:
@@ -484,9 +486,10 @@ use the draw_step() iterator which yields at each layer during the forward and
 backward trip.
 
 Then, drawing the graph with a graphical canvas can be done by drawing each
-views at their xy positions, and providing appropriate setpath methods to draw
-each edge, or using the route_with_splines function and use the e.view.splines
-attribute.
+views at their xy positions and either defining a =setpath= method that will
+be called by grandalf draw_edges() with a set of routing points, or by using
+predefined functions in =routing.py= like =route_with_lines= or
+=route_with_splines=.
 
 If you have installed [[http://github.com/bdcht/masr][masr]], just do:
  #+BEGIN_EXAMPLE
