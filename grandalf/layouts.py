@@ -563,8 +563,10 @@ class  DigcoLayout(object):
         self._cv_max_iter = self._cg_max_iter
 
     def init_all(self,alpha=0.1,beta=0.01):
-        # partition g in hierarchical levels:
-        y = self.part_to_levels(alpha,beta)
+        y = None
+        if self.g.directed:
+            # partition g in hierarchical levels:
+            y = self.part_to_levels(alpha,beta)
         # initiate positions (y and random in x):
         self.Z = self._xyinit(y)
 
