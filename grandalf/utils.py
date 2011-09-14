@@ -124,13 +124,15 @@ class  Poset(object):
 
 
 #  rand_ortho1 returns a numpy.array representing
-#  a random normalized n-dimension vector orthogonal to 1.
+#  a random normalized n-dimension vector orthogonal to (1,1,1,...,1).
 def  rand_ortho1(n):
     from random import SystemRandom
     r = SystemRandom()
     pos = [r.random() for x in xrange(n)]
     s = sum(pos)
-    return array(pos,dtype=float)-(s/len(pos))
+    v = array(pos,dtype=float)-(s/len(pos))
+    norm = sqrt(sum(v*v))
+    return v/norm
 
 
 #------------------------------------------------------------------------------
