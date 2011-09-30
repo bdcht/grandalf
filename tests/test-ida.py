@@ -22,8 +22,11 @@ def test_lexer():
     ''')
 
 if __name__ == '__main__':
-
-    ast  = IDA().read('samples/ida12487.tmp')
+    import sys
+    if len(sys.argv)>1:
+        ast = IDA().read(sys.argv[-1])
+    else:
+        ast  = IDA().read('samples/ida12487.tmp')
 
     print "testing graph %s :"%ast.name,
     V = {}

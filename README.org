@@ -31,18 +31,20 @@ Grandalf does only two things:
 It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
 whatever canvas library. This means that Grandalf will help you find _where_ to
 draw things like nodes and edges, but it's up to you to perform the drawing...
-Take a look at [[http://github.com/bdcht/masr][masr]] (masr/plugins/graph/README) to see
-how Grandalf can be used to render some graphs (dot format) on a cairo canvas.
+Take a look at [[http://github.com/bdcht/masr][masr]]
+(masr/plugins/graph/README) to see how Grandalf can be used to render some
+graphs on a cairo canvas.
 
 * Screenshots and Videos
 
 See examples listed in the [[https://github.com/bdcht/grandalf/wiki][Wiki]].
-All videos have been made with grandalf and the [[http://github.com/bdcht/masr][masr]]
-canvas application template.
+All videos have been made with grandalf and the
+[[http://github.com/bdcht/masr][masr]] canvas application template.
 
 * Links
-  - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to render (on a
-  Qt canvas) the control flow graph of a disassembled binary program.
+  - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to interactively
+    render the control flow graph of a disassembled binary program
+    (on a Qt canvas).
 
 * Quickstart
 
@@ -109,12 +111,13 @@ Look for examples in =tests/=. Here is a very simple example :
 
 * Overview
 
-** =graph.py= : contains the "mathematical" methods related to graphs. 
+** =graph.py= :
+  Contains the "mathematical" methods related to graphs.
   This module defines the classes:
   - Vertex (and vertex_core)
   - Edge (and edge_core)
   - Graph (and graph_core)
-     
+
 *** Vertex.
   A Vertex object is defined by a data field holding whatever you want
   associated to that vertex. It inherits from a vertex_core that --- when the
@@ -178,10 +181,11 @@ Look for examples in =tests/=. Here is a very simple example :
   graph's internal list.
 
 
-** =layouts.py= : 
+** =layouts.py= :
   Contains the "drawing" algorithms.
   This module defines the classes:
   - SugiyamaLayout
+  - DigcoLayout
 
 *** SugiyamaLayout.
   This class performs a 2D hierarchical placement of a connected graph.
@@ -197,8 +201,17 @@ Look for examples in =tests/=. Here is a very simple example :
     these nodes)
   - the list of feedback acyclic edges (see test/test-dot.py for example)
 
+*** DigcoLayout.
+  This class performs a 2D hierarchical placement of a connected graph.
+  The main difference with SugiyamaLayout is that this algorithm is based on
+  optimization theory rather than on heuristics. It computes the node
+  coordinates by minimization of an "energy" function that describes the stress
+  factor associated to a layout.
+  This approach allows to take into account new constraints on node placement.
+  To create a graph layout, you only need to provide:
+  - a graph_core object where every Vertex has been equiped with a '.view'
 
-** =routing.py= : 
+** =routing.py= :
   Contains the edge routing algorithms.
   This module defines the classes and functions:
   - EdgeViewer
@@ -229,9 +242,10 @@ Look for examples in =tests/=. Here is a very simple example :
   an array of 2 points defines a line
   an array of 4 points defines a bezier curve.
 
-** =utils.py= : 
+** =utils.py= :
   Provides utilities like partially ordered sets, linear programming solvers,
-  parsers for external formats (Dot, etc.) This module defines :
+  parsers for external formats (Dot, etc.)
+  This module defines :
   - Poset
   - Dot
   and some general purpose functions like:
@@ -267,7 +281,7 @@ Look for examples in =tests/=. Here is a very simple example :
   method provides the best result for edge routing with the SugiyamaLayout.
   It is used in the route_with_splines function in routing.py.
 
-** tests/ : 
+** tests/ :
   Contains many testing procedures as well as some graph samples.
 
 
@@ -472,20 +486,65 @@ use the draw_step() iterator which yields at each layer during the forward and
 backward trip.
 
 Then, drawing the graph with a graphical canvas can be done by drawing each
-views at their xy positions, and providing appropriate setpath methods to draw
-each edge, or using the route_with_splines function and use the e.view.splines
-attribute.
+views at their xy positions and either defining a =setpath= method that will
+be called by grandalf draw_edges() with a set of routing points, or by using
+predefined functions in =routing.py= like =route_with_lines= or
+=route_with_splines=.
+
+If you have installed [[http://github.com/bdcht/masr][masr]], just do:
+ #+BEGIN_EXAMPLE
+ $ cd /path/to/grandalf
+ $ ./masr-graph tests/samples/brandes.dot
+ #+END_EXAMPLE
+(When a node is focused, the SPACE key is bound to draw_step().next(). This
+will show how the algorithm tries to reduce edge crossing in each layer by
+modifying the layer ordering. Modified nodes will appear with green shadow.)
 
 *** DigcoLayout
+
+The DigcoLayout stands for "Directed Graph Constrained Layout". The method was
+proposed by Dwyer & Koren in a paper presented at InfoVis 2005. It relies on
+a stress minimization approach (similar to force-driven layouts like /neato/)
+with hierarchical properties taken into account as additional constraints on
+node coordinates.
+
+**** the init_all() and draw() methods
+
+Like for SugiyamaLayout, just do for example:
+ #+BEGIN_EXAMPLE
+ >>> dco = DigcoLayout(gr)
+ >>> dco.init_all()
+ >>> dco.draw(limit=100)
+ #+END_EXAMPLE
+The init_all() method will take into account hierarchical information if the
+graph is directed, and will randomly choose an initial distribution of node
+coordinates. The draw() method will then converge towards the optimal solution
+by using a conjugate-gradient method.
+The =limit= parameter (defaults to gr.order() if not provided,) controls the
+maximum iteration count of the convergence loop.
+FIXME: In the current implementation, hierarchical levels are not taken into
+account as additional constraints.
+
+If you have installed [[http://github.com/bdcht/masr][masr]], just do:
+ #+BEGIN_EXAMPLE
+ $ cd /path/to/grandalf
+ $ ./masr-graph -digco -N 25 tests/samples/circle.dot
+ #+END_EXAMPLE
+Or, you may visualize each step of the convergence by:
+ #+BEGIN_EXAMPLE
+ $ ./masr-graph -digco -N 1 tests/samples/circle.dot
+ #+END_EXAMPLE
+Now mouse-focus one of the nodes and press SPACE to see the next iteration.
+Check out the masr/plugins/graph code to see how it works!
 
 * TODO
 
  - commit the constrained routing function (forces edge connectors to be placed
    on the bottom/top depending on wether the edge is outgoing/incoming)
+ - add hierarchical constraints in DigcoLayout to support directed graphs
  - add support for GraphML format import/export
  - add support for pgf/tikz export
- - commit/merge the DigcoLayout devel branch
- - provide facilities for efficient edge re-routing
+ - provide facilities for efficient (interactive) edge re-routing
 
 * FAQ
 

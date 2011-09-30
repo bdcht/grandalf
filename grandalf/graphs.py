@@ -135,10 +135,12 @@ class  Edge(edge_core):
 #  is straightforward from self.sV.
 #------------------------------------------------------------------------------
 class  graph_core(object):
-    def __init__(self,V=None,E=None):
+    def __init__(self,V=None,E=None,directed=True):
 
         if V is None: V=[]
         if E is None: E=[]
+
+        self.directed = directed
 
         self.sV = Poset(V)
         self.sE = Poset([])
@@ -277,6 +279,7 @@ class  graph_core(object):
         assert x in self.sV
         assert y in self.sV
         if x==y: return []
+        if f_io!=0: assert self.directed==True
         # path:
         p = None
         if hook is None: hook = lambda x:False
@@ -306,6 +309,7 @@ class  graph_core(object):
         from collections import defaultdict
         from heapq import heappop, heappush
         if x not in self.sV: return None
+        if f_io!=0: assert self.directed==True
         # take a shallow copy of the set of vertices containing those for which
         # the shortest path to x needs to be computed:
         S = self.sV.copy()
@@ -443,9 +447,10 @@ class  graph_core(object):
 #  in self.C as a list of graph_core objects.
 #------------------------------------------------------------------------------
 class  Graph(object):
-    def __init__(self,V=None,E=None):
+    def __init__(self,V=None,E=None,directed=True):
         if V is None: V=[]
         if E is None: E=[]
+        self.directed = directed
         # tag connex set of vertices:
         # at first, every vertex is its own component
         for v in V: v.c = Poset([v])
@@ -476,13 +481,13 @@ class  Graph(object):
         for c in CV:
             s = set()
             for v in c: s.update(v.e)
-            self.C.append(graph_core(c,s))
+            self.C.append(graph_core(c,s,directed))
 
     # add vertex v into the Graph as a new (unconnected) component
     def add_vertex(self,v):
         for c in self.C:
             if (v in c.sV): return 0
-        g = graph_core()
+        g = graph_core(directed=self.directed)
         g.add_single_vertex(v)
         self.C.append(g)
         return 1
@@ -531,7 +536,7 @@ class  Graph(object):
             e.detach()
             c.sE.remove(e)
             self.C.remove(c)
-            tmpg = Graph(c.sV,c.sE)
+            tmpg = Graph(c.sV,c.sE,self.directed)
             assert len(tmpg.C)==2
             self.C.extend(tmpg.C)
 
@@ -547,7 +552,7 @@ class  Graph(object):
             for e in x.detach(): c.sE.remove(e)
             c.sV.remove(x)
             self.C.remove(c)
-            tmpg = Graph(c.sV,c.sE)
+            tmpg = Graph(c.sV,c.sE,self.directed)
             assert len(tmpg.C)==2
             self.C.extend(tmpg.C)
 

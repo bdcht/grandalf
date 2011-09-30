@@ -26,7 +26,7 @@ class  EdgeViewer(object):
 #  since the layout engine has already provided to list of points through which
 #  the edge shall be drawn. We just compute the position where to adjust the
 #  tail and head. 
-def  route_with_lines(e,pts):
+def  route_with_lines(L,e,pts):
     assert hasattr(e,'view')
     tail_pos = intersectR(e.v[0].view,topt=pts[1])
     head_pos = intersectR(e.v[1].view,topt=pts[-2])
@@ -37,8 +37,17 @@ def  route_with_lines(e,pts):
 #------------------------------------------------------------------------------
 #  enhanced edge routing where 'corners' of the above polyline route are
 #  rounded with a bezier curve.
-def route_with_splines(e,pts):
-    route_with_lines(e,pts)
+def route_with_splines(L,e,pts):
+    route_with_lines(L,e,pts)
     splines = setroundcorner(e,pts)
     e.view.splines = splines
 
+def route_manhattan(L,e,pts):
+    assert hasattr(e,'view')
+    tail_pos = intersectR(e.v[0].view,topt=pts[1])
+    head_pos = intersectR(e.v[1].view,topt=pts[-2])
+    pts[0]  = tail_pos
+    pts[-1] = head_pos
+    # insert points :
+    # ...
+    e.view.head_angle = getangle(pts[-2],pts[-1])

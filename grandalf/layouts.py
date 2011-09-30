@@ -124,7 +124,8 @@ class  SugiyamaLayout(object):
 
     # compute every node coordinates after converging to optimal ordering by N
     # rounds, and finally perform the edge routing.
-    def draw(self,N=1):
+    def draw(self,N=None):
+        if not N: N=1
         for i in range(N):
             for s in self.ordering_step(): pass
         self.setxy()
@@ -279,7 +280,7 @@ class  SugiyamaLayout(object):
             self.grx[v].bar=bar
         # now resort layers l according to positions:
         self.layers[l].sort(cmp=(lambda x,y: \
-				 cmp(self.grx[x].bar,self.grx[y].bar)))
+                                 cmp(self.grx[x].bar,self.grx[y].bar)))
         # assign new position in layer l:
         for i,v in enumerate(self.layers[l]):
             if self.grx[v].pos!=i: mvmt.append(v)
@@ -499,19 +500,19 @@ class  SugiyamaLayout(object):
                         if g[s].shift[dirvh]<>None:
                             if dirh>0:
                                 g[s].shift[dirvh] = min(g[s].shift[dirvh],
-							newshift)
+                                                        newshift)
                             else:
                                 g[s].shift[dirvh] = max(g[s].shift[dirvh],
-							-newshift)
+                                                        -newshift)
                         else:
                                 g[s].shift[dirvh] = dirh*newshift
                     else:
                         if dirh>0:
                             g[v].x[dirvh] = max(g[v].x[dirvh],
-						(g[u].x[dirvh]+delta))
+                                               (g[u].x[dirvh]+delta))
                         else:
                             g[v].x[dirvh] = min(g[v].x[dirvh],
-						(g[u].x[dirvh]-delta))
+                                               (g[u].x[dirvh]-delta))
 
                 w = g[w].align[dirvh]
                 if w==v: break
@@ -533,7 +534,7 @@ class  SugiyamaLayout(object):
                     for r in range(r0+1,r1)[::orient]:
                         l.insert(-1,D[r].view.xy)
                 try:
-                    self.route_edge(e,l)
+                    self.route_edge(self,e,l)
                 except AttributeError:
                     pass
                 e.view.setpath(l)
@@ -558,12 +559,14 @@ class  DigcoLayout(object):
         # solver parameters:
         self._cg_max_iter = g.order()
         self._cg_tolerance = 1.0e-6
-        self._eps = 1.0e-3
+        self._eps = 1.0e-5
         self._cv_max_iter = self._cg_max_iter
 
     def init_all(self,alpha=0.1,beta=0.01):
-        # partition g in hierarchical levels:
-        y = self.part_to_levels(alpha,beta)
+        y = None
+        if self.g.directed:
+            # partition g in hierarchical levels:
+            y = self.part_to_levels(alpha,beta)
         # initiate positions (y and random in x):
         self.Z = self._xyinit(y)
 
@@ -572,12 +575,26 @@ class  DigcoLayout(object):
         self.Z = self._optimize(self.Z,limit=N)
         # set view xy from near-optimal coords matrix:
         for v in self.g.V():
-            v.view.xy = (self.Z[v.i][0,0],self.Z[v.i][0,1])
+            v.view.xy = (self.Z[v.i][0,0]*self.dr,
+                         self.Z[v.i][0,1]*self.dr)
+        self.draw_edges()
 
     def draw_step(self):
         for x in xrange(self._cv_max_iter):
             self.draw(N=1)
+            self.draw_edges()
             yield
+
+    # Basic edge routing with segments
+    def draw_edges(self):
+        for e in self.g.E():
+            if hasattr(e,'view'):
+                l=[e.v[0].view.xy,e.v[1].view.xy]
+                try:
+                    self.route_edge(e,l)
+                except AttributeError:
+                    pass
+                e.view.setpath(l)
 
     # partition the nodes into levels:
     def part_to_levels(self,alpha,beta):
@@ -696,7 +713,7 @@ class  DigcoLayout(object):
         Dji = []
         for v in self.g.V():
             wd = self.g.dijkstra(v)
-            Di = [wd[w]*self.dr for w in self.g.V()]
+            Di = [wd[w] for w in self.g.V()]
             Dji.append(Di)
         # at this point  D is stored by rows, 
         # but anymway it's a symmetric matrix
@@ -744,6 +761,7 @@ class  DigcoLayout(object):
         K = self.g.order()*(self.g.order()-1.0)/2.0
         stress = float('inf')
         count=0
+        deep=0
         b  = self.__Lij_Z_Z(Z)
         while count<limit:
             if self.debug:
@@ -765,13 +783,15 @@ class  DigcoLayout(object):
             # update new stress:
             FZ += 2*float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # test convergence:
-            if stress==0.0 or abs((stress-FZ)/stress)<self._eps:
-                print 'stress=%.10f'%FZ
-                break
-            else:
-                stress=FZ
-                print 'stress=%.10f'%FZ
-                count += 1
+            print 'stress=%.10f'%FZ
+            if stress==0.0 : break
+            elif abs((stress-FZ)/stress)<self._eps:
+                if deep==2:
+                    break
+                else:
+                    deep += 1
+            stress=FZ
+            count += 1
         return Z
 
 
