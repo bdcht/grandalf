@@ -352,6 +352,11 @@ class  graph_core(object):
     # marking the edges with a "feedback" flag.
     # Complexity is O(V+E).
     def get_scs_with_feedback(self,roots):
+        from  sys import getrecursionlimit,setrecursionlimit
+        limit=getrecursionlimit()
+        N=self.norm()+10
+        if N>limit:
+            setrecursionlimit(N)
         def _visit(v,L):
             v.ind = v.ncur
             v.lowlink = v.ncur
@@ -391,6 +396,7 @@ class  graph_core(object):
             del v.mark
         del Vertex.ncur
         del self.tstack
+        setrecursionlimit(limit)
         return scs
 
     # returns neighbours of a vertex v:

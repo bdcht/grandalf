@@ -13,6 +13,7 @@
 # 
 from  numpy   import array,matrix,linalg
 from  utils   import rand_ortho1,median_wh
+from  sys     import getrecursionlimit,setrecursionlimit
 
 #  the VertexViewer class is responsible of providing
 #  graphical attributes associated with a Vertex.
@@ -142,8 +143,9 @@ class  SugiyamaLayout(object):
             for v in l:
                 print v,
                 try:
-                      print v.data[1:13],self.grx[v]
-                except AttributeError: print
+                    print v.data[1:13],self.grx[v]
+                except AttributeError: 
+                    print
             print '+'*20
 
     # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
@@ -411,7 +413,7 @@ class  SugiyamaLayout(object):
                         for vk in self._neighbors(vl,-1):
                             k = self.grx[vk].pos
                             if (k<k0 or k>k1):
-                                    self.conflicts.append((vk,vl))
+                                self.conflicts.append((vk,vl))
                     l=l1+1
                     k0=k1
 
@@ -454,6 +456,10 @@ class  SugiyamaLayout(object):
         return (pos[m]+pos[M])/2.0
 
     def _coord_horizontal_compact(self,dirvh):
+        limit=getrecursionlimit()
+        N=len(self.layers)+10
+        if N>limit:
+            setrecursionlimit(N)
         dirh,dirv = self.__getdirs(dirvh)
         g = self.grx
         L = range(self.nlayers)[::-dirv]
@@ -461,7 +467,9 @@ class  SugiyamaLayout(object):
         for i in L:
             l=self.layers[i]
             for v in l[::dirh]:
-                if g[v].root[dirvh]==v: self.__place_block(v,dirvh)
+                if g[v].root[dirvh]==v: 
+                    self.__place_block(v,dirvh)
+        setrecursionlimit(limit)
         # then assign x-coord of its root:
         #mini=1.e9 # stands for infinity (see also float('infinity'))
         mini=float('infinity')
