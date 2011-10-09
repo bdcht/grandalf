@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from grandalf import *
 
 g = utils.Dot().read('tests/samples/cycles.dot')[0]
