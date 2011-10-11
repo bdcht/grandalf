@@ -144,7 +144,7 @@ class  SugiyamaLayout(object):
                 print v,
                 try:
                     print v.data[1:13],self.grx[v]
-                except AttributeError: 
+                except AttributeError:
                     print
             print '+'*20
 
@@ -467,7 +467,7 @@ class  SugiyamaLayout(object):
         for i in L:
             l=self.layers[i]
             for v in l[::dirh]:
-                if g[v].root[dirvh]==v: 
+                if g[v].root[dirvh]==v:
                     self.__place_block(v,dirvh)
         setrecursionlimit(limit)
         # then assign x-coord of its root:
