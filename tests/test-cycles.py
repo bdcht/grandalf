@@ -1,6 +1,8 @@
+#!/usr/bin/env python
+
 from grandalf import *
 
-g = utils.Dot().read('tests/samples/cycles.dot')[0]
+g = utils.Dot().read('samples/cycles.dot')[0]
 V = {}
 for k,v in g.nodes.iteritems():
     V[k]=graphs.Vertex(k)
