@@ -48,7 +48,6 @@ class  _sugiyama_vertex_attr(object):
         if self.dummy: return "%s <dummy>"%s
         else: return s
 
-
 class  DummyVertex(_sugiyama_vertex_attr):
     def __init__(self,r=None,d=0,viewclass=VertexViewer):
         self.view = viewclass()
@@ -56,11 +55,13 @@ class  DummyVertex(_sugiyama_vertex_attr):
         _sugiyama_vertex_attr.__init__(self,r,d)
     def N(self,dir):
         assert dir==+1 or dir==-1
-        return [self.ctrl[self.rank+dir]]
+        return self.ctrl.get(self.rank+dir,[])
     def inner(self,dir):
         assert dir==+1 or dir==-1
         try:
-          return self.grx[self.ctrl[self.rank+dir]].dummy==1
+          return self.ctrl[self.rank+dir][-1].dummy==1
+        except KeyError:
+          return False
         except AttributeError:
           return False
 
@@ -102,7 +103,7 @@ class  SugiyamaLayout(object):
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
     #  -list of root nodes.
-    def init_all(self,roots=None,inverted_edges=None):
+    def init_all(self,roots=None,inverted_edges=None,cons=True):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
@@ -116,8 +117,9 @@ class  SugiyamaLayout(object):
         # assign rank to all vertices:
         self.rank_all(roots)
         # add dummy vertex/edge for 'long' edges:
+        self.ctrls['cons']=cons
         for e in self.g.E():
-            self.setdummies(e)
+            self.setdummies(e,cons)
         # precompute some layers values:
         self.layers_init()
         # assign initial order in each layer:
@@ -203,7 +205,19 @@ class  SugiyamaLayout(object):
             self.grx[v].pos = 0
             self.grx[v].bar = None
 
-    def setdummies(self,e):
+    def dummyctrl(self,r,ctrl):
+        dv = DummyVertex(r,1)
+        dv.view.w,dv.view.h=self.dw,self.dh
+        self.grx[dv] = dv
+        dv.ctrl = ctrl
+        try:
+            ctrl[r].append(dv)
+        except KeyError:
+            ctrl[r] = [dv]
+        self.layers[r].append(dv)
+        return dv
+
+    def setdummies(self,e,with_constraint=True):
         v0,v1 = e.v
         r0,r1 = self.grx[v0].rank,self.grx[v1].rank
         if r0>r1:
@@ -215,15 +229,13 @@ class  SugiyamaLayout(object):
             # "dummy vertices" are stored in the edge ctrl dict,
             # keyed by their rank in layers.
             ctrl=self.ctrls[e]={}
-            ctrl[r0]=v0
-            ctrl[r1]=v1
+            ctrl[r0]=[v0]
+            ctrl[r1]=[v1]
             for r in spanover:
-                dv = DummyVertex(r,1)
-                dv.view.w,dv.view.h=self.dw,self.dh
-                self.grx[dv] = dv
-                dv.ctrl = ctrl
-                ctrl[r] = dv
-                self.layers[r].append(dv)
+                self.dummyctrl(r,ctrl)
+            if e in self.alt_e and with_constraint:
+                self.dummyctrl(r0,ctrl)
+                self.dummyctrl(r1,ctrl)
 
     # seting up each layer l this way by extending the list objects
     # makes the rest of the code much easier to write.
@@ -309,18 +321,19 @@ class  SugiyamaLayout(object):
     # is not in the layer above/below.
     def _neighbors(self,v,dirv):
         grxv=self.grx[v]
-        try:
+        try: #(cache)
             return grxv.nvs[dirv]
         except AttributeError:
             assert self.dag
             grxv.nvs={-1:v.N(-1),+1:v.N(+1)}
             if grxv.dummy: return grxv.nvs[dirv]
+            # v is real, v.N are graph neigbors but we need layers neighbors
             for d in (-1,+1):
                 tr=grxv.rank+d
                 for i,x in enumerate(v.N(d)):
                     if self.grx[x].rank==tr:continue
                     e=v.e_with(x)
-                    dum = self.ctrls[e][tr]
+                    dum = self.ctrls[e][tr][0]
                     grxv.nvs[d][i]=dum
             return grxv.nvs[dirv]
 
@@ -429,7 +442,7 @@ class  SugiyamaLayout(object):
                     if g[vk].align[dirvh] == vk:
                         if dirv==1: vpair = (vk,um)
                         else:       vpair = (um,vk)
-                        if (not vpair in self.conflicts) and \
+                        if (vpair not in self.conflicts) and \
                            (r==None or dirh*r<dirh*m):
                             g[um].align[dirvh] = vk
                             g[vk].root[dirvh] = g[um].root[dirvh]
@@ -531,16 +544,20 @@ class  SugiyamaLayout(object):
     def draw_edges(self):
         for e in self.g.E():
             if hasattr(e,'view'):
-                l=[e.v[0].view.xy,e.v[1].view.xy]
+                l=[]
                 if self.ctrls.has_key(e):
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
-                    orient=1
-                    if r0>r1:
-                        orient = -1
-                        r0,r1=r1,r0
-                    for r in range(r0+1,r1)[::orient]:
-                        l.insert(-1,D[r].view.xy)
+                    if r0<r1:
+                        ranks = range(r0+1,r1)
+                    else:
+                        if self.ctrls['cons']:
+                            ranks = range(r0,r1-1,-1)
+                        else:
+                            ranks = range(r0-1,r1,-1)
+                    l = [D[r][-1].view.xy for r in ranks]
+                l.insert(0,e.v[0].view.xy)
+                l.append(e.v[1].view.xy)
                 try:
                     self.route_edge(e,l)
                 except AttributeError:

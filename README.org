@@ -539,8 +539,6 @@ Check out the masr/plugins/graph code to see how it works!
 
 * TODO
 
- - commit the constrained routing function (forces edge connectors to be placed
-   on the bottom/top depending on wether the edge is outgoing/incoming)
  - add hierarchical constraints in DigcoLayout to support directed graphs
  - add support for GraphML format import/export
  - add support for pgf/tikz export
