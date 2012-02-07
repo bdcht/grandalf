@@ -49,21 +49,22 @@ class  _sugiyama_vertex_attr(object):
         else: return s
 
 class  DummyVertex(_sugiyama_vertex_attr):
-    def __init__(self,r=None,d=0,viewclass=VertexViewer):
+    def __init__(self,r=None,viewclass=VertexViewer):
         self.view = viewclass()
         self.ctrl = None
-        _sugiyama_vertex_attr.__init__(self,r,d)
+        self.constrainer = False
+        _sugiyama_vertex_attr.__init__(self,r,d=1)
     def N(self,dir):
         assert dir==+1 or dir==-1
         return self.ctrl.get(self.rank+dir,[])
     def inner(self,dir):
         assert dir==+1 or dir==-1
         try:
-          return self.ctrl[self.rank+dir][-1].dummy==1
+            return self.ctrl[self.rank+dir][-1].dummy==1
         except KeyError:
-          return False
+            return False
         except AttributeError:
-          return False
+            return False
 
 # TODO: make it more that just a wrapper of list by precomputing neighbors
 # and possibly linking with above-below layers to avoid accessing the layers
@@ -206,7 +207,7 @@ class  SugiyamaLayout(object):
             self.grx[v].bar = None
 
     def dummyctrl(self,r,ctrl):
-        dv = DummyVertex(r,1)
+        dv = DummyVertex(r)
         dv.view.w,dv.view.h=self.dw,self.dh
         self.grx[dv] = dv
         dv.ctrl = ctrl
@@ -234,8 +235,10 @@ class  SugiyamaLayout(object):
             for r in spanover:
                 self.dummyctrl(r,ctrl)
             if e in self.alt_e and with_constraint:
-                self.dummyctrl(r0,ctrl)
-                self.dummyctrl(r1,ctrl)
+                dv0 = self.dummyctrl(r0,ctrl)
+                dv1 = self.dummyctrl(r1,ctrl)
+                dv0.constrainer=True
+                dv1.constrainer=True
 
     # seting up each layer l this way by extending the list objects
     # makes the rest of the code much easier to write.
@@ -280,11 +283,11 @@ class  SugiyamaLayout(object):
         L = range(0,self.nlayers)
         for l in L:
             mvmt = self._ordering_l(l,-1)
-            yield mvmt
+            yield "step down: layer %d, mvmt="%l,mvmt
         L.reverse()
         for l in L:
             mvmt = self._ordering_l(l,+1)
-            yield mvmt
+            yield "step   up: layer %d, mvmt="%l,mvmt
 
     def _ordering_l(self,l,dirv):
         self.__edge_inverter()
@@ -299,6 +302,7 @@ class  SugiyamaLayout(object):
         for i,v in enumerate(self.layers[l]):
             if self.grx[v].pos!=i: mvmt.append(v)
             self.grx[v].pos = i
+            #self.grx[v].bar = i
         # count resulting crossings:
         X = self._ordering_reduce_crossings(l,dirv)
         self.__edge_inverter()
@@ -356,6 +360,19 @@ class  SugiyamaLayout(object):
         g = self.grx
         assert self.dag
         N = self.lens[l]
+        c = []
+        for i in range(N):
+            v = self.layers[l][i]
+            if g[v].dummy and v.constrainer:
+                c.append((i,self.layers[l].index(v.ctrl[l][0])))
+        for i,j in c:
+            v = self.layers[l].pop(i)
+            if i>j:
+                self.layers[l].insert(j+1,v)
+            else:
+                self.layers[l].insert(j,v)
+        for i in range(N):
+            self.layers[l][i].pos=i
         X=0
         for i,j in zip(range(N-1),range(1,N)):
             vi = self.layers[l][i]
@@ -545,6 +562,7 @@ class  SugiyamaLayout(object):
         for e in self.g.E():
             if hasattr(e,'view'):
                 l=[]
+                r0,r1 = None,None
                 if self.ctrls.has_key(e):
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
@@ -558,6 +576,17 @@ class  SugiyamaLayout(object):
                     l = [D[r][-1].view.xy for r in ranks]
                 l.insert(0,e.v[0].view.xy)
                 l.append(e.v[1].view.xy)
+                if self.ctrls['cons'] and r0>r1:
+                    dy = e.v[0].view.w/2. + self.yspace/3.
+                    x,y = zip(l[0],l[1])
+                    y = max(y)+dy
+                    l.insert(1,(x[0],y))
+                    l.insert(2,(x[1],y))
+                    dy = e.v[1].view.w/2. + self.yspace/3.
+                    x,y = zip(l[-1],l[-2])
+                    y = min(y)-dy
+                    l.insert(-1,(x[0],y))
+                    l.insert(-2,(x[1],y))
                 try:
                     self.route_edge(e,l)
                 except AttributeError:
