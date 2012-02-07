@@ -1,0 +1,11 @@
+digraph manhattan1 {
+  A -> B ; B -> A;
+  A -> BB;
+  BB -> C;
+  B -> C; B -> D;
+  C -> E; C -> F; D -> G;
+  E -> H;
+  G -> A;
+  F -> BB;
+  H -> BB;
+}
