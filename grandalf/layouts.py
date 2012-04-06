@@ -44,15 +44,16 @@ class  _sugiyama_vertex_attr(object):
         self.x=0
         self.bar=None
     def __str__(self):
-        s="rank=%3d, pos=%3d, x=%s"%(self.rank,self.pos,str(self.x))
-        if self.dummy: return "%s <dummy>"%s
-        else: return s
+        s="(%3d,%3d) x=%s"%(self.rank,self.pos,str(self.x))
+        if self.dummy: s="[d] %s"%s
+        return s
 
 class  DummyVertex(_sugiyama_vertex_attr):
     def __init__(self,r=None,viewclass=VertexViewer):
         self.view = viewclass()
         self.ctrl = None
         self.constrainer = False
+        self.controlled = False
         _sugiyama_vertex_attr.__init__(self,r,d=1)
     def N(self,dir):
         assert dir==+1 or dir==-1
@@ -65,6 +66,11 @@ class  DummyVertex(_sugiyama_vertex_attr):
             return False
         except AttributeError:
             return False
+    def __str__(self):
+        s="(%3d,%3d) x=%s"%(self.rank,self.pos,str(self.x))
+        if self.dummy: s="[d] %s"%s
+        if self.constrainer: s="[c] %s"%s
+        return s
 
 # TODO: make it more that just a wrapper of list by precomputing neighbors
 # and possibly linking with above-below layers to avoid accessing the layers
@@ -98,8 +104,8 @@ class  SugiyamaLayout(object):
         for v in self.g.V():
             assert hasattr(v,'view')
             self.grx[v] = _sugiyama_vertex_attr()
-        self.xspace,self.yspace = median_wh([v.view for v in self.g.V()])
-        self.dw,self.dh = self.xspace/2, self.yspace/2
+        self.dw,self.dh = median_wh([v.view for v in self.g.V()])
+        self.dw = 8
 
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
@@ -239,6 +245,8 @@ class  SugiyamaLayout(object):
                 dv1 = self.dummyctrl(r1,ctrl)
                 dv0.constrainer=True
                 dv1.constrainer=True
+                ctrl[r0+1][0].controlled=True
+                ctrl[r1-1][0].controlled=True
 
     # seting up each layer l this way by extending the list objects
     # makes the rest of the code much easier to write.
@@ -301,8 +309,7 @@ class  SugiyamaLayout(object):
         # assign new position in layer l:
         for i,v in enumerate(self.layers[l]):
             if self.grx[v].pos!=i: mvmt.append(v)
-            self.grx[v].pos = i
-            #self.grx[v].bar = i
+            self.grx[v].bar = self.grx[v].pos = i
         # count resulting crossings:
         X = self._ordering_reduce_crossings(l,dirv)
         self.__edge_inverter()
@@ -313,6 +320,8 @@ class  SugiyamaLayout(object):
     # experiments show that meanvalue heuristic performs better than median.
     def _meanvalueattr(self,v,l,dirv,att='bar'):
         assert self.dag
+        if self.grx[v].dummy and v.constrainer:
+            return self.layers[l].index(v.ctrl[l][0])
         if not (0<=(l+dirv)<self.nlayers):
             return getattr(self.grx[v],att)
         pos = [getattr(self.grx[x],att) for x in self._neighbors(v,dirv)]
@@ -337,7 +346,7 @@ class  SugiyamaLayout(object):
                 for i,x in enumerate(v.N(d)):
                     if self.grx[x].rank==tr:continue
                     e=v.e_with(x)
-                    dum = self.ctrls[e][tr][0]
+                    dum = self.ctrls[e][tr][-1]
                     grxv.nvs[d][i]=dum
             return grxv.nvs[dirv]
 
@@ -360,19 +369,6 @@ class  SugiyamaLayout(object):
         g = self.grx
         assert self.dag
         N = self.lens[l]
-        c = []
-        for i in range(N):
-            v = self.layers[l][i]
-            if g[v].dummy and v.constrainer:
-                c.append((i,self.layers[l].index(v.ctrl[l][0])))
-        for i,j in c:
-            v = self.layers[l].pop(i)
-            if i>j:
-                self.layers[l].insert(j+1,v)
-            else:
-                self.layers[l].insert(j,v)
-        for i in range(N):
-            self.layers[l][i].pos=i
         X=0
         for i,j in zip(range(N-1),range(1,N)):
             vi = self.layers[l][i]
@@ -385,7 +381,7 @@ class  SugiyamaLayout(object):
                 Xji += len(ni)-x
             if Xji<Xij:
                 g[vi].pos,g[vj].pos = g[vj].pos,g[vi].pos
-                #g[vi].bar,g[vj].bar = g[vj].bar,g[vi].bar
+                g[vi].bar,g[vj].bar = g[vj].bar,g[vi].bar
                 self.layers[l][i] = vj
                 self.layers[l][j] = vi
                 X += Xji
@@ -397,17 +393,22 @@ class  SugiyamaLayout(object):
     def setxy(self):
         self.__edge_inverter()
         self._detect_alignment_conflicts()
+        inf = float('infinity')
         # initialize vertex coordinates attributes:
         for l in self.layers:
             for v in l:
                 self.grx[v].root  = [v,v,v,v]
                 self.grx[v].align = [v,v,v,v]
                 self.grx[v].sink  = [v,v,v,v]
-                self.grx[v].shift = [None]*4
-                self.grx[v].x     = [None]*4
+                self.grx[v].shift = [inf,inf,inf,inf]
+                self.grx[v].X     = [None,None,None,None]
+                self.grx[v].x     = [None,None,None,None]
         for dirvh in range(4):
+            print 'dirvh=%d'%dirvh
             self._coord_vertical_alignment(dirvh)
             self._coord_horizontal_compact(dirvh)
+            print '*'*80
+            print
         # vertical coordinate assigment of all nodes:
         Y = 0
         for l in self.layers:
@@ -428,8 +429,7 @@ class  SugiyamaLayout(object):
     # type 2 is inner crossing inner (avoided by reduce_crossings phase)
     def _detect_alignment_conflicts(self):
         self.conflicts = []
-        # inner edges exist only in inner layers [1...N-1]
-        for i in range(1,self.nlayers-2):
+        for i in range(0,self.nlayers-1):
             L = self.layers[i+1]
             k0=0
             l=0
@@ -438,7 +438,7 @@ class  SugiyamaLayout(object):
                 if l1==L.len-1 or v.inner(-1):
                     k1=self.lens[i]-1
                     if v.inner(-1):
-                        k1=self.grx[v.N(-1)[0]].pos
+                        k1=self.grx[v.N(-1)[-1]].pos
                     for vl in L[l:l1+1]:
                         for vk in self._neighbors(vl,-1):
                             k = self.grx[vk].pos
@@ -453,41 +453,47 @@ class  SugiyamaLayout(object):
         for i in range(self.nlayers)[::-dirv][1:]:
             r=None
             for vk in self.layers[i][::dirh]:
-                m  = self._medianindex(vk,i,dirv,dirh)
-                if m<>None:
+                for m in self._medianindex(vk,i,dirv,dirh):
+                    # take the median node in dirv layer:
                     um = self.layers[i+dirv][m]
+                    if g[um].dummy and um.controlled and not g[vk].dummy:
+                        continue
+                    # if vk is "free" align it with um's root
                     if g[vk].align[dirvh] == vk:
                         if dirv==1: vpair = (vk,um)
                         else:       vpair = (um,vk)
+                        # if vk<->um link is used for alignment
                         if (vpair not in self.conflicts) and \
                            (r==None or dirh*r<dirh*m):
-                            g[um].align[dirvh] = vk
-                            g[vk].root[dirvh] = g[um].root[dirvh]
-                            g[vk].align[dirvh] = g[vk].root[dirvh]
+                            g[um].align[dirvh] = vk                # um aligns vk
+                            g[vk].root[dirvh] = g[um].root[dirvh]  # block root pointer
+                            g[vk].align[dirvh] = g[vk].root[dirvh] # end-of-block termination
                             r = m
-                        else:
-                            if vpair in self.conflicts:
-                                print "conflict",vpair
 
     # find new position of vertex v according to adjacency in layer l+dir.
     # position is given by the median value of adjacent positions.
     # median heuristic is proven to achieve at most 3 times the minimum
     # of crossings (while barycenter achieve in theory the order of |V|) 
     def _medianindex(self,v,l,dirv,dirh):
-        if not (0<=(l+dirv)<self.lens): return None
-        pos = [self.grx[x].pos for x in self._neighbors(v,dirv)]
-        if len(pos)==0:
-            return None
+        assert 0<=(l+dirv)<self.lens
+        N = self._neighbors(v,dirv)
+        if self.grx[v].dummy and v.controlled:
+            for x in N:
+                if self.grx[x].dummy and x.constrainer:
+                    print 'median constrainer (dirv=%d,dirh=%d): %s -> %s'%(dirv,dirh,str(self.grx[x]),str(self.grx[v]))
+                    return [self.grx[x].pos]
+        pos = [self.grx[x].pos for x in N]
+        lp = len(pos)
+        if lp==0: return []
         pos.sort()
-        m = (len(pos)-1)/2
-        M = len(pos)/2
-        if dirh>0: return pos[m]
-        if dirh<0: return pos[M]
-        return (pos[m]+pos[M])/2.0
+        pos = pos[::dirh]
+        i,j = divmod(lp-1,2)
+        return [pos[i]] if j==0 else [pos[i],pos[i+j]]
 
     def _coord_horizontal_compact(self,dirvh):
         limit=getrecursionlimit()
-        N=len(self.layers)+10
+        self.dpad=-1
+        N=self.nlayers+10
         if N>limit:
             setrecursionlimit(N)
         dirh,dirv = self.__getdirs(dirvh)
@@ -499,61 +505,76 @@ class  SugiyamaLayout(object):
             for v in l[::dirh]:
                 if g[v].root[dirvh]==v:
                     self.__place_block(v,dirvh)
+                    print '-'*80
         setrecursionlimit(limit)
+        if dirh==-1:
+            for i in L:
+                l=self.layers[i]
+                for v in l[::dirh]:
+                    x = g[v].X[dirvh]
+                    if x: g[v].X[dirvh] = -x
         # then assign x-coord of its root:
-        #mini=1.e9 # stands for infinity (see also float('infinity'))
-        mini=float('infinity')
+        inf=float('infinity')
+        rb=inf
         for i in L:
             l=self.layers[i]
             for v in l[::dirh]:
-                g[v].x[dirvh]=g[g[v].root[dirvh]].x[dirvh]
-                s =  g[g[g[v].root[dirvh]].sink[dirvh]].shift[dirvh]
-                if s<>None:
-                    g[v].x[dirvh] += s
-                if g[v].x[dirvh]<mini: mini=g[v].x[dirvh]
+                g[v].x[dirvh] = g[g[v].root[dirvh]].X[dirvh]
+                rs = g[g[v].root[dirvh]].sink[dirvh]
+                s = g[rs].shift[dirvh]
+                if s<inf:
+                    g[v].x[dirvh] += dirh*s
+                    #if g[v].root[dirvh]==v:
+                    #    g[v].shift[dirvh]=0
+                    #    g[v].sink[dirvh]=v
+                rb = min(rb,g[v].x[dirvh])
         # normalize to 0:
-        if dirh>0:return
-        for i in L:
-            l=self.layers[i]
-            for v in l:
-                g[v].x[dirvh] -= mini
+        if dirh==-1:
+            for i in L:
+                l=self.layers[i]
+                for v in l:
+                    g[v].x[dirvh] -= rb
 
     def __place_block(self,v,dirvh):
         dirh,dirv = self.__getdirs(dirvh)
         g = self.grx
-        if g[v].x[dirvh]==None:
-            g[v].x[dirvh] = 0.0
+        self.dpad += 1
+        print '%s|%s'%('  '*self.dpad,str(g[v]))
+        if g[v].X[dirvh]==None:
+            # every block is initially placed at x=0
+            g[v].X[dirvh] = 0.0
+            # place block in which v belongs:
             w = v
             while 1:
-                if 0<=(g[w].pos-dirh)<self.lens[g[w].rank]:
-                    wprec = self.layers[g[w].rank][g[w].pos-dirh]
-                    delta = self.xspace+(wprec.view.w + w.view.w)/2.
+                j = g[w].pos-dirh # predecessor in rank must be placed
+                r = g[w].rank
+                if 0<= j <self.lens[r]:
+                    wprec = self.layers[r][j]
+                    delta = self.xspace+(wprec.view.w + w.view.w)/2.   # abs positive minimum displ.
+                    print '%s|wprec:%s delta=%f'%('  '*self.dpad,str(g[wprec]),delta)
+                    # take root and place block:
                     u = g[wprec].root[dirvh]
+                    print '%s|root:%s'%('  '*self.dpad,str(g[u]))
                     self.__place_block(u,dirvh)
+                    # set sink as sink of prec-block root
                     if g[v].sink[dirvh]==v:
+                        print '%s|set sink:%s'%('  '*self.dpad,str(g[g[u].sink[dirvh]]))
                         g[v].sink[dirvh] = g[u].sink[dirvh]
                     if g[v].sink[dirvh]<>g[u].sink[dirvh]:
                         s = g[u].sink[dirvh]
-                        newshift = g[v].x[dirvh]-g[u].x[dirvh]-delta
-                        if g[s].shift[dirvh]<>None:
-                            if dirh>0:
-                                g[s].shift[dirvh] = min(g[s].shift[dirvh],
-							newshift)
-                            else:
-                                g[s].shift[dirvh] = max(g[s].shift[dirvh],
-							-newshift)
-                        else:
-                                g[s].shift[dirvh] = dirh*newshift
+                        print '%s|root sink:%s'%('  '*self.dpad,str(g[s]))
+                        newshift = g[v].X[dirvh]-(g[u].X[dirvh]+delta)
+                        print '%s|newshift ? : %f < %f'%('  '*self.dpad,g[s].shift[dirvh],newshift)
+                        g[s].shift[dirvh] = min(g[s].shift[dirvh],newshift)
                     else:
-                        if dirh>0:
-                            g[v].x[dirvh] = max(g[v].x[dirvh],
-						(g[u].x[dirvh]+delta))
-                        else:
-                            g[v].x[dirvh] = min(g[v].x[dirvh],
-						(g[u].x[dirvh]-delta))
-
+                        g[v].X[dirvh] = max(g[v].X[dirvh],(g[u].X[dirvh]+delta))
+                print '%s|newx=%f'%('  '*self.dpad,g[v].X[dirvh])
+                # take next node to align in block:
                 w = g[w].align[dirvh]
+                print '%s|aligns %s'%('  '*self.dpad,g[w])
+                # quit if self aligned
                 if w==v: break
+        self.dpad -= 1
 
     # Basic edge routing applied only for edges with dummy points.
     # Enhanced edge routing can be performed by using the apropriate
@@ -577,12 +598,12 @@ class  SugiyamaLayout(object):
                 l.insert(0,e.v[0].view.xy)
                 l.append(e.v[1].view.xy)
                 if self.ctrls['cons'] and r0>r1:
-                    dy = e.v[0].view.w/2. + self.yspace/3.
+                    dy = e.v[0].view.h/2. + self.yspace/3.
                     x,y = zip(l[0],l[1])
                     y = max(y)+dy
                     l.insert(1,(x[0],y))
                     l.insert(2,(x[1],y))
-                    dy = e.v[1].view.w/2. + self.yspace/3.
+                    dy = e.v[1].view.h/2. + self.yspace/3.
                     x,y = zip(l[-1],l[-2])
                     y = min(y)-dy
                     l.insert(-1,(x[0],y))
