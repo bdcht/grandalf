@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # This code is part of Grandalf
-# Copyright (C) 2010-2011 Axel Tillequin (bdcht3@gmail.com)
+# Copyright (C) 2010-2012 Axel Tillequin (bdcht3@gmail.com)
 # published under the GPLv2 license
 
 #  Layouts are classes that provide graph drawing algorithms.
@@ -72,12 +72,155 @@ class  DummyVertex(_sugiyama_vertex_attr):
         if self.constrainer: s="[c] %s"%s
         return s
 
-# TODO: make it more that just a wrapper of list by precomputing neighbors
-# and possibly linking with above-below layers to avoid accessing the layers
-# through an index in a list.
+#------------------------------------------------------------------------------
+# Layer is where Sugiyama layout organises nodes in hierarchical lists.
+# The placement of nodes is done by the Sugiyama class, but it highly relies on 
+# the 'ordering' of nodes in each layer to reduce crossings.
+# This ordering depends on the neighbors found in the upper or lower layers.
+# WARNING: methods HIGHLY depend on layout.dirv state.
+# TODO: see if grx dict can be stored inside Layers or needs to stay in layout.
+#------------------------------------------------------------------------------
 class Layer(list):
-  def set_neighbors(self):
-    pass
+    __r    = None
+    layout = None
+    upper  = None
+    lower  = None
+
+    def __repr__(self):
+        return '<Layer %d, len=%d>'%(self.__r,len(self))
+
+    def setup(self,layout):
+        self.layout = layout
+        r = layout.layers.index(self)
+        self.__r=r
+        for i,v in enumerate(self):
+            assert layout.grx[v].rank==r
+            layout.grx[v].pos = i
+            layout.grx[v].bar = None
+        if r>0:
+            self.upper = layout.layers[r-1]
+        if r<len(layout.layers)-1:
+            self.lower = layout.layers[r+1]
+
+    def nextlayer(self):
+        return self.lower if self.layout.dirv==-1 else self.upper
+    def prevlayer(self):
+        return self.lower if self.layout.dirv==+1 else self.upper
+
+    def order(self):
+        sug = self.layout
+        sug._edge_inverter()
+        mvmt=[]
+        for v in self:
+            bar = self._meanvalueattr(v,sug.order_attr)
+            sug.grx[v].bar=bar
+        # now resort layers l according to positions:
+        self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
+        # assign new position in layer l:
+        for i,v in enumerate(self):
+            if sug.grx[v].pos!=i: mvmt.append(v)
+            sug.grx[v].bar = sug.grx[v].pos = i
+        # count resulting crossings:
+        X = self._ordering_reduce_crossings()
+        self.layout._edge_inverter()
+        return mvmt
+
+    # find new position of vertex v according to adjacency in prevlayer.
+    # position is given by the mean value of adjacent positions.
+    # experiments show that meanvalue heuristic performs better than median.
+    def _meanvalueattr(self,v,att='bar'):
+        sug = self.layout
+        assert sug.dag
+        if sug.grx[v].dummy and v.constrainer:
+            return self.index(v.ctrl[self.__r][0])
+        if not self.prevlayer():
+            return getattr(sug.grx[v],att)
+        pos = [getattr(sug.grx[x],att) for x in self._neighbors(v)]
+        if len(pos)==0:
+            return getattr(sug.grx[v],att)
+        return float(sum(pos))/len(pos)
+
+    # find new position of vertex v according to adjacency in layer l+dir.
+    # position is given by the median value of adjacent positions.
+    # median heuristic is proven to achieve at most 3 times the minimum
+    # of crossings (while barycenter achieve in theory the order of |V|) 
+    def _medianindex(self,v):
+        assert self.prevlayer()!=None
+        N = self._neighbors(v)
+        g=self.layout.grx
+        if g[v].dummy and v.controlled:
+            for x in N:
+                if g[x].dummy and x.constrainer:
+                    print 'median constrainer (dirv=%d,dirh=%d): %s -> %s'%(self.layout.dirv,self.layout.dirh,str(g[x]),str(g[v]))
+                    return [g[x].pos]
+        pos = [g[x].pos for x in N]
+        lp = len(pos)
+        if lp==0: return []
+        pos.sort()
+        pos = pos[::self.layout.dirh]
+        i,j = divmod(lp-1,2)
+        return [pos[i]] if j==0 else [pos[i],pos[i+j]]
+
+    # due to dummy nodes, neighbors are not simply v.N(dir) !
+    # we need to check for the right dummy node if the real neighbor
+    # is not in the layer above/below.
+    def _neighbors(self,v):
+        dirv = self.layout.dirv
+        grxv=self.layout.grx[v]
+        try: #(cache)
+            return grxv.nvs[dirv]
+        except AttributeError:
+            assert self.layout.dag
+            grxv.nvs={-1:v.N(-1),+1:v.N(+1)}
+            if grxv.dummy: return grxv.nvs[dirv]
+            # v is real, v.N are graph neigbors but we need layers neighbors
+            for d in (-1,+1):
+                tr=grxv.rank+d
+                for i,x in enumerate(v.N(d)):
+                    if self.layout.grx[x].rank==tr:continue
+                    e=v.e_with(x)
+                    dum = self.layout.ctrls[e][tr][-1]
+                    grxv.nvs[d][i]=dum
+            return grxv.nvs[dirv]
+
+    # counts (inefficently but at least accurately) the number of 
+    # crossing edges between layer l and l+dirv. 
+    def _crossings(self):
+        g=self.layout.grx
+        P=[]
+        for v in self:
+            P.append([g[x].pos for x in self._neighbors(v)])
+        for i,p in enumerate(P):
+            candidates = []
+            for r in P[i+1:]: candidates.extend(r)
+            for j,e in enumerate(p):
+                p[j] = len(filter((lambda nx:nx<e), candidates))
+            del candidates
+        return P
+
+    def _ordering_reduce_crossings(self):
+        assert self.layout.dag
+        g = self.layout.grx
+        N = len(self)
+        X=0
+        for i,j in zip(range(N-1),range(1,N)):
+            vi = self[i]
+            vj = self[j]
+            ni = [g[v].pos for v in self._neighbors(vi)]
+            Xij=Xji=0
+            for nj in [g[v].pos for v in self._neighbors(vj)]:
+                x = len(filter((lambda nx:nx>nj),ni))
+                Xij += x
+                Xji += len(ni)-x
+            if Xji<Xij:
+                g[vi].pos,g[vj].pos = g[vj].pos,g[vi].pos
+                g[vi].bar,g[vj].bar = g[vj].bar,g[vi].bar
+                self[i] = vj
+                self[j] = vi
+                X += Xji
+            else:
+                X += Xij
+        return X
 
 #------------------------------------------------------------------------------
 #  The Sugiyama Layout Class takes as input a core_graph object and implements
@@ -115,9 +258,7 @@ class  SugiyamaLayout(object):
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
             roots = filter(lambda x: len(x.e_in())==0, self.g.sV)
-            print "%d verts, %d root(s)"%(self.g.order(),len(roots))
         if inverted_edges==None:
-            print 'using tarjan algorithm to find inverted_edges...'
             L = self.g.get_scs_with_feedback(roots)
             inverted_edges = filter(lambda x:x.feedback, self.g.sE)
         self.alt_e = inverted_edges
@@ -128,7 +269,7 @@ class  SugiyamaLayout(object):
         for e in self.g.E():
             self.setdummies(e,cons)
         # precompute some layers values:
-        self.layers_init()
+        for l in self.layers: l.setup(self)
         # assign initial order in each layer:
         self._ordering_init()
 
@@ -141,21 +282,11 @@ class  SugiyamaLayout(object):
         self.setxy()
         self.draw_edges()
 
-    def __edge_inverter(self):
+    def _edge_inverter(self):
         for e in self.alt_e:
             x,y = e.v
             e.v = (y,x)
         self.dag = not self.dag
-
-    def show(self):
-        for l in self.layers:
-            for v in l:
-                print v,
-                try:
-                    print v.data[1:13],self.grx[v]
-                except AttributeError:
-                    print
-            print '+'*20
 
     # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
     # dirvh=1 -> dirh=-1, dirv=-1: rightmost upper
@@ -163,6 +294,10 @@ class  SugiyamaLayout(object):
     # dirvh=3 -> dirh=-1, dirv=+1: rightmost lower
     def __getdirs(self,dirvh):
         return {0:(1,-1), 1:(-1,-1), 2:(1,1), 3:(-1,1)}[dirvh]
+    def __setdirs(self,dirvh):
+        print 'dirvh=%d'%dirvh
+        self.dirvh = dirvh
+        self.dirh,self.dirv = self.__getdirs(dirvh)
 
     # rank all vertices.
     # if list l is None, find initial rankable vertices (roots),
@@ -170,12 +305,11 @@ class  SugiyamaLayout(object):
     # The initial rank is based on precedence relationships,
     # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots):
-        self.__edge_inverter()
-        r = filter(lambda x: len(x.e_in())==0 and x not in roots,
-                   self.g.sV)
+        self._edge_inverter()
+        r = filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV)
         self._rank_init(roots+r)
         self._rank_optimize()
-        self.__edge_inverter()
+        self._edge_inverter()
 
     def _rank_init(self,unranked):
         assert self.dag
@@ -205,12 +339,12 @@ class  SugiyamaLayout(object):
         # add it to its layer:
         try:
             self.layers[r].append(v)
-            self.grx[v].pos = self.layers[r].index(v)
-            self.grx[v].bar = None
+            #self.grx[v].pos = self.layers[r].index(v)
+            #self.grx[v].bar = None
         except IndexError:
             self.layers.append(Layer([v]))
-            self.grx[v].pos = 0
-            self.grx[v].bar = None
+            #self.grx[v].pos = 0
+            #self.grx[v].bar = None
 
     def dummyctrl(self,r,ctrl):
         dv = DummyVertex(r)
@@ -248,29 +382,11 @@ class  SugiyamaLayout(object):
                 ctrl[r0+1][0].controlled=True
                 ctrl[r1-1][0].controlled=True
 
-    # seting up each layer l this way by extending the list objects
-    # makes the rest of the code much easier to write.
-    def layers_init(self):
-        self.nlayers = len(self.layers)
-        self.lens = map(len,self.layers)
-        for i in range(self.nlayers):
-            l = self.layers[i]
-            l.len = self.lens[i]
-            l.prev = None if i==0              else self.layers[i-1]
-            l.next = None if i+1==self.nlayers else self.layers[i+1]
-            l.set_neighbors()
-
     def _ordering_init(self):
-        # assign initial order within rank:
-        if self.nlayers>0:
-            lwidth = max(self.lens)
-            for l in self.layers:
-                for i,v in enumerate(l):
-                    self.grx[v].pos = i
-                    self.grx[v].bar = None
+        if len(self.layers)>0:
+            delta = max(map(len,self.layers))/2.
             # set bar for layer 0:
-            delta = max(self.lens)/2.
-            l = self.lens[0]
+            l = len(self.layers[0])
             if l==1: s=delta-l
             else : s=delta-l/2.
             for v in self.layers[0]:
@@ -288,125 +404,34 @@ class  SugiyamaLayout(object):
             yield step
 
     def ordering_step(self):
-        L = range(0,self.nlayers)
-        for l in L:
-            mvmt = self._ordering_l(l,-1)
-            yield "step down: layer %d, mvmt="%l,mvmt
-        L.reverse()
-        for l in L:
-            mvmt = self._ordering_l(l,+1)
-            yield "step   up: layer %d, mvmt="%l,mvmt
-
-    def _ordering_l(self,l,dirv):
-        self.__edge_inverter()
-        mvmt=[]
-        for v in self.layers[l]:
-            bar = self._meanvalueattr(v,l,dirv,self.order_attr)
-            self.grx[v].bar=bar
-        # now resort layers l according to positions:
-        self.layers[l].sort(cmp=(lambda x,y: \
-				 cmp(self.grx[x].bar,self.grx[y].bar)))
-        # assign new position in layer l:
-        for i,v in enumerate(self.layers[l]):
-            if self.grx[v].pos!=i: mvmt.append(v)
-            self.grx[v].bar = self.grx[v].pos = i
-        # count resulting crossings:
-        X = self._ordering_reduce_crossings(l,dirv)
-        self.__edge_inverter()
-        return mvmt
-
-    # find new position of vertex v according to adjacency in layer l+dir.
-    # position is given by the mean value of adjacent positions.
-    # experiments show that meanvalue heuristic performs better than median.
-    def _meanvalueattr(self,v,l,dirv,att='bar'):
-        assert self.dag
-        if self.grx[v].dummy and v.constrainer:
-            return self.layers[l].index(v.ctrl[l][0])
-        if not (0<=(l+dirv)<self.nlayers):
-            return getattr(self.grx[v],att)
-        pos = [getattr(self.grx[x],att) for x in self._neighbors(v,dirv)]
-        if len(pos)==0:
-            return getattr(self.grx[v],att)
-        return float(sum(pos))/len(pos)
-
-    # due to dummy nodes, neighbors are not simply v.N(dir) !
-    # we need to check for the right dummy node if the real neighbor
-    # is not in the layer above/below.
-    def _neighbors(self,v,dirv):
-        grxv=self.grx[v]
-        try: #(cache)
-            return grxv.nvs[dirv]
-        except AttributeError:
-            assert self.dag
-            grxv.nvs={-1:v.N(-1),+1:v.N(+1)}
-            if grxv.dummy: return grxv.nvs[dirv]
-            # v is real, v.N are graph neigbors but we need layers neighbors
-            for d in (-1,+1):
-                tr=grxv.rank+d
-                for i,x in enumerate(v.N(d)):
-                    if self.grx[x].rank==tr:continue
-                    e=v.e_with(x)
-                    dum = self.ctrls[e][tr][-1]
-                    grxv.nvs[d][i]=dum
-            return grxv.nvs[dirv]
-
-    # counts (inefficently but at least accurately) the number of 
-    # crossing edges between layer l and l+dirv. 
-    def _crossings(self,l,dirv):
-        g=self.grx
-        P=[]
-        for v in self.layers[l]:
-            P.append([g[x].pos for x in self._neighbors(v,dirv)])
-        for i,p in enumerate(P):
-            candidates = []
-            for r in P[i+1:]: candidates.extend(r)
-            for j,e in enumerate(p):
-                p[j] = len(filter((lambda nx:nx<e), candidates))
-            del candidates
-        return P
-
-    def _ordering_reduce_crossings(self,l,dirv):
-        g = self.grx
-        assert self.dag
-        N = self.lens[l]
-        X=0
-        for i,j in zip(range(N-1),range(1,N)):
-            vi = self.layers[l][i]
-            vj = self.layers[l][j]
-            ni = [g[v].pos for v in self._neighbors(vi,dirv)]
-            Xij=Xji=0
-            for nj in [g[v].pos for v in self._neighbors(vj,dirv)]:
-                x = len(filter((lambda nx:nx>nj),ni))
-                Xij += x
-                Xji += len(ni)-x
-            if Xji<Xij:
-                g[vi].pos,g[vj].pos = g[vj].pos,g[vi].pos
-                g[vi].bar,g[vj].bar = g[vj].bar,g[vi].bar
-                self.layers[l][i] = vj
-                self.layers[l][j] = vi
-                X += Xji
-            else:
-                X += Xij
-        return X
+        self.dirv=-1
+        for l in self.layers:
+            mvmt = l.order()
+            yield "step down: %s, mvmt="%repr(l),mvmt
+        self.dirv=+1
+        while l:
+            mvmt = l.order()
+            yield "step   up: %s, mvmt="%repr(l),mvmt
+            l = l.nextlayer()
 
     # algorithm by Brandes & Kopf:
     def setxy(self):
-        self.__edge_inverter()
+        self._edge_inverter()
         self._detect_alignment_conflicts()
         inf = float('infinity')
         # initialize vertex coordinates attributes:
         for l in self.layers:
             for v in l:
-                self.grx[v].root  = [v,v,v,v]
-                self.grx[v].align = [v,v,v,v]
-                self.grx[v].sink  = [v,v,v,v]
-                self.grx[v].shift = [inf,inf,inf,inf]
-                self.grx[v].X     = [None,None,None,None]
-                self.grx[v].x     = [None,None,None,None]
+                self.grx[v].root  = v
+                self.grx[v].align = v
+                self.grx[v].sink  = v
+                self.grx[v].shift = inf
+                self.grx[v].X     = None
+                self.grx[v].x     = [0.0]*4
         for dirvh in range(4):
-            print 'dirvh=%d'%dirvh
-            self._coord_vertical_alignment(dirvh)
-            self._coord_horizontal_compact(dirvh)
+            self.__setdirs(dirvh)
+            self._coord_vertical_alignment()
+            self._coord_horizontal_compact()
             print '*'*80
             print
         # vertical coordinate assigment of all nodes:
@@ -420,7 +445,7 @@ class  SugiyamaLayout(object):
                 # final xy-coordinates :
                 v.view.xy = (avgm,Y+dY)
             Y += 2*dY+self.yspace
-        self.__edge_inverter()
+        self._edge_inverter()
 
     # mark conflicts between edges:
     # inner edges are edges between dummy nodes
@@ -428,149 +453,131 @@ class  SugiyamaLayout(object):
     # type 1 is inner crossing regular (targeted crossings)
     # type 2 is inner crossing inner (avoided by reduce_crossings phase)
     def _detect_alignment_conflicts(self):
+        self.dirv=-1
         self.conflicts = []
-        for i in range(0,self.nlayers-1):
-            L = self.layers[i+1]
+        for L in self.layers:
+            last = len(L)-1
+            prev = L.prevlayer()
+            if not prev: continue
             k0=0
+            k1_init=len(prev)-1
             l=0
             for l1,v in enumerate(L):
                 if not self.grx[v].dummy: continue
-                if l1==L.len-1 or v.inner(-1):
-                    k1=self.lens[i]-1
+                if l1==last or v.inner(-1):
+                    k1=k1_init
                     if v.inner(-1):
                         k1=self.grx[v.N(-1)[-1]].pos
                     for vl in L[l:l1+1]:
-                        for vk in self._neighbors(vl,-1):
+                        for vk in L._neighbors(vl):
                             k = self.grx[vk].pos
                             if (k<k0 or k>k1):
                                 self.conflicts.append((vk,vl))
                     l=l1+1
                     k0=k1
 
-    def _coord_vertical_alignment(self,dirvh):
-        dirh,dirv = self.__getdirs(dirvh)
+    # vertical alignment highly depends on dirh/dirv state.
+    def _coord_vertical_alignment(self):
+        dirh,dirv = self.dirh,self.dirv
         g = self.grx
-        for i in range(self.nlayers)[::-dirv][1:]:
+        for l in self.layers[::-dirv]:
+            if not l.prevlayer(): continue
             r=None
-            for vk in self.layers[i][::dirh]:
-                for m in self._medianindex(vk,i,dirv,dirh):
+            for vk in l[::dirh]:
+                for m in l._medianindex(vk):
                     # take the median node in dirv layer:
-                    um = self.layers[i+dirv][m]
+                    um = l.prevlayer()[m]
                     if g[um].dummy and um.controlled and not g[vk].dummy:
                         continue
                     # if vk is "free" align it with um's root
-                    if g[vk].align[dirvh] == vk:
+                    if g[vk].align == vk:
                         if dirv==1: vpair = (vk,um)
                         else:       vpair = (um,vk)
                         # if vk<->um link is used for alignment
                         if (vpair not in self.conflicts) and \
                            (r==None or dirh*r<dirh*m):
-                            g[um].align[dirvh] = vk                # um aligns vk
-                            g[vk].root[dirvh] = g[um].root[dirvh]  # block root pointer
-                            g[vk].align[dirvh] = g[vk].root[dirvh] # end-of-block termination
+                            g[um].align = vk
+                            g[vk].root = g[um].root
+                            g[vk].align = g[vk].root
                             r = m
 
-    # find new position of vertex v according to adjacency in layer l+dir.
-    # position is given by the median value of adjacent positions.
-    # median heuristic is proven to achieve at most 3 times the minimum
-    # of crossings (while barycenter achieve in theory the order of |V|) 
-    def _medianindex(self,v,l,dirv,dirh):
-        assert 0<=(l+dirv)<self.lens
-        N = self._neighbors(v,dirv)
-        if self.grx[v].dummy and v.controlled:
-            for x in N:
-                if self.grx[x].dummy and x.constrainer:
-                    print 'median constrainer (dirv=%d,dirh=%d): %s -> %s'%(dirv,dirh,str(self.grx[x]),str(self.grx[v]))
-                    return [self.grx[x].pos]
-        pos = [self.grx[x].pos for x in N]
-        lp = len(pos)
-        if lp==0: return []
-        pos.sort()
-        pos = pos[::dirh]
-        i,j = divmod(lp-1,2)
-        return [pos[i]] if j==0 else [pos[i],pos[i+j]]
 
-    def _coord_horizontal_compact(self,dirvh):
+    def _coord_horizontal_compact(self):
         limit=getrecursionlimit()
         self.dpad=-1
-        N=self.nlayers+10
+        N=len(self.layers)+10
         if N>limit:
             setrecursionlimit(N)
-        dirh,dirv = self.__getdirs(dirvh)
+        dirh,dirv = self.dirh,self.dirv
         g = self.grx
-        L = range(self.nlayers)[::-dirv]
+        L = self.layers[::-dirv]
         # recursive placement of blocks:
-        for i in L:
-            l=self.layers[i]
+        for l in L:
             for v in l[::dirh]:
-                if g[v].root[dirvh]==v:
-                    self.__place_block(v,dirvh)
+                if g[v].root==v:
+                    self.__place_block(v)
                     print '-'*80
         setrecursionlimit(limit)
+        # mirror all nodes if right-aligned:
         if dirh==-1:
-            for i in L:
-                l=self.layers[i]
-                for v in l[::dirh]:
-                    x = g[v].X[dirvh]
-                    if x: g[v].X[dirvh] = -x
+            for l in L:
+                for v in l:
+                    x = g[v].X
+                    if x: g[v].X = -x
         # then assign x-coord of its root:
         inf=float('infinity')
         rb=inf
-        for i in L:
-            l=self.layers[i]
+        for l in L:
             for v in l[::dirh]:
-                g[v].x[dirvh] = g[g[v].root[dirvh]].X[dirvh]
-                rs = g[g[v].root[dirvh]].sink[dirvh]
-                s = g[rs].shift[dirvh]
+                g[v].x[self.dirvh] = g[g[v].root].X
+                rs = g[g[v].root].sink
+                s = g[rs].shift
                 if s<inf:
-                    g[v].x[dirvh] += dirh*s
-                    #if g[v].root[dirvh]==v:
-                    #    g[v].shift[dirvh]=0
-                    #    g[v].sink[dirvh]=v
-                rb = min(rb,g[v].x[dirvh])
-        # normalize to 0:
-        if dirh==-1:
-            for i in L:
-                l=self.layers[i]
-                for v in l:
-                    g[v].x[dirvh] -= rb
+                    g[v].x[self.dirvh] += dirh*s
+                rb = min(rb,g[v].x[self.dirvh])
+        # normalize to 0, and reinit root/align/sink/shift/X
+        for l in self.layers:
+            for v in l:
+                #g[v].x[dirvh] -= rb
+                g[v].root = g[v].align = g[v].sink = v
+                g[v].shift = inf
+                g[v].X = None
 
-    def __place_block(self,v,dirvh):
-        dirh,dirv = self.__getdirs(dirvh)
+    def __place_block(self,v):
         g = self.grx
         self.dpad += 1
         print '%s|%s'%('  '*self.dpad,str(g[v]))
-        if g[v].X[dirvh]==None:
+        if g[v].X==None:
             # every block is initially placed at x=0
-            g[v].X[dirvh] = 0.0
+            g[v].X = 0.0
             # place block in which v belongs:
             w = v
             while 1:
-                j = g[w].pos-dirh # predecessor in rank must be placed
+                j = g[w].pos-self.dirh # predecessor in rank must be placed
                 r = g[w].rank
-                if 0<= j <self.lens[r]:
+                if 0<= j <len(self.layers[r]):
                     wprec = self.layers[r][j]
                     delta = self.xspace+(wprec.view.w + w.view.w)/2.   # abs positive minimum displ.
                     print '%s|wprec:%s delta=%f'%('  '*self.dpad,str(g[wprec]),delta)
                     # take root and place block:
-                    u = g[wprec].root[dirvh]
+                    u = g[wprec].root
                     print '%s|root:%s'%('  '*self.dpad,str(g[u]))
-                    self.__place_block(u,dirvh)
+                    self.__place_block(u)
                     # set sink as sink of prec-block root
-                    if g[v].sink[dirvh]==v:
-                        print '%s|set sink:%s'%('  '*self.dpad,str(g[g[u].sink[dirvh]]))
-                        g[v].sink[dirvh] = g[u].sink[dirvh]
-                    if g[v].sink[dirvh]<>g[u].sink[dirvh]:
-                        s = g[u].sink[dirvh]
+                    if g[v].sink==v:
+                        print '%s|set sink:%s'%('  '*self.dpad,str(g[g[u].sink]))
+                        g[v].sink = g[u].sink
+                    if g[v].sink<>g[u].sink:
+                        s = g[u].sink
                         print '%s|root sink:%s'%('  '*self.dpad,str(g[s]))
-                        newshift = g[v].X[dirvh]-(g[u].X[dirvh]+delta)
-                        print '%s|newshift ? : %f < %f'%('  '*self.dpad,g[s].shift[dirvh],newshift)
-                        g[s].shift[dirvh] = min(g[s].shift[dirvh],newshift)
+                        newshift = g[v].X-(g[u].X+delta)
+                        print '%s|newshift ? : %f < %f'%('  '*self.dpad,g[s].shift,newshift)
+                        g[s].shift = min(g[s].shift,newshift)
                     else:
-                        g[v].X[dirvh] = max(g[v].X[dirvh],(g[u].X[dirvh]+delta))
-                print '%s|newx=%f'%('  '*self.dpad,g[v].X[dirvh])
+                        g[v].X = max(g[v].X,(g[u].X+delta))
+                print '%s|newx=%f'%('  '*self.dpad,g[v].X)
                 # take next node to align in block:
-                w = g[w].align[dirvh]
+                w = g[w].align
                 print '%s|aligns %s'%('  '*self.dpad,g[w])
                 # quit if self aligned
                 if w==v: break
