@@ -141,7 +141,6 @@ class Layer(list):
     # experiments show that meanvalue heuristic performs better than median.
     def _meanvalueattr(self,v,att='bar'):
         sug = self.layout
-        assert sug.dag
         if sug.grx[v].dummy and v.constrainer:
             return self.index(v.ctrl[self.__r][0])
         if not self.prevlayer():
@@ -436,11 +435,11 @@ class  SugiyamaLayout(object):
         self.dirv=-1
         for l in self.layers:
             mvmt = l.order()
-            yield "step down: %s, mvmt="%repr(l),mvmt
+            yield
         self.dirv=+1
         while l:
             mvmt = l.order()
-            yield "step   up: %s, mvmt="%repr(l),mvmt
+            yield
             l = l.nextlayer()
 
     # algorithm by Brandes & Kopf:
@@ -461,8 +460,6 @@ class  SugiyamaLayout(object):
             self.dirvh = dirvh
             self._coord_vertical_alignment()
             self._coord_horizontal_compact()
-            print '*'*80
-            print
         # vertical coordinate assigment of all nodes:
         Y = 0
         for l in self.layers:
@@ -533,7 +530,6 @@ class  SugiyamaLayout(object):
 
     def _coord_horizontal_compact(self):
         limit=getrecursionlimit()
-        self.dpad=-1
         N=len(self.layers)+10
         if N>limit:
             setrecursionlimit(N)
@@ -545,7 +541,6 @@ class  SugiyamaLayout(object):
             for v in l[::dirh]:
                 if g[v].root==v:
                     self.__place_block(v)
-                    print '-'*80
         setrecursionlimit(limit)
         # mirror all nodes if right-aligned:
         if dirh==-1:
@@ -574,7 +569,6 @@ class  SugiyamaLayout(object):
 
     def __place_block(self,v):
         g = self.grx
-        self.dpad += 1
         if g[v].X==None:
             # every block is initially placed at x=0
             g[v].X = 0.0
@@ -602,7 +596,6 @@ class  SugiyamaLayout(object):
                 w = g[w].align
                 # quit if self aligned
                 if w==v: break
-        self.dpad -= 1
 
     # Basic edge routing applied only for edges with dummy points.
     # Enhanced edge routing can be performed by using the apropriate
