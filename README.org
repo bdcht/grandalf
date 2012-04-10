@@ -16,24 +16,28 @@
 
 * Description
 
-Grandalf is a python module made for experimentations with graphs and drawing
-algorithms. Since it relies only on python code it is not meant to be used as
-a replacement for /graphviz/ or other libraries like /OGDF/ (C++),
-/GDToolkit/ (C), /tulip/ (Java), etc.
-The idea was to provide a way to *draw* and *navigate* graphs no larger than
-thousands of nodes, while keeping the source code simple enough (now less than
-1500 lines of python) to make it possible to easily tweak and hack any part of
-it for experimental purpose.
-Grandalf does only two things:
- - computing the nodes (x,y) coordinates (based on provided dimensions, and a
+Grandalf is a python package made for experimentations with graphs and drawing
+algorithms. It is written in pure python, and implements two layouts: the Sugiyama
+hierarchical layout and the force-driven or energy minimization approach.
+While not as fast or featured as /graphviz/ or other libraries like /OGDF/ (C++),
+/GDToolkit/ (C), /tulip/ (Java), it provides a way to *draw* and *navigate* graphs
+no larger than thousands of nodes, while keeping the source code simple enough
+to make it possible to easily tweak and hack any part of it for experimental purpose.
+With a total of about 1500 lines of python, the code involved in
+drawing the Sugiyama (dot) layout fits in less than 600 lines.
+The energy minimization approach is comprised of only 250 lines !
+
+Grandalf does only two not-so-simple things:
+ - computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
     chosen layout)
  - routing the edges with lines or nurbs
-It does NOT include any graphics toolkit, nor does it rely on any qt-gtk-cairo-
-whatever canvas library. This means that Grandalf will help you find _where_ to
-draw things like nodes and edges, but it's up to you to perform the drawing...
+It doesn't depend on any GTK/Qt/whatever graphics toolkit.
+This means that it will help you find _where_ to
+draw things like nodes and edges, but it's up to you to actually draw things with
+your favorite graphics toolkit.
 Take a look at [[http://github.com/bdcht/masr][masr]]
 (masr/plugins/graph/README) to see how Grandalf can be used to render some
-graphs on a cairo canvas.
+graphs on a GTK/cairo canvas.
 
 * Screenshots and Videos
 
@@ -44,7 +48,7 @@ All videos have been made with grandalf and the
 * Links
   - [[http://code.google.com/p/smiasm][smiasm]], uses Grandalf to interactively
     render the control flow graph of a disassembled binary program
-    (on a Qt canvas).
+    on a Qt canvas.
 
 * Quickstart
 
@@ -184,6 +188,7 @@ Look for examples in =tests/=. Here is a very simple example :
 ** =layouts.py= :
   Contains the "drawing" algorithms.
   This module defines the classes:
+  - Layer
   - SugiyamaLayout
   - DigcoLayout
 
@@ -196,10 +201,15 @@ Look for examples in =tests/=. Here is a very simple example :
     interface providing the width and height of the graphical representation of
     the Vertex (in our terminology, a Vertex equiped with a '.view' is a "node"
     of the graph)
-  To initiate the drawing (init_all) procedure you'll need to provide:
-  - the list of "root" nodes (see test/test-dot.py for example of how to find
-    these nodes)
-  - the list of feedback acyclic edges (see test/test-dot.py for example)
+  To initiate the drawing (init_all) you will optionally provide:
+  - the list of "root" nodes
+  - the list of feedback acyclic edges
+  - constraint parameter related to how inverted edges are routed
+  In order to minimize edge crossings between each consecutive layers, the
+  algorithm uses several rounds of nodes reordering (draw(N)). Increasing this
+  parameter N can lead to layout with less crossings.
+  For educational or debugging purpose, the drawing computation can be observed
+  step-by-step (draw_step).
 
 *** DigcoLayout.
   This class performs a 2D hierarchical placement of a connected graph.
@@ -426,7 +436,12 @@ These layers are stacked one under the others. The first layer contains the
 
 **** the root nodes and the feedback edges sets
 
-The first requirement for this layout is to provide the list of inverted edges
+Most of the time, you don't need to bother with these notions because
+init_all() will find the needed root nodes and feedback edges. Still, in some
+cases it may help to know about these essential sets:
+
+The Sugiyama layout is made for directed acyclic graphs. So the first requirement
+for this layout is to have the list of inverted edges
 (aka the feedback acyclic set needed to make the graph acyclic when needed.)
 These edges are inverted in the graph_core only during some specific operations
 and are reverted immediately after these computations.
@@ -467,14 +482,14 @@ to temporarily remove cycles and retry (look at =__edge_inverter= method.)
 
 **** the init_all() and draw() methods
 
-Now, drawing the gr component just resumes to:
+Drawing the gr component by computing .view.xy coordinates just resumes to:
  #+BEGIN_EXAMPLE
  >>> sug = SugiyamaLayout(gr)
- >>> sug.init_all(r,inverted_edges)
+ >>> sug.init_all()
  >>> sug.draw()
  #+END_EXAMPLE
-which performs completely ONE pass of the drawing algorithm. Doing a single
-pass means that the node placement has been performed from the top layer to the
+This will perform ONE round of the drawing algorithm. A single
+round means that the node placement has been performed from the top layer to the
 bottom layer and back to top. This may not be sufficient to reduce the edge
 crossings, so you can draw again or simply provide the number of pass to
 perform:
@@ -496,9 +511,17 @@ If you have installed [[http://github.com/bdcht/masr][masr]], just do:
  $ cd /path/to/grandalf
  $ ./masr-graph tests/samples/brandes.dot
  #+END_EXAMPLE
-(When a node is focused, the SPACE key is bound to draw_step().next(). This
+When a node is focused, the SPACE key is bound to draw_step().next(). This
 will show how the algorithm tries to reduce edge crossing in each layer by
-modifying the layer ordering. Modified nodes will appear with green shadow.)
+modifying the layer ordering. Modified nodes will appear with green shadow.
+The P key will cycle through the 4 internal alignment policies
+(top-left, top-right, bottom-left, bottom-right.)
+
+Optionally, inverted edges can be constrained to always start from the bottom
+of their init vertex, and end on the top of their terminal vertex.
+ #+BEGIN_EXAMPLE
+ $ ./masr-graph tests/samples/manhattan1.dot -ce
+ #+END_EXAMPLE
 
 *** DigcoLayout
 
