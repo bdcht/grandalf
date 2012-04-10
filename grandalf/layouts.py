@@ -87,7 +87,11 @@ class Layer(list):
     lower  = None
 
     def __repr__(self):
-        return '<Layer %d, len=%d>'%(self.__r,len(self))
+        s  = '<Layer %d'%self.__r
+        s += ', len=%d'%len(self)
+        x = sum(sum(self._crossings(),[]))
+        s += ', crossings=%d>'%x
+        return s
 
     def setup(self,layout):
         self.layout = layout
@@ -112,8 +116,14 @@ class Layer(list):
         sug._edge_inverter()
         mvmt=[]
         for v in self:
+            if sug.grx[v].dummy and v.constrainer:
+                mvmt.append(v)
+                continue
             bar = self._meanvalueattr(v,sug.order_attr)
             sug.grx[v].bar=bar
+        while len(mvmt)>0:
+            v = mvmt.pop()
+            v.bar = sug.grx[v.ctrl[self.__r][0]].bar
         # now resort layers l according to positions:
         self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
         # assign new position in layer l:
@@ -121,7 +131,8 @@ class Layer(list):
             if sug.grx[v].pos!=i: mvmt.append(v)
             sug.grx[v].bar = sug.grx[v].pos = i
         # count resulting crossings:
-        X = self._ordering_reduce_crossings()
+        self._ordering_reduce_crossings()
+        #self._ordering_reduce_crossings() # re-reduce crossings ?
         self.layout._edge_inverter()
         return mvmt
 
@@ -151,7 +162,6 @@ class Layer(list):
         if g[v].dummy and v.controlled:
             for x in N:
                 if g[x].dummy and x.constrainer:
-                    print 'median constrainer (dirv=%d,dirh=%d): %s -> %s'%(self.layout.dirv,self.layout.dirh,str(g[x]),str(g[v]))
                     return [g[x].pos]
         pos = [g[x].pos for x in N]
         lp = len(pos)
@@ -161,9 +171,10 @@ class Layer(list):
         i,j = divmod(lp-1,2)
         return [pos[i]] if j==0 else [pos[i],pos[i+j]]
 
-    # due to dummy nodes, neighbors are not simply v.N(dir) !
-    # we need to check for the right dummy node if the real neighbor
-    # is not in the layer above/below.
+    # neighbors refer to upper/lower adjacent nodes.
+    # remember that v.N() provides neighbors of v within the graph, while
+    # this method provides the Vertex and DummyVertex adjacent to v in the 
+    # upper or lower layer (depending on layout.dirv state).
     def _neighbors(self,v):
         dirv = self.layout.dirv
         grxv=self.layout.grx[v]
@@ -185,14 +196,16 @@ class Layer(list):
 
     # counts (inefficently but at least accurately) the number of 
     # crossing edges between layer l and l+dirv. 
+    # P[i][j] counts the number of crossings from j-th edge of vertex i.
+    # The total count of crossings is the sum of flattened P:
+    # x = sum(sum(P,[]))
     def _crossings(self):
         g=self.layout.grx
         P=[]
         for v in self:
             P.append([g[x].pos for x in self._neighbors(v)])
         for i,p in enumerate(P):
-            candidates = []
-            for r in P[i+1:]: candidates.extend(r)
+            candidates = sum(P[i+1:],[])
             for j,e in enumerate(p):
                 p[j] = len(filter((lambda nx:nx<e), candidates))
             del candidates
@@ -288,16 +301,32 @@ class  SugiyamaLayout(object):
             e.v = (y,x)
         self.dag = not self.dag
 
+    # internal state for alignment policy:
     # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
     # dirvh=1 -> dirh=-1, dirv=-1: rightmost upper
     # dirvh=2 -> dirh=+1, dirv=+1: leftmost lower
     # dirvh=3 -> dirh=-1, dirv=+1: rightmost lower
-    def __getdirs(self,dirvh):
-        return {0:(1,-1), 1:(-1,-1), 2:(1,1), 3:(-1,1)}[dirvh]
-    def __setdirs(self,dirvh):
-        print 'dirvh=%d'%dirvh
+    @property
+    def dirvh(self): return self.__dirvh
+    @property
+    def dirv(self): return self.__dirv
+    @property
+    def dirh(self): return self.__dirh
+    @dirvh.setter
+    def dirvh(self,dirvh):
+        assert dirvh in range(4)
+        self.__dirvh=dirvh
+        self.__dirh,self.__dirv={0:(1,-1), 1:(-1,-1), 2:(1,1), 3:(-1,1)}[dirvh]
+    @dirv.setter
+    def dirv(self,dirv):
+        assert dirv in (-1,+1)
+        dirvh = (dirv+1)+(1-self.__dirh)/2
         self.dirvh = dirvh
-        self.dirh,self.dirv = self.__getdirs(dirvh)
+    @dirh.setter
+    def dirh(self,dirh):
+        assert dirh in (-1,+1)
+        dirvh = (self.__dirv+1)+(1-dirh)/2
+        self.dirvh = dirvh
 
     # rank all vertices.
     # if list l is None, find initial rankable vertices (roots),
@@ -429,7 +458,7 @@ class  SugiyamaLayout(object):
                 self.grx[v].X     = None
                 self.grx[v].x     = [0.0]*4
         for dirvh in range(4):
-            self.__setdirs(dirvh)
+            self.dirvh = dirvh
             self._coord_vertical_alignment()
             self._coord_horizontal_compact()
             print '*'*80
@@ -453,7 +482,7 @@ class  SugiyamaLayout(object):
     # type 1 is inner crossing regular (targeted crossings)
     # type 2 is inner crossing inner (avoided by reduce_crossings phase)
     def _detect_alignment_conflicts(self):
-        self.dirv=-1
+        self.dirvh=0
         self.conflicts = []
         for L in self.layers:
             last = len(L)-1
@@ -546,7 +575,6 @@ class  SugiyamaLayout(object):
     def __place_block(self,v):
         g = self.grx
         self.dpad += 1
-        print '%s|%s'%('  '*self.dpad,str(g[v]))
         if g[v].X==None:
             # every block is initially placed at x=0
             g[v].X = 0.0
@@ -558,27 +586,20 @@ class  SugiyamaLayout(object):
                 if 0<= j <len(self.layers[r]):
                     wprec = self.layers[r][j]
                     delta = self.xspace+(wprec.view.w + w.view.w)/2.   # abs positive minimum displ.
-                    print '%s|wprec:%s delta=%f'%('  '*self.dpad,str(g[wprec]),delta)
                     # take root and place block:
                     u = g[wprec].root
-                    print '%s|root:%s'%('  '*self.dpad,str(g[u]))
                     self.__place_block(u)
                     # set sink as sink of prec-block root
                     if g[v].sink==v:
-                        print '%s|set sink:%s'%('  '*self.dpad,str(g[g[u].sink]))
                         g[v].sink = g[u].sink
                     if g[v].sink<>g[u].sink:
                         s = g[u].sink
-                        print '%s|root sink:%s'%('  '*self.dpad,str(g[s]))
                         newshift = g[v].X-(g[u].X+delta)
-                        print '%s|newshift ? : %f < %f'%('  '*self.dpad,g[s].shift,newshift)
                         g[s].shift = min(g[s].shift,newshift)
                     else:
                         g[v].X = max(g[v].X,(g[u].X+delta))
-                print '%s|newx=%f'%('  '*self.dpad,g[v].X)
                 # take next node to align in block:
                 w = g[w].align
-                print '%s|aligns %s'%('  '*self.dpad,g[w])
                 # quit if self aligned
                 if w==v: break
         self.dpad -= 1
