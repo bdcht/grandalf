@@ -242,6 +242,7 @@ class Layer(list):
 class  SugiyamaLayout(object):
     def __init__(self,g):
         # drawing parameters:
+        self.dirvh=0
         self.order_iter = 8
         self.order_attr = 'pos'
         self.xspace = 20
