@@ -266,7 +266,7 @@ class  SugiyamaLayout(object):
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
     #  -list of root nodes.
-    def init_all(self,roots=None,inverted_edges=None,cons=True):
+    def init_all(self,roots=None,inverted_edges=None,cons=False):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
