@@ -41,6 +41,11 @@ Screenshots and Videos
 See examples listed in the Wiki_.
 All videos have been made with grandalf and the masr_ canvas application template.
 
+Here is a screenshot showing the result of rendering the control flow graph of
+a function:
+
+.. image:: https://raw.github.com/bdcht/grandalf/master/doc/screenshot-1.png
+
 Links
 =====
 
@@ -64,7 +69,7 @@ so it installs straightforwardly from sources.
 Quickstart
 ==========
 
-Look for examples in =tests/=. Here is a very simple example :
+Look for examples in ``tests/``. Here is a very simple example :
 
 .. sourcecode:: python
 
@@ -94,7 +99,7 @@ Look for examples in =tests/=. Here is a very simple example :
  ...   w,h = 10,10
  >>> for v in V: v.view = defaultview()
  >>> sug = SugiyamaLayout(g.C[0])
- >>> sug.init_all(roots=[V[0]],inverted_edges=[V[4].e_to(V[0])])
+ >>> sug.init_all(roots``[V[0]],inverted_edges``[V[4].e_to(V[0])])
  >>> sug.draw()
  >>> for v in g.C[0].sV: print "%s: (%d,%d)"%(v.data,v.view.xy[0],v.view.xy[1])
  0: (43,5)
@@ -164,7 +169,7 @@ Example:
 
 .. sourcecode:: python
   >>> e1 = Edge(v1,v2)
-  >>> e2 = Edge(v1,v3,w=2)
+  >>> e2 `` Edge(v1,v3,w``2)
 
 Optional arguments includes a weight (defaults to 1) and a data holding
 whatever you want associated with the edge (defaults to None). Edge weight
@@ -343,12 +348,14 @@ Graph creation
 --------------
 
 Lets start by creating an empty graph:
+
 .. sourcecode:: python
   >>> g = Graph()
 
 Wether you first create the graph and add elements in it or create it after all
 Vertex and Edge objects have been defined, is up to you.
 For the moment the graph has no components :
+
 .. sourcecode:: python
   >>> g.order()
   0
@@ -356,6 +363,7 @@ For the moment the graph has no components :
   []
 
 Lets create some vertices now.
+
 .. sourcecode:: python
   >>> v1 = Vertex('a')
   >>> v2 = Vertex('b')
@@ -373,14 +381,16 @@ associated with any graph_core object. When a vertex belongs to a graph_core,
 the reference to this graph_core is found in the 'c' field (component field).
 
 To insert a Vertex in a Graph object we do:
+
 .. sourcecode:: python
   >>> g.add_vertex(v1)
 
 or we can add a new edge, then any new vertex it the edge will be attached to
 the graph also:
+
 .. sourcecode:: python
   >>> e1 = Edge(v1,v2)
-  >>> e2 = Edge(v1,v3,w=2)
+  >>> e2 `` Edge(v1,v3,w``2)
   >>> g.add_edge(e1)
   >>> g.add_edge(e2)
   >>> v2 in g.C[0]
@@ -390,6 +400,7 @@ Warning: Vertex and Edge objects MUST belong to only one graph_core object at a
 time. So you should never use the same Vertex/Edge into another graph without
 removing it first from the current one !
 Of course, removing a vertex also removes all edges linked to it.
+
 .. sourcecode:: python
   >>> g.remove_vertex(v1)
   >>> e1 in g
@@ -399,6 +410,7 @@ Of course, removing a vertex also removes all edges linked to it.
 
 Removing v1 here has removed e1 and e2, and the graph g is now cut in 3
 components holding each one vertex only. Lets rebuild the graph and extend it:
+
 .. sourcecode:: python
   >>> g.add_edge(e1)
   >>> g.add_edge(e2)
@@ -406,6 +418,7 @@ components holding each one vertex only. Lets rebuild the graph and extend it:
   >>> g.add_edge(Edge(v4,v5))
 
 Now g has two graph_core objects in g.C, and if
+
 .. sourcecode:: python
   >>> g.add_edge(Edge(v5,v3))
 
@@ -446,21 +459,21 @@ part is definetly in the TODO list!).
 Before creating a layout engine associated with a graph_core, each vertex MUST
 be equiped with what we call a 'view'. For a vertex v, such view must be an
 object with attributes
-   - =w= (width) and
-   - =h= (height),
-   - =xy= (position)
+   - ``w`` (width) and
+   - ``h`` (height),
+   - ``xy`` (position)
 
 and the layout engine will set the v.view.xy field with a (x,y) tuple value
 corresponding to the center of the node.
-In practice, this allows to use =view= objects that inherits from graphic
+In practice, this allows to use ``view`` objects that inherits from graphic
 widgets (e.g. a rectangle in a Canvas) which will position the widget in the
 canvas when the xy attribute is set.
 
 If you want the layout to perform also edge routing, you MAY equipe edges also
-with a 'view' attribute. For an edge e, the view must have a =setpath= method
+with a 'view' attribute. For an edge e, the view must have a ``setpath`` method
 taking a list of points as argument.
 The layout engine will provide the list of (x,y) routing points, starting by
-the =e.v[0].view.xy=, then all intermediate dummy vertices position through
+the ``e.v[0].view.xy``, then all intermediate dummy vertices position through
 which the edge drawing should go, including the e.v[1].view.xy last point.
 The routing.py module provides enhanced routing functions as well as a
 representative EdgeViewer class to help finding the exact position where
@@ -501,31 +514,34 @@ A good choice is of course to start with the set of nodes that have no incoming
 edges, but if this set is empty (because the graph is cyclic) you will have to
 choose a preferred set :
 Hence,
+
 .. sourcecode:: python
- >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
- >>> if len(r)==0: r = [my_guessed_root_node]
+ >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
+ >>> if len(r)=``0: r `` [my_guessed_root_node]
  >>> L = gr.get_scs_with_feedback(r)
  >>> inverted_edges=filter(lambda x:x.feedback, gr.sE)
 
-leads to L containing the SCS of the =gr= component, and the feedback set is
+leads to L containing the SCS of the ``gr`` component, and the feedback set is
 then obtained by filter edges with the feedback flag.
 
 As mentioned before, drawing with the SugiyamaLayout engine also requires that
 you provide the list of "root" nodes.
 Its up to you to decide which nodes are the "roots", but the natural definition
 is as stated before :
+
 .. sourcecode:: python
  >>> gr = g.C[0]
- >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
+ >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
 
 that is, the list r of vertex with no incoming edges.
 Warning: if r is empty, you might want to use the set of edges computed before
-to temporarily remove cycles and retry (look at =__edge_inverter= method.)
+to temporarily remove cycles and retry (look at ``__edge_inverter`` method.)
 
 the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
 
 Drawing the gr component by computing .view.xy coordinates just resumes to:
+
 .. sourcecode:: python
  >>> sug = SugiyamaLayout(gr)
  >>> sug.init_all()
@@ -536,6 +552,7 @@ round means that the node placement has been performed from the top layer to the
 bottom layer and back to top. This may not be sufficient to reduce the edge
 crossings, so you can draw again or simply provide the number of pass to
 perform:
+
 .. sourcecode:: python
  >>> sug.draw(3)
 
@@ -544,12 +561,13 @@ use the draw_step() iterator which yields at each layer during the forward and
 backward trip.
 
 Then, drawing the graph with a graphical canvas can be done by drawing each
-views at their xy positions and either defining a =setpath= method that will
+views at their xy positions and either defining a ``setpath`` method that will
 be called by grandalf draw_edges() with a set of routing points, or by using
-predefined functions in =routing.py= like =route_with_lines= or
-=route_with_splines=.
+predefined functions in ``routing.py`` like ``route_with_lines`` or
+``route_with_splines``.
 
 If you have installed masr_, just do:
+
 .. sourcecode:: python
  $ cd /path/to/grandalf
  $ ./masr-graph tests/samples/brandes.dot
@@ -562,6 +580,7 @@ The P key will cycle through the 4 internal alignment policies
 
 Optionally, inverted edges can be constrained to always start from the bottom
 of their init vertex, and end on the top of their terminal vertex.
+
 .. sourcecode:: python
  $ ./masr-graph tests/samples/manhattan1.dot -ce
 
@@ -579,6 +598,7 @@ the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
 
 Like for SugiyamaLayout, just do for example:
+
 .. sourcecode:: python
  >>> dco = DigcoLayout(gr)
  >>> dco.init_all()
@@ -588,17 +608,19 @@ The init_all() method will take into account hierarchical information if the
 graph is directed, and will randomly choose an initial distribution of node
 coordinates. The draw() method will then converge towards the optimal solution
 by using a conjugate-gradient method.
-The =limit= parameter (defaults to gr.order() if not provided,) controls the
+The ``limit`` parameter (defaults to gr.order() if not provided,) controls the
 maximum iteration count of the convergence loop.
 FIXME: In the current implementation, hierarchical levels are not taken into
 account as additional constraints.
 
 If you have installed masr_, just do:
+
 .. sourcecode:: python
  $ cd /path/to/grandalf
  $ ./masr-graph -digco -N 25 tests/samples/circle.dot
 
 Or, you may visualize each step of the convergence by:
+
 .. sourcecode:: python
  $ ./masr-graph -digco -N 1 tests/samples/circle.dot
 
