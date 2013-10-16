@@ -21,7 +21,7 @@ no larger than thousands of nodes, while keeping the source code simple enough
 to make it possible to easily tweak and hack any part of it for experimental purpose.
 With a total of about 1500 lines of python, the code involved in
 drawing the Sugiyama (dot) layout fits in less than 600 lines.
-The energy minimization approach is comprised of only 250 lines !
+The energy minimization approach is comprised of only 250 lines!
 
 Grandalf does only two not-so-simple things:
  - computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
@@ -99,7 +99,7 @@ Look for examples in ``tests/``. Here is a very simple example :
  ...   w,h = 10,10
  >>> for v in V: v.view = defaultview()
  >>> sug = SugiyamaLayout(g.C[0])
- >>> sug.init_all(roots``[V[0]],inverted_edges``[V[4].e_to(V[0])])
+ >>> sug.init_all(roots=[V[0]],inverted_edges=[V[4].e_to(V[0])])
  >>> sug.draw()
  >>> for v in g.C[0].sV: print "%s: (%d,%d)"%(v.data,v.view.xy[0],v.view.xy[1])
  0: (43,5)
@@ -171,7 +171,7 @@ Example:
 .. sourcecode:: python
 
  >>> e1 = Edge(v1,v2)
- >>> e2 `` Edge(v1,v3,w``2)
+ >>> e2 = Edge(v1,v3,w=2)
 
 Optional arguments includes a weight (defaults to 1) and a data holding
 whatever you want associated with the edge (defaults to None). Edge weight
@@ -399,7 +399,7 @@ the graph also:
 .. sourcecode:: python
 
  >>> e1 = Edge(v1,v2)
- >>> e2 `` Edge(v1,v3,w``2)
+ >>> e2 = Edge(v1,v3,w=2)
  >>> g.add_edge(e1)
  >>> g.add_edge(e2)
  >>> v2 in g.C[0]
@@ -529,8 +529,8 @@ Hence,
 
 .. sourcecode:: python
 
- >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
- >>> if len(r)=``0: r `` [my_guessed_root_node]
+ >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
+ >>> if len(r)==0: r = [my_guessed_root_node]
  >>> L = gr.get_scs_with_feedback(r)
  >>> inverted_edges=filter(lambda x:x.feedback, gr.sE)
 
@@ -545,7 +545,7 @@ is as stated before :
 .. sourcecode:: python
 
  >>> gr = g.C[0]
- >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
+ >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
 
 that is, the list r of vertex with no incoming edges.
 Warning: if r is empty, you might want to use the set of edges computed before
