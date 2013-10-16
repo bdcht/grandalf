@@ -24,9 +24,10 @@ drawing the Sugiyama (dot) layout fits in less than 600 lines.
 The energy minimization approach is comprised of only 250 lines!
 
 Grandalf does only two not-so-simple things:
- - computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
-    chosen layout)
- - routing the edges with lines or nurbs
+
+- computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
+  chosen layout)
+- routing the edges with lines or nurbs
 
 It doesn't depend on any GTK/Qt/whatever graphics toolkit.
 This means that it will help you find _where_ to
@@ -49,18 +50,20 @@ a function:
 Links
 =====
 
-  - smiasm_, uses Grandalf to interactively
-    render the control flow graph of a disassembled binary program
-    on a Qt canvas.
+- smiasm_, uses Grandalf to interactively
+  render the control flow graph of a disassembled binary program
+  on a Qt canvas.
 
 Install
 =======
 
-  Grandalf requires the following python packages:
-  - http://pypi.python.org/pypi/numpy
+Grandalf requires the following python packages:
 
-  Grandalf suggests the following python packages:
-  - http://www.dabeaz.com/ply, for parsing Dot input files
+- http://pypi.python.org/pypi/numpy
+
+Grandalf suggests the following python packages:
+
+- http://www.dabeaz.com/ply, for parsing Dot input files
 
 These packages are generally provided by any linux distribution (python-numpy,
 python-ply.) Numpy provides Windows installer and PLY is written in full python
@@ -137,9 +140,10 @@ Overview
 ----------
 Contains the "mathematical" methods related to graphs.
 This module defines the classes:
-  - Vertex (and vertex_core)
-  - Edge (and edge_core)
-  - Graph (and graph_core)
+
+- Vertex (and vertex_core)
+- Edge (and edge_core)
+- Graph (and graph_core)
 
 Vertex.
 ~~~~~~~
@@ -218,9 +222,10 @@ graph's internal list.
 ------------
 Contains the "drawing" algorithms.
 This module defines the classes:
-  - Layer
-  - SugiyamaLayout
-  - DigcoLayout
+
+- Layer
+- SugiyamaLayout
+- DigcoLayout
 
 SugiyamaLayout.
 ~~~~~~~~~~~~~~~
@@ -228,15 +233,17 @@ This class performs a 2D hierarchical placement of a connected graph.
 The algorithm works only for directed acyclic graphs (DAG), so that a
 "feedback acyclic set" of edges is needed.
 To create a graph layout, you need to provide:
-  - a graph_core object where every Vertex has been equiped with a '.view'
-    interface providing the width and height of the graphical representation of
-    the Vertex (in our terminology, a Vertex equiped with a '.view' is a "node"
-    of the graph)
+
+- a graph_core object where every Vertex has been equiped with a '.view'
+  interface providing the width and height of the graphical representation of
+  the Vertex (in our terminology, a Vertex equiped with a '.view' is a "node"
+  of the graph)
 
 To initiate the drawing (init_all) you will optionally provide:
-  - the list of "root" nodes
-  - the list of feedback acyclic edges
-  - constraint parameter related to how inverted edges are routed
+
+- the list of "root" nodes
+- the list of feedback acyclic edges
+- constraint parameter related to how inverted edges are routed
 
 In order to minimize edge crossings between each consecutive layers, the
 algorithm uses several rounds of nodes reordering (draw(N)). Increasing this
@@ -253,15 +260,16 @@ coordinates by minimization of an "energy" function that describes the stress
 factor associated to a layout.
 This approach allows to take into account new constraints on node placement.
 To create a graph layout, you only need to provide:
-  - a graph_core object where every Vertex has been equiped with a '.view'
+- a graph_core object where every Vertex has been equiped with a '.view'
 
 *routing.py*
 ------------
 Contains the edge routing algorithms.
 This module defines the classes and functions:
-  - EdgeViewer
-  - route_with_lines
-  - route_with_splines
+
+- EdgeViewer
+- route_with_lines
+- route_with_splines
 
 EdgeViewer.
 ~~~~~~~~~~~
@@ -287,24 +295,26 @@ by route_with_lines are rounded.
 To use this routing method,  set the route_edge field of the layout instance
 to this function (sug.route_edge = route_with_splines) and use the values
 returned in the .splines field of the edge view :
-  - an array of 2 points defines a line
-  - an array of 4 points defines a bezier curve.
+- an array of 2 points defines a line
+- an array of 4 points defines a bezier curve.
 
 *utils.py*
 ----------
 Provides utilities like partially ordered sets, linear programming solvers,
 parsers for external formats (Dot, etc.)
 This module defines :
-  - Poset
-  - Dot
+
+- Poset
+- Dot
 
 and some general purpose functions like:
-  - intersect2lines
-  - intersectR
-  - getangle (computing the atan2 value for directed edge heading)
-  - intersectC
-  - setcurve (computing a nurbs locally interpolating a given set of points)
-  - setroundcorner
+
+- intersect2lines
+- intersectR
+- getangle (computing the atan2 value for directed edge heading)
+- intersectC
+- setcurve (computing a nurbs locally interpolating a given set of points)
+- setroundcorner
 
 Poset.
 ~~~~~~
@@ -471,9 +481,10 @@ part is definetly in the TODO list!).
 Before creating a layout engine associated with a graph_core, each vertex MUST
 be equiped with what we call a 'view'. For a vertex v, such view must be an
 object with attributes
-   - ``w`` (width) and
-   - ``h`` (height),
-   - ``xy`` (position)
+
+- ``w`` (width) and
+- ``h`` (height),
+- ``xy`` (position)
 
 and the layout engine will set the v.view.xy field with a (x,y) tuple value
 corresponding to the center of the node.
@@ -495,14 +506,12 @@ curves so that almost any curve Canvas primitive can be used.
 
 SugiyamaLayout
 ~~~~~~~~~~~~~~
-
 The Sugiyama layout draws a graph by separating the nodes in several layers.
 These layers are stacked one under the others. The first layer contains the
 "root" nodes.
 
 the root nodes and the feedback edges sets
 ++++++++++++++++++++++++++++++++++++++++++
-
 Most of the time, you don't need to bother with these notions because
 init_all() will find the needed root nodes and feedback edges. Still, in some
 cases it may help to know about these essential sets:
@@ -553,7 +562,6 @@ to temporarily remove cycles and retry (look at ``__edge_inverter`` method.)
 
 the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
-
 Drawing the gr component by computing .view.xy coordinates just resumes to:
 
 .. sourcecode:: python
@@ -605,7 +613,6 @@ of their init vertex, and end on the top of their terminal vertex.
 
 DigcoLayout
 ~~~~~~~~~~~
-
 The DigcoLayout stands for "Directed Graph Constrained Layout". The method was
 proposed by Dwyer & Koren in a paper presented at InfoVis 2005. It relies on
 a stress minimization approach (similar to force-driven layouts like /neato/)
@@ -614,7 +621,6 @@ node coordinates.
 
 the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
-
 Like for SugiyamaLayout, just do for example:
 
 .. sourcecode:: python
@@ -650,23 +656,21 @@ Check out the masr/plugins/graph code to see how it works!
 
 TODO
 ====
-
- - add hierarchical constraints in DigcoLayout to support directed graphs
- - add support for GraphML format import/export
- - add support for pgf/tikz export
- - provide facilities for efficient (interactive) edge re-routing
+- add hierarchical constraints in DigcoLayout to support directed graphs
+- add support for GraphML format import/export
+- add support for pgf/tikz export
+- provide facilities for efficient (interactive) edge re-routing
 
 FAQ
 ===
-
 1. Why is there no 'add_vertex()' method in the graph_core class ?
 
-Because graph_core are connected graphs, only add_single_vertex() makes sense.
-If you want to add a vertex directly into a graph_core, the vertex must be
-connected with an edge to another vertex already in the graph_core
-(use add_edge()).
-However, if the graph is empty, the first vertex can be attached to the graph
-by using add_single_vertex().
+  Because graph_core are connected graphs, only add_single_vertex() makes sense.
+  If you want to add a vertex directly into a graph_core, the vertex must be
+  connected with an edge to another vertex already in the graph_core
+  (use add_edge()).
+  However, if the graph is empty, the first vertex can be attached to the graph
+  by using add_single_vertex().
 
 .. _masr: http://github.com/bdcht/masr
 .. _Wiki: https://github.com/bdcht/grandalf/wiki
