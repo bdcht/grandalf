@@ -50,6 +50,18 @@ All videos have been made with grandalf and the
     render the control flow graph of a disassembled binary program
     on a Qt canvas.
 
+* Install
+
+  Grandalf requires the following python packages:
+  - [[http://pypi.python.org/pypi/numpy][numpy]],
+
+  Grandalf suggests the following python packages:
+  - [[http://www.dabeaz.com/ply][ply]], for parsing Dot input files
+
+These packages are generally provided by any linux distribution (python-numpy,
+python-ply, python-dbus.) Numpy provides Windows installer and
+PLY is written in full python so it installs straightforwardly from sources.
+
 * Quickstart
 
 Look for examples in =tests/=. Here is a very simple example :

@@ -4,11 +4,15 @@
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) 
 # published under GPLv2 license
 
-from  numpy import array,matrix,linalg
+from  numpy import array
 from  math  import atan2,cos,sin,sqrt
 
-import ply.lex as lex
-import ply.yacc as yacc
+try:
+    import ply.lex as lex
+    import ply.yacc as yacc
+    _has_ply = True
+except ImportError:
+    _has_ply = False
 
 #------------------------------------------------------------------------------
 class  Poset(object):
@@ -379,7 +383,8 @@ class Dot:
             t.lexer.skip(1)
 
         def build(self,**kargs):
-            self._lexer = lex.lex(module=self, **kargs)
+            if _has_ply:
+                self._lexer = lex.lex(module=self, **kargs)
 
         def test(self,data):
             self._lexer.input(data)
@@ -649,11 +654,14 @@ class Dot:
         def build(self,**kargs):
             opt=dict(debug=0,write_tables=0)
             opt.update(**kargs)
-            self._parser = yacc.yacc(module=self,**opt)
+            if _has_ply:
+                self._parser = yacc.yacc(module=self,**opt)
 
     def __init__(self,**kargs):
         self.lexer  = Dot.Lexer()
         self.parser = Dot.Parser()
+        if not _has_ply:
+            print 'warning: Dot parser not supported (install python-ply)'
 
     def parse(self,data):
         try:
