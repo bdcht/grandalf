@@ -154,11 +154,12 @@ None.
 Example:
 
 .. sourcecode:: python
-  >>> v1 = Vertex('a')
-  >>> v2 = Vertex('b')
-  >>> v3 = Vertex('c')
-  >>> v1.data
-  'a'
+
+ >>> v1 = Vertex('a')
+ >>> v2 = Vertex('b')
+ >>> v3 = Vertex('c')
+ >>> v1.data
+ 'a'
 
 Edge.
 ~~~~~
@@ -168,8 +169,9 @@ irrelevant. See Usage section for details.
 Example:
 
 .. sourcecode:: python
-  >>> e1 = Edge(v1,v2)
-  >>> e2 `` Edge(v1,v3,w``2)
+
+ >>> e1 = Edge(v1,v2)
+ >>> e2 `` Edge(v1,v3,w``2)
 
 Optional arguments includes a weight (defaults to 1) and a data holding
 whatever you want associated with the edge (defaults to None). Edge weight
@@ -186,7 +188,8 @@ is connected.
 Example:
 
 .. sourcecode:: python
-  >>> g  = graph_core([v1,v2,v3],[e1,e2])
+
+ >>> g  = graph_core([v1,v2,v3],[e1,e2])
 
 The graph object can be updated by g.add_edge(e), g.remove_edge(e) or
 g.remove_vertex(v) which all raise an exception if connectivity is lost. Note
@@ -202,8 +205,9 @@ graph_core components.
 Example:
 
 .. sourcecode:: python
-  >>> v4,v5 = Vertex(4),Vertex(5)
-  >>> g = Graph([v1,v2,v3,v4],[e1,e2])
+
+ >>> v4,v5 = Vertex(4),Vertex(5)
+ >>> g = Graph([v1,v2,v3,v4],[e1,e2])
 
 The graph object can be updated by g.add_vertex(v), g.add_edge(e),
 g.remove_vertex(v) and g.remove_edge(e) which all may result in updating a
@@ -350,27 +354,30 @@ Graph creation
 Lets start by creating an empty graph:
 
 .. sourcecode:: python
-  >>> g = Graph()
+
+ >>> g = Graph()
 
 Wether you first create the graph and add elements in it or create it after all
 Vertex and Edge objects have been defined, is up to you.
 For the moment the graph has no components :
 
 .. sourcecode:: python
-  >>> g.order()
-  0
-  >>> g.C
-  []
+
+ >>> g.order()
+ 0
+ >>> g.C
+ []
 
 Lets create some vertices now.
 
 .. sourcecode:: python
-  >>> v1 = Vertex('a')
-  >>> v2 = Vertex('b')
-  >>> v3 = Vertex()
-  >>> v3.data = 'c'
-  >>> v1.data
-  'a'
+
+ >>> v1 = Vertex('a')
+ >>> v2 = Vertex('b')
+ >>> v3 = Vertex()
+ >>> v3.data = 'c'
+ >>> v1.data
+ 'a'
 
 First, note that the 'data' field is optional and can be added anytime in the
 vertex. We are associating a string to this field so that it is easy to
@@ -383,18 +390,20 @@ the reference to this graph_core is found in the 'c' field (component field).
 To insert a Vertex in a Graph object we do:
 
 .. sourcecode:: python
-  >>> g.add_vertex(v1)
+
+ >>> g.add_vertex(v1)
 
 or we can add a new edge, then any new vertex it the edge will be attached to
 the graph also:
 
 .. sourcecode:: python
-  >>> e1 = Edge(v1,v2)
-  >>> e2 `` Edge(v1,v3,w``2)
-  >>> g.add_edge(e1)
-  >>> g.add_edge(e2)
-  >>> v2 in g.C[0]
-  True
+
+ >>> e1 = Edge(v1,v2)
+ >>> e2 `` Edge(v1,v3,w``2)
+ >>> g.add_edge(e1)
+ >>> g.add_edge(e2)
+ >>> v2 in g.C[0]
+ True
 
 Warning: Vertex and Edge objects MUST belong to only one graph_core object at a
 time. So you should never use the same Vertex/Edge into another graph without
@@ -402,25 +411,28 @@ removing it first from the current one !
 Of course, removing a vertex also removes all edges linked to it.
 
 .. sourcecode:: python
-  >>> g.remove_vertex(v1)
-  >>> e1 in g
-  False
-  >>> len(g.C)
-  3
+
+ >>> g.remove_vertex(v1)
+ >>> e1 in g
+ False
+ >>> len(g.C)
+ 3
 
 Removing v1 here has removed e1 and e2, and the graph g is now cut in 3
 components holding each one vertex only. Lets rebuild the graph and extend it:
 
 .. sourcecode:: python
-  >>> g.add_edge(e1)
-  >>> g.add_edge(e2)
-  >>> v4,v5 = Vertex(4),Vertex(5)
-  >>> g.add_edge(Edge(v4,v5))
+
+ >>> g.add_edge(e1)
+ >>> g.add_edge(e2)
+ >>> v4,v5 = Vertex(4),Vertex(5)
+ >>> g.add_edge(Edge(v4,v5))
 
 Now g has two graph_core objects in g.C, and if
 
 .. sourcecode:: python
-  >>> g.add_edge(Edge(v5,v3))
+
+ >>> g.add_edge(Edge(v5,v3))
 
 the cores are merged in one component only.
 
@@ -516,6 +528,7 @@ choose a preferred set :
 Hence,
 
 .. sourcecode:: python
+
  >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
  >>> if len(r)=``0: r `` [my_guessed_root_node]
  >>> L = gr.get_scs_with_feedback(r)
@@ -530,6 +543,7 @@ Its up to you to decide which nodes are the "roots", but the natural definition
 is as stated before :
 
 .. sourcecode:: python
+
  >>> gr = g.C[0]
  >>> r `` filter(lambda x: len(x.e_in())``=0, gr.sV)
 
@@ -543,6 +557,7 @@ the init_all() and draw() methods
 Drawing the gr component by computing .view.xy coordinates just resumes to:
 
 .. sourcecode:: python
+
  >>> sug = SugiyamaLayout(gr)
  >>> sug.init_all()
  >>> sug.draw()
@@ -554,6 +569,7 @@ crossings, so you can draw again or simply provide the number of pass to
 perform:
 
 .. sourcecode:: python
+
  >>> sug.draw(3)
 
 If you want to be able to draw the graph while the engine is running, you can
@@ -569,6 +585,7 @@ predefined functions in ``routing.py`` like ``route_with_lines`` or
 If you have installed masr_, just do:
 
 .. sourcecode:: python
+
  $ cd /path/to/grandalf
  $ ./masr-graph tests/samples/brandes.dot
 
@@ -582,6 +599,7 @@ Optionally, inverted edges can be constrained to always start from the bottom
 of their init vertex, and end on the top of their terminal vertex.
 
 .. sourcecode:: python
+
  $ ./masr-graph tests/samples/manhattan1.dot -ce
 
 
@@ -600,6 +618,7 @@ the init_all() and draw() methods
 Like for SugiyamaLayout, just do for example:
 
 .. sourcecode:: python
+
  >>> dco = DigcoLayout(gr)
  >>> dco.init_all()
  >>> dco.draw(limit=100)
@@ -616,12 +635,14 @@ account as additional constraints.
 If you have installed masr_, just do:
 
 .. sourcecode:: python
+
  $ cd /path/to/grandalf
  $ ./masr-graph -digco -N 25 tests/samples/circle.dot
 
 Or, you may visualize each step of the convergence by:
 
 .. sourcecode:: python
+
  $ ./masr-graph -digco -N 1 tests/samples/circle.dot
 
 Now mouse-focus one of the nodes and press SPACE to see the next iteration.
