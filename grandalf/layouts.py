@@ -12,7 +12,7 @@
 #  acyclic and so on, are all kept inside the layout object.
 # 
 from  numpy   import array,matrix,linalg
-from  utils   import rand_ortho1,median_wh
+from .utils   import rand_ortho1,median_wh
 from  sys     import getrecursionlimit,setrecursionlimit
 
 #  the VertexViewer class is responsible of providing

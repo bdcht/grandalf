@@ -14,7 +14,7 @@
 #  shall be performed by the drawing engine associated with 'views'.
 #  (e.g. look at intersectC when the node shape is a circle)
 
-from  utils import intersectR,getangle,setcurve,setroundcorner
+from .utils import intersectR,getangle,setcurve,setroundcorner
 
 #------------------------------------------------------------------------------
 class  EdgeViewer(object):
