@@ -2,7 +2,7 @@
 
 # This code is part of Grandalf
 # Copyright (C) 2010-2012 Axel Tillequin (bdcht3@gmail.com)
-# published under the GPLv2 license
+# published under the GPLv2 license or EPLv1 license
 
 #  Layouts are classes that provide graph drawing algorithms.
 #

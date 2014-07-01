@@ -2,7 +2,7 @@
 #
 # This code is part of Grandalf
 # Copyright (C) 2008-2011 Axel Tillequin (bdcht3@gmail.com) 
-# published under GPLv2 license
+# published under GPLv2 license or EPLv1 license
 
 from .utils import Poset
 from operator import attrgetter

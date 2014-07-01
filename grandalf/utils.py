@@ -2,7 +2,7 @@
 #
 # This code is part of Grandalf
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) 
-# published under GPLv2 license
+# published under GPLv2 license or EPLv1 license
 
 from  numpy import array
 from  math  import atan2,cos,sin,sqrt
