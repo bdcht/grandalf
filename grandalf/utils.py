@@ -188,7 +188,7 @@ def  intersectR(view,topt):
             return (x,y)
     # there can't be no intersection unless the endpoint was
     # inside the bb !
-    raise ValueError,'no intersection found (point inside ?!)'
+    raise ValueError('no intersection found (point inside ?!). view: %s topt: %s' % (view, topt))
 
 
 #------------------------------------------------------------------------------

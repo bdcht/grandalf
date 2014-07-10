@@ -7,23 +7,39 @@
 #  Layouts are classes that provide graph drawing algorithms.
 #
 #  These classes all take a graph_core argument. The graph_core
-#  topology will never be permanently modified by the drawing algorithm: 
+#  topology will never be permanently modified by the drawing algorithm:
 #  e.g. "dummy" node insertion, edge reversal for making the graph
 #  acyclic and so on, are all kept inside the layout object.
-# 
-from  numpy   import array,matrix,linalg
+#
+from  numpy   import array,matrix
 from .utils   import rand_ortho1,median_wh
 from  sys     import getrecursionlimit,setrecursionlimit
+
+try:
+    xrange
+except NameError:
+    xrange = range
+
+try:
+    from itertools import izip
+except:
+    izip = zip
 
 #  the VertexViewer class is responsible of providing
 #  graphical attributes associated with a Vertex.
 #  Instance of VertexViewer are generally created from
-#  Vertex.data and then embedded in the 'view' field. 
-#  It is used by the layout algorithms the get vertex dimensions. 
+#  Vertex.data and then embedded in the 'view' field.
+#  It is used by the layout algorithms the get vertex dimensions.
 class  VertexViewer(object):
     def __init__(self,w=2,h=2,data=None):
         self.w = w
         self.h = h
+        
+    def __str__(self, *args, **kwargs):
+        if hasattr(self, 'xy'):
+            return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
+        
+        return 'VertexViewer (xy: None) w: %s h: %s' % (self.w, self.h)
 
 
 #  SUGIYAMA LAYOUT
@@ -74,7 +90,7 @@ class  DummyVertex(_sugiyama_vertex_attr):
 
 #------------------------------------------------------------------------------
 # Layer is where Sugiyama layout organises nodes in hierarchical lists.
-# The placement of nodes is done by the Sugiyama class, but it highly relies on 
+# The placement of nodes is done by the Sugiyama class, but it highly relies on
 # the 'ordering' of nodes in each layer to reduce crossings.
 # This ordering depends on the neighbors found in the upper or lower layers.
 # WARNING: methods HIGHLY depend on layout.dirv state.
@@ -153,7 +169,7 @@ class Layer(list):
     # find new position of vertex v according to adjacency in layer l+dir.
     # position is given by the median value of adjacent positions.
     # median heuristic is proven to achieve at most 3 times the minimum
-    # of crossings (while barycenter achieve in theory the order of |V|) 
+    # of crossings (while barycenter achieve in theory the order of |V|)
     def _medianindex(self,v):
         assert self.prevlayer()!=None
         N = self._neighbors(v)
@@ -172,7 +188,7 @@ class Layer(list):
 
     # neighbors refer to upper/lower adjacent nodes.
     # remember that v.N() provides neighbors of v within the graph, while
-    # this method provides the Vertex and DummyVertex adjacent to v in the 
+    # this method provides the Vertex and DummyVertex adjacent to v in the
     # upper or lower layer (depending on layout.dirv state).
     def _neighbors(self,v):
         dirv = self.layout.dirv
@@ -193,8 +209,8 @@ class Layer(list):
                     grxv.nvs[d][i]=dum
             return grxv.nvs[dirv]
 
-    # counts (inefficently but at least accurately) the number of 
-    # crossing edges between layer l and l+dirv. 
+    # counts (inefficently but at least accurately) the number of
+    # crossing edges between layer l and l+dirv.
     # P[i][j] counts the number of crossings from j-th edge of vertex i.
     # The total count of crossings is the sum of flattened P:
     # x = sum(sum(P,[]))
@@ -215,7 +231,7 @@ class Layer(list):
         g = self.layout.grx
         N = len(self)
         X=0
-        for i,j in zip(range(N-1),range(1,N)):
+        for i,j in izip(xrange(N-1),xrange(1,N)):
             vi = self[i]
             vj = self[j]
             ni = [g[v].pos for v in self._neighbors(vi)]
@@ -290,7 +306,7 @@ class  SugiyamaLayout(object):
     # rounds, and finally perform the edge routing.
     def draw(self,N=None):
         if not N: N=1
-        for i in range(N):
+        for i in xrange(N):
             for s in self.ordering_step(): pass
         self.setxy()
         self.draw_edges()
@@ -457,7 +473,7 @@ class  SugiyamaLayout(object):
                 self.grx[v].shift = inf
                 self.grx[v].X     = None
                 self.grx[v].x     = [0.0]*4
-        for dirvh in range(4):
+        for dirvh in xrange(4):
             self.dirvh = dirvh
             self._coord_vertical_alignment()
             self._coord_horizontal_compact()
@@ -610,12 +626,12 @@ class  SugiyamaLayout(object):
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
                     if r0<r1:
-                        ranks = range(r0+1,r1)
+                        ranks = xrange(r0+1,r1)
                     else:
                         if self.ctrls['cons']:
-                            ranks = range(r0,r1-1,-1)
+                            ranks = xrange(r0,r1-1,-1)
                         else:
-                            ranks = range(r0-1,r1,-1)
+                            ranks = xrange(r0-1,r1,-1)
                     l = [D[r][-1].view.xy for r in ranks]
                 l.insert(0,e.v[0].view.xy)
                 l.append(e.v[1].view.xy)
@@ -787,7 +803,7 @@ class  DigcoLayout(object):
 
     # conjugate_gradient with given matrix Lw:
     # it is assumed that b is not a multivector,
-    # so _cg_Lw should be called in all directions separately. 
+    # so _cg_Lw should be called in all directions separately.
     # note that everything is a matrix here, (arrays are row vectors only)
     def _cg_Lw(self,Lw,z,b):
         scal = lambda U,V: float(U.transpose()*V)
@@ -812,7 +828,7 @@ class  DigcoLayout(object):
             wd = self.g.dijkstra(v)
             Di = [wd[w] for w in self.g.V()]
             Dji.append(Di)
-        # at this point  D is stored by rows, 
+        # at this point  D is stored by rows,
         # but anymway it's a symmetric matrix
         return matrix(Dji,dtype=float)
 
@@ -846,7 +862,7 @@ class  DigcoLayout(object):
             iterk_except_i = (k for k in xrange(n) if k<>i)
             for k in iterk_except_i:
                 liz[0,k] = 1.0/(self.Dij[i,k]*dist(Z[i],Z[k]))
-            liz[0,i] = 0.0 # forced, otherwise next liz.sum() is wrong ! 
+            liz[0,i] = 0.0 # forced, otherwise next liz.sum() is wrong !
             liz[0,i] = -liz.sum()
             # now that we have the i-th row of L^Z, just dotprod with Z:
             lzz[i] = liz*Z
