@@ -34,11 +34,11 @@ class  VertexViewer(object):
     def __init__(self,w=2,h=2,data=None):
         self.w = w
         self.h = h
-        
+
     def __str__(self, *args, **kwargs):
         if hasattr(self, 'xy'):
             return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
-        
+
         return 'VertexViewer (xy: None) w: %s h: %s' % (self.w, self.h)
 
 
@@ -773,7 +773,8 @@ class  DigcoLayout(object):
     # _xyinit can use diagonally scaled initial vertices positioning to provide
     # better convergence in constrained stress majorization
     def _xyinit(self,y=None):
-        if y is None: y = rand_ortho1(self.g.order())
+        if y is None:
+            y = rand_ortho1(self.g.order())
         x = rand_ortho1(self.g.order())
         # translate and normalize:
         x = x-x[0]

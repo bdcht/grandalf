@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 #
 # This code is part of Grandalf
-# Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) 
+# Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) and others
 # published under GPLv2 license or EPLv1 license
+# Contributor(s): Axel Tillequin, Fabio Zadrozny
 
 from  numpy import array
 from  math  import atan2,cos,sin,sqrt
+import math, numpy
 
 try:
     import ply.lex as lex
@@ -30,7 +32,8 @@ class  Poset(object):
         self.s = s
 
     def __repr__(self):
-        return 'poset'+repr(self.o)
+        return 'poset(%r)' % (self.o,)
+
     def __str__(self):
         f='%%%dd'%len(str(len(self.o)))
         s=[]
@@ -53,9 +56,6 @@ class  Poset(object):
 
     def __len__(self):
         return len(self.o)
-
-    def __repr__(self):
-        return repr(self.o)
 
     def __iter__(self):
         for obj in self.o:
@@ -134,7 +134,13 @@ def  rand_ortho1(n):
     r = SystemRandom()
     pos = [r.random() for x in xrange(n)]
     s = sum(pos)
-    v = array(pos,dtype=float)-(s/len(pos))
+
+    # Note: returning only positive values (if we had only negative values
+    # an exception such as:
+    # inf X:\grandalf\grandalf\layouts.py:784: RuntimeWarning: divide by zero encountered in double_scalars
+    #   sfactor = 1.0/max(y.max(),x.max())
+    # Could be found (randomly happening in test-layouts:test_splines).
+    v = abs(array(pos,dtype=float)-(s/len(pos)))
     norm = sqrt(sum(v*v))
     return v/norm
 
@@ -201,7 +207,7 @@ def  getangle(p1,p2):
 
 #------------------------------------------------------------------------------
 #  intersectC returns the intersection point between the Circle
-#  of radius r and centered on views' position with the line 
+#  of radius r and centered on views' position with the line
 #  to the 'topt' point.
 def  intersectC(view, r, topt):
     theta = getangle(view.xy,topt)
@@ -393,7 +399,7 @@ class Dot:
                 if not tok: break
                 print tok
 
-    # Classes for the AST returned by Parser: 
+    # Classes for the AST returned by Parser:
     class graph(object):
         def __init__(self,name,data,strict=None,direct=None):
             self.name = name
@@ -520,7 +526,7 @@ class Dot:
 
         def p_statements(self,p):
             '''statements : statements stmt
-                          | stmt 
+                          | stmt
                           | '''
             self.__makelist(p)
 
@@ -681,6 +687,96 @@ class Dot:
         return L
 
     def read(self,filename):
-        f = file(filename,'r')
+        f = file(filename,'rb') # As it'll try to decode later on with utf-8, read it binary at this point.
         return self.parse(f.read())
+
+
+
+
+class Point(object):
+    '''
+    Helper class representing a point.
+    '''
+
+    def __init__(self, *pts):
+        self.x, self.y = pts
+
+    def __getitem__(self, i):
+        if i == 0:
+            return self.x
+
+        if i == 1:
+            return self.y
+
+        raise AssertionError('For 2d point can only get 0 or 1 (trying to get: %s)' % (i,))
+
+    def __len__(self):
+        return 2
+
+    def __iter__(self):
+        yield self.x
+        yield self.y
+
+    def distance(self, p2):
+        x1, y1 = self
+        x2, y2 = p2
+        dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        return dist
+
+    def __str__(self):
+        return '(%s, %s)' % (self.x, self.y)
+
+    def __repr__(self):
+        return 'Point(%s, %s)' % (self.x, self.y)
+
+
+def angle_between_360_degrees(angle):
+    while angle >= 360.0:
+        angle -= 360.0
+    while angle < 0.0:
+        angle += 360.0
+    if angle == 360.0:
+        angle = 0.0
+
+    return angle
+
+
+def angle_to_x_axis_in_degrees(pt0, pt1):
+    base_p0 = (0.0, 0.0)
+    base_p1 = (1.0, 0.0)
+
+    line1 = (pt0[0] - pt1[0], pt0[1] - pt1[1])
+    line2 = (base_p1[0] - base_p0[0], base_p1[1] - base_p0[1])
+
+    x1 = float(line1[0])
+    y1 = float(line1[1])
+    x2 = float(line2[0])
+    y2 = float(line2[1])
+    divide_by = (abs(x1 * x2) + abs(y1 * y2))
+
+    if divide_by == 0.0:
+        if pt0[1] > pt1[1]:
+            return 90.0
+        else:
+            return 270.0
+    else:
+        tg = ((x1 * y2) - (x2 * y1)) / divide_by
+        tan_degrees = math.degrees(math.atan(tg))
+
+        if pt0[0] > pt1[0]:
+            tan_degrees = -tan_degrees
+        else:
+            tan_degrees += 180.0
+
+        angle = tan_degrees
+        angle = angle_between_360_degrees(angle)
+
+        return angle
+
+def new_point_at_distance(pt, distance, angle):
+    angle = float(angle)
+    x, y = pt.x, pt.y
+    x += float(distance) * numpy.cos(numpy.deg2rad(angle))
+    y += float(distance) * numpy.sin(numpy.deg2rad(angle))
+    return Point(float(x), float(y))
 
