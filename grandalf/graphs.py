@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # This code is part of Grandalf
-# Copyright (C) 2008-2011 Axel Tillequin (bdcht3@gmail.com) 
+# Copyright (C) 2008-2011 Axel Tillequin (bdcht3@gmail.com)
 # published under GPLv2 license or EPLv1 license
 
 from .utils import Poset
@@ -68,7 +68,7 @@ class  edge_core(object):
 
 
 #------------------------------------------------------------------------------
-#  Vertex class enhancing a vertex_core with 
+#  Vertex class enhancing a vertex_core with
 #  c: the poset of connected vertices containing this vertex.
 #  data: anything else associated with the vertex.
 #------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ class  Edge(edge_core):
 #  self.sV: set of vertices
 #  self.sE: set of edges
 #  The graph is stored in edge list representation by self.sE,
-#  but since the vertex_core embbeds edges information, the adjacency list rep 
+#  but since the vertex_core embbeds edges information, the adjacency list rep
 #  is straightforward from self.sV.
 #------------------------------------------------------------------------------
 class  graph_core(object):
@@ -185,7 +185,7 @@ class  graph_core(object):
             v.c = self
 
     # add edge e. At least one of its vertex must belong to the graph,
-    # the other being added automatically. 
+    # the other being added automatically.
     def add_edge(self,e):
         if e not in self.sE:
             x = e.v[0]
@@ -303,7 +303,7 @@ class  graph_core(object):
             p.insert(0,v[p[0]])
         return p
 
-    # shortest weighted-edges paths between x and all other vertices 
+    # shortest weighted-edges paths between x and all other vertices
     # by dijkstra's algorithm with heap used as priority queue.
     def dijkstra(self,x,f_io=0,hook=None):
         from collections import defaultdict
@@ -341,14 +341,14 @@ class  graph_core(object):
                     heappush(L,(Dv,v))
         return D
 
-    # returns the set of strongly connected components 
+    # returns the set of strongly connected components
     # ("scs") by using Tarjan algorithm.
-    # These are maximal sets of vertices such that there is a path from each 
-    # vertex to every other vertex. 
+    # These are maximal sets of vertices such that there is a path from each
+    # vertex to every other vertex.
     # The algorithm performs a DFS from the provided list of root vertices.
-    # A cycle is of course a strongly connected component, 
+    # A cycle is of course a strongly connected component,
     # but a strongly connected component can include several cycles.
-    # The Feedback Acyclic Set of edge to be removed/reversed is provided by 
+    # The Feedback Acyclic Set of edge to be removed/reversed is provided by
     # marking the edges with a "feedback" flag.
     # Complexity is O(V+E).
     def get_scs_with_feedback(self,roots):
@@ -409,7 +409,7 @@ class  graph_core(object):
     # general graph properties:
     # -------------------------
 
-    # returns True iff 
+    # returns True iff
     #  - o is a subgraph of self, or
     #  - o is a vertex in self, or
     #  - o is an edge in self
@@ -466,13 +466,10 @@ class  Graph(object):
         for e in E:
             x = e.v[0]
             y = e.v[1]
-            try:
-                assert x in V
-                assert y in V
-                assert x.c in CV
-                assert y.c in CV
-            except AssertionError:
-                mypdb.set_trace()
+            assert x in V
+            assert y in V
+            assert x.c in CV
+            assert y.c in CV
             e.attach()
             if x.c!=y.c:
                 #merge y.c into x.c :
@@ -481,7 +478,7 @@ class  Graph(object):
                 CV.remove(y.c)
                 #update reference:
                 for z in y.c: z.c = x.c
-        # now create edge sets from connected vertex sets and 
+        # now create edge sets from connected vertex sets and
         # make the graph_core connected graphs for this component :
         self.C = []
         for c in CV:
