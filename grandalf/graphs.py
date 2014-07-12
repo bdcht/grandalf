@@ -513,6 +513,13 @@ class  Graph(object):
             cx.union_update(cy)
             self.C.remove(cy)
 
+    def get_vertices_count(self):
+        total = 0
+        for c in self.C:
+            V = c.sV
+            total += len(V)
+        return total
+
     # generates an iterator over vertices
     def V(self):
         for c in self.C:
