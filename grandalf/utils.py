@@ -27,8 +27,8 @@ class  Poset(object):
                 self.o.append(obj)
                 s.add(obj)
             else:
-                print 'warning: obj was already added in poset at index %d' \
-                      %s.index(obj)
+                print('warning: obj was already added in poset at index %d' \
+                      %s.index(obj))
         self.s = s
 
     def __repr__(self):
@@ -341,7 +341,7 @@ class Dot:
                 try:
                     float(v)
                 except ValueError:
-                    print 'invalid numeral token: %s'%v
+                    print('invalid numeral token: %s'%v)
                     raise SyntaxError
             elif '.' in v: # forbidden in non-numeric
                 raise SyntaxError
@@ -385,7 +385,7 @@ class Dot:
             return t
 
         def t_ANY_error(self,t):
-            print "Illegal character '%s'" % t.value[0]
+            print("Illegal character '%s'" % t.value[0])
             t.lexer.skip(1)
 
         def build(self,**kargs):
@@ -396,8 +396,9 @@ class Dot:
             self._lexer.input(data)
             while 1:
                 tok = self._lexer.token()
-                if not tok: break
-                print tok
+                if not tok:
+                    break
+                print(tok)
 
     # Classes for the AST returned by Parser:
     class graph(object):
@@ -492,7 +493,7 @@ class Dot:
         def p_Graph_strict(self,p):
             '''Graph : strict graph name Block'''
             p[0] = Dot.graph(name=p[3],data=p[4],strict=1,direct=0)
-            print 'Dot.Parser: graph object %s created'%p[0].name
+            #print 'Dot.Parser: graph object %s created'%p[0].name
 
         def p_Graph_graph(self,p):
             '''Graph : graph name Block'''
@@ -654,7 +655,7 @@ class Dot:
             p[0] = "%s:%s"%(p[1],p[2])
 
         def p_error(self,p):
-            print 'Syntax Error',p
+            print('Syntax Error: %s' % (p,))
             self._parser.restart()
 
         def build(self,**kargs):
@@ -667,7 +668,7 @@ class Dot:
         self.lexer  = Dot.Lexer()
         self.parser = Dot.Parser()
         if not _has_ply:
-            print 'warning: Dot parser not supported (install python-ply)'
+            print('warning: Dot parser not supported (install python-ply)')
 
     def parse(self,data):
         try:
@@ -676,7 +677,7 @@ class Dot:
             self.lexer.build(reflags=lex.re.UNICODE)
             self.parser.build()
         except:
-            print 'unexpected error'
+            print('unexpected error')
             return None
         try:
             s = data.decode('utf-8')
