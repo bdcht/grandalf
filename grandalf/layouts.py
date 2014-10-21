@@ -425,22 +425,23 @@ class  SugiyamaLayout(object):
     # iterator that computes all node coordinates and edge routing after
     # just one step (one layer after the other from top to bottom to top).
     # Purely inefficient ! Use it only for "animation" or debugging purpose.
-    def draw_step(self):
-        ostep = self.ordering_step()
-        for step in ostep:
+    def draw_step(self,verbose=False):
+        ostep = self.ordering_step(verbose)
+        for s in ostep:
             self.setxy()
             self.draw_edges()
-            yield step
+            print s
+            yield s
 
-    def ordering_step(self):
+    def ordering_step(self,verbose=False):
         self.dirv=-1
         for l in self.layers:
             mvmt = l.order()
-            yield
+            yield (l,mvmt) if verbose else None
         self.dirv=+1
         while l:
             mvmt = l.order()
-            yield
+            yield (l,mvmt) if verbose else None
             l = l.nextlayer()
 
     # algorithm by Brandes & Kopf:
