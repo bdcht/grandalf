@@ -458,10 +458,12 @@ class  SugiyamaLayout(object):
                 self.grx[v].shift = inf
                 self.grx[v].X     = None
                 self.grx[v].x     = [0.0]*4
+        curvh = self.dirvh # save current dirvh value
         for dirvh in range(4):
             self.dirvh = dirvh
             self._coord_vertical_alignment()
             self._coord_horizontal_compact()
+        self.dirvh = curvh # restore it
         # vertical coordinate assigment of all nodes:
         Y = 0
         for l in self.layers:
@@ -481,6 +483,7 @@ class  SugiyamaLayout(object):
     # type 1 is inner crossing regular (targeted crossings)
     # type 2 is inner crossing inner (avoided by reduce_crossings phase)
     def _detect_alignment_conflicts(self):
+        curvh = self.dirvh # save current dirvh value
         self.dirvh=0
         self.conflicts = []
         for L in self.layers:
@@ -503,6 +506,7 @@ class  SugiyamaLayout(object):
                                 self.conflicts.append((vk,vl))
                     l=l1+1
                     k0=k1
+        self.dirvh = curvh # restore it
 
     # vertical alignment highly depends on dirh/dirv state.
     def _coord_vertical_alignment(self):
