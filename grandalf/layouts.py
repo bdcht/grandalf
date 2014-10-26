@@ -308,10 +308,14 @@ class  SugiyamaLayout(object):
 
     # compute every node coordinates after converging to optimal ordering by N
     # rounds, and finally perform the edge routing.
-    def draw(self,N=None):
-        if not N: N=1
-        for i in range(N):
-            for s in self.ordering_step(): pass
+    def draw(self,N=1.5):
+        while N>0.5:
+            for (l,mvmt) in self.ordering_step():
+                pass
+            N = N-1
+        if N>0:
+            for (l,mvmt) in self.ordering_step(oneway=True):
+                pass
         self.setxy()
         self.draw_edges()
 
@@ -429,25 +433,26 @@ class  SugiyamaLayout(object):
     # iterator that computes all node coordinates and edge routing after
     # just one step (one layer after the other from top to bottom to top).
     # Purely inefficient ! Use it only for "animation" or debugging purpose.
-    def draw_step(self,verbose=False):
-        ostep = self.ordering_step(verbose)
+    def draw_step(self):
+        ostep = self.ordering_step()
         for s in ostep:
             self.setxy()
             self.draw_edges()
             yield s
 
-    def ordering_step(self,verbose=False):
+    def ordering_step(self,oneway=False):
         self.dirv=-1
         crossings = 0
         for l in self.layers:
             mvmt = l.order()
             crossings += l.ccount
-            yield (l,mvmt) if verbose else None
-        if crossings == 0: return
+            yield (l,mvmt)
+        if oneway or (crossings == 0):
+            return
         self.dirv=+1
         while l:
             mvmt = l.order()
-            yield (l,mvmt) if verbose else None
+            yield (l,mvmt)
             l = l.nextlayer()
 
     # algorithm by Brandes & Kopf:
