@@ -92,8 +92,8 @@ class Layer(list):
     def __repr__(self):
         s  = '<Layer %d'%self.__r
         s += ', len=%d'%len(self)
-        x = self.ccount
-        s += ', crossings=%d>'%x
+        xc = self.ccount or '?'
+        s += ', crossings=%s>'%xc
         return s
 
     def setup(self,layout):
@@ -130,13 +130,13 @@ class Layer(list):
             while len(mvmt)>0:
                 v = mvmt.pop()
                 v.bar = sug.grx[v.ctrl[self.__r][0]].bar
-            # now resort layers l according to positions:
+            # now resort layers l according to bar value:
             self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
             # assign new position in layer l:
             for i,v in enumerate(self):
                 if sug.grx[v].pos!=i: mvmt.append(v)
                 sug.grx[v].pos = i
-                sug.grx[v].bar = i*self.__x
+                #sug.grx[v].bar = i*self.__x
             # try count resulting crossings:
             c = self._ordering_reduce_crossings()
         self.layout._edge_inverter()
@@ -300,7 +300,7 @@ class  SugiyamaLayout(object):
         # assign rank to all vertices:
         self.rank_all(roots)
         # add dummy vertex/edge for 'long' edges:
-        self.ctrls['cons']=cons
+        self.ctrls['cons']=cons  # use "constrained edges" ?
         for e in self.g.E():
             self.setdummies(e,cons)
         # precompute some layers values:
@@ -382,18 +382,13 @@ class  SugiyamaLayout(object):
 
     def setrank(self,v):
         assert self.dag
-        #assert self.grx[v].rank==None
         r=max([self.grx[x].rank for x in v.N(-1)]+[-1])+1
         self.grx[v].rank=r
         # add it to its layer:
         try:
             self.layers[r].append(v)
-            #self.grx[v].pos = self.layers[r].index(v)
-            #self.grx[v].bar = None
         except IndexError:
             self.layers.append(Layer([v]))
-            #self.grx[v].pos = 0
-            #self.grx[v].bar = None
 
     def dummyctrl(self,r,ctrl):
         dv = DummyVertex(r)
