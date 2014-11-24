@@ -108,8 +108,3 @@ def  test_cycles():
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
     return g1
 
-test_vertex()
-test_edge()
-test_graph()
-test_remove()
-test_cycles()
