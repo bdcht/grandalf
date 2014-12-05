@@ -397,6 +397,7 @@ class  SugiyamaLayout(object):
             unranked=l
 
     # TODO: Network flow solver minimizing total edge length
+    # Also interesting: http://jgaa.info/accepted/2005/EiglspergerSiebenhallerKaufmann2005.9.3.pdf
     def _rank_optimize(self):
         assert self.dag
 
