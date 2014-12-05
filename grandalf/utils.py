@@ -774,7 +774,7 @@ def angle_to_x_axis_in_degrees(pt0, pt1):
 
 def new_point_at_distance(pt, distance, angle):
     angle = float(angle)
-    x, y = pt.x, pt.y
+    x, y = pt[0], pt[1]
     x += float(distance) * numpy.cos(numpy.deg2rad(angle))
     y += float(distance) * numpy.sin(numpy.deg2rad(angle))
     return float(x), float(y)
