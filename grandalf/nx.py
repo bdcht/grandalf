@@ -1,6 +1,14 @@
+#!/usr/bin/env python
+#
+# This code is part of Grandalf
+#  Copyright (C) 2014 Axel Tillequin (bdcht3@gmail.com) and others
+# published under GPLv2 license or EPLv1 license
+# Contributor(s): Axel Tillequin, Fabio Zadrozny
+
 '''
 Some utilities to interact with networkx.
 '''
+
 from grandalf.graphs import Graph, Vertex, Edge
 
 
