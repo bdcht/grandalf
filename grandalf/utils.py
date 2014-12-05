@@ -692,8 +692,6 @@ class Dot:
         return self.parse(f.read())
 
 
-
-
 class Point(object):
     '''
     Helper class representing a point.
@@ -779,5 +777,5 @@ def new_point_at_distance(pt, distance, angle):
     x, y = pt.x, pt.y
     x += float(distance) * numpy.cos(numpy.deg2rad(angle))
     y += float(distance) * numpy.sin(numpy.deg2rad(angle))
-    return Point(float(x), float(y))
+    return float(x), float(y)
 

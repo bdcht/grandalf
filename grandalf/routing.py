@@ -15,7 +15,7 @@
 #  shall be performed by the drawing engine associated with 'views'.
 #  (e.g. look at intersectC when the node shape is a circle)
 
-from .utils import (intersectR, getangle, setcurve, setroundcorner, Point,
+from .utils import (intersectR, getangle, setcurve, setroundcorner,
     angle_to_x_axis_in_degrees, new_point_at_distance)
 
 #------------------------------------------------------------------------------
@@ -45,9 +45,10 @@ def route_with_splines(e,pts):
     e.view.splines = splines
 
 
+from math import sqrt
 
 def _gen_point(p1, p2, new_distance):
-    initial_distance = distance = p1.distance(p2)
+    initial_distance = distance =  sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
     if initial_distance < 1e-10:
         return None
 
@@ -59,17 +60,16 @@ def _gen_point(p1, p2, new_distance):
     angle = angle_to_x_axis_in_degrees(p2, p1)
 
     new = new_point_at_distance(p1, distance, angle)
-    assert p1.distance(Point(*new)) < initial_distance
     return new
 
 
 def _gen_smoother_middle_points_from_3_points(pts, initial):
-    p1 = Point(*pts[0])
-    p2 = Point(*pts[1])
-    p3 = Point(*pts[2])
+    p1 = pts[0]
+    p2 = pts[1]
+    p3 = pts[2]
 
-    distance1 = p1.distance(p2)
-    distance2 = p1.distance(p3)
+    distance1 = sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+    distance2 = sqrt((p3[0] - p1[0]) ** 2 + (p3[1] - p1[1]) ** 2)
     if distance1 < 1e-10 or distance2 < 1e-10:
         yield p2
     else:
@@ -99,13 +99,13 @@ def _round_corners(pts, round_at_distance):
 
             for i, curr in enumerate(pts[1:-1]):
                 i += 1
-                p1 = Point(*pts[i - 1])
-                p2 = Point(*curr)
-                p3 = Point(*pts[i + 1])
+                p1 = pts[i - 1]
+                p2 = curr
+                p3 = pts[i + 1]
 
                 if len(pts) > 3:
                     # i.e.: at least 4 points
-                    if p3.distance(p2) < (2 * calc_with_distance):
+                    if sqrt((p3[0] - p2[0]) ** 2 + (p3[1] - p2[1]) ** 2) < (2 * calc_with_distance):
                         # prevent from crossing over.
                         new_lst.append(p2)
                         continue
