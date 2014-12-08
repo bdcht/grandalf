@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 from grandalf import *
+from tests.helpers import get_samples_file
+
 
 def test_cycles():
-    g = utils.Dot().read('samples/cycles.dot')[0]
+    g = utils.Dot().read(get_samples_file('cycles.dot'))[0]
     V = {}
     for k,v in g.nodes.iteritems():
         V[k]=graphs.Vertex(k)
@@ -22,4 +24,4 @@ def test_cycles():
 
     print 'roots',[x.data for x in r]
     for s in L:
-      print [x.data for x in s]
+        print [x.data for x in s]
