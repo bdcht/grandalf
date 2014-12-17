@@ -304,7 +304,7 @@ class  SugiyamaLayout(object):
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
     #  -list of root nodes.
-    def init_all(self,roots=None,inverted_edges=None,cons=False):
+    def init_all(self,roots=None,inverted_edges=None,cons=False,optimize=False):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
@@ -314,7 +314,7 @@ class  SugiyamaLayout(object):
             inverted_edges = filter(lambda x:x.feedback, self.g.sE)
         self.alt_e = inverted_edges
         # assign rank to all vertices:
-        self.rank_all(roots)
+        self.rank_all(roots,optimize)
         # add dummy vertex/edge for 'long' edges:
         self.ctrls['cons']=cons  # use "constrained edges" ?
         for e in self.g.E():
@@ -373,11 +373,11 @@ class  SugiyamaLayout(object):
     # otherwise update ranking from these vertices.
     # The initial rank is based on precedence relationships,
     # optimal ranking may be derived from network flow (simplex).
-    def rank_all(self,roots):
+    def rank_all(self,roots,optimize=False):
         self._edge_inverter()
         r = filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV)
         self._rank_init(roots+r)
-        self._rank_optimize()
+        if optimize: self._rank_optimize()
         self._edge_inverter()
 
     def _rank_init(self,unranked):
@@ -400,6 +400,16 @@ class  SugiyamaLayout(object):
     # Also interesting: http://jgaa.info/accepted/2005/EiglspergerSiebenhallerKaufmann2005.9.3.pdf
     def _rank_optimize(self):
         assert self.dag
+        for l in reversed(self.layers):
+            for v in l:
+                gv = self.grx[v]
+                for x in v.N(-1):
+                   if all((self.grx[y].rank>=gv.rank for y in x.N(+1))):
+                        gx = self.grx[x]
+                        self.layers[gx.rank].remove(x)
+                        gx.rank = gv.rank-1
+                        self.layers[gv.rank-1].append(x)
+
 
     def setrank(self,v):
         assert self.dag
