@@ -419,6 +419,7 @@ class  SugiyamaLayout(object):
         try:
             self.layers[r].append(v)
         except IndexError:
+            assert r==len(self.layers)
             self.layers.append(Layer([v]))
 
     def dummyctrl(self,r,ctrl):
