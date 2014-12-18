@@ -77,10 +77,11 @@ def create_scenario():
     assert len(G.C) == 1
     gr = G.C[0]
     
-    r = filter(lambda x: len(x.e_in()) == 0, gr.sV)
-    if len(r) == 0:
-        r = [gr.sV.o[0]]
-    return gr, r, data_to_vertex
+    # not needed anymore...
+    #r = filter(lambda x: len(x.e_in()) == 0, gr.sV)
+    #if len(r) == 0:
+    #    r = [gr.sV.o[0]]
+    return gr, data_to_vertex
 
 class CustomRankingSugiyamaLayout(SugiyamaLayout):
     
@@ -92,6 +93,9 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
         '''
         if initial_ranking is not None:
             self.initial_ranking = initial_ranking
+            assert 0 in initial_ranking
+            nblayers = max(initial_ranking.keys())+1
+            self.layers = [Layer([]) for l in range(nblayers)]
             
         SugiyamaLayout.init_all(self, roots=roots, inverted_edges=inverted_edges, cons=cons)
         
@@ -105,10 +109,7 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
                 for v in vertices:
                     self.grx[v].rank=rank
                     # add it to its layer:
-                    try:
-                        self.layers[rank].append(v)
-                    except IndexError:
-                        self.layers.append(Layer([v]))
+                    self.layers[rank].append(v)
 
 def _compute_rank_to_data(sug):
     rank_to_data = {}
@@ -122,11 +123,11 @@ def _compute_rank_to_data(sug):
     
 
 def test_sugiyama_ranking():
-    gr, r, data_to_vertex = create_scenario()
+    gr, data_to_vertex = create_scenario()
     
     sug = SugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
-    sug.init_all(roots=r, inverted_edges=filter(lambda x: x.feedback, gr.sE))
+    sug.init_all()
             
     # rank 0: v4      v0
     #          \     / |
@@ -148,7 +149,7 @@ def test_sugiyama_ranking():
     sug.draw(N=10)
     
 def test_sugiyama_custom_ranking():
-    gr, r, data_to_vertex = create_scenario()
+    gr, data_to_vertex = create_scenario()
     
     sug = CustomRankingSugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
@@ -160,7 +161,7 @@ def test_sugiyama_custom_ranking():
         3: [data_to_vertex['v2']], 
         4: [data_to_vertex['v3']], 
     }
-    sug.init_all(roots=r, inverted_edges=filter(lambda x: x.feedback, gr.sE), initial_ranking=rank_to_data)
+    sug.init_all(initial_ranking=rank_to_data)
             
     # rank 0: v4      v0
     #          \     / |
@@ -182,7 +183,7 @@ def test_sugiyama_custom_ranking():
     sug.draw(N=10)
     
 def test_sugiyama_custom_ranking2():
-    gr, r, data_to_vertex = create_scenario()
+    gr, data_to_vertex = create_scenario()
     
     sug = CustomRankingSugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
@@ -193,20 +194,7 @@ def test_sugiyama_custom_ranking2():
         2: [data_to_vertex['v2']], 
         3: [data_to_vertex['v3']], 
     }
-    sug.init_all(roots=r, inverted_edges=filter(lambda x: x.feedback, gr.sE), initial_ranking=rank_to_data)
-            
-    # rank 0: v4        v0
-    #          \        | \
-    # rank 1:   v5 --  v1 |
-    #            \   /   /
-    # rank 2:       v2
-    #               |
-    # rank 3:       v3
-    rank_to_data = _compute_rank_to_data(sug)
-    assert rank_to_data == {
-        0: ['v4', 'v0'], 
-        1: ['v5', 'v1'], 
-        2: ['v2'], 
-        3: ['v3'], 
-    }
-    sug.draw(N=10)
+    try:
+        sug.init_all(initial_ranking=rank_to_data)
+    except ValueError,e:
+        assert e.message == 'bad ranking'
