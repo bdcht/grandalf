@@ -16,7 +16,7 @@
 #  (e.g. look at intersectC when the node shape is a circle)
 
 from .utils import (intersectR, getangle, setcurve, setroundcorner,
-    angle_to_x_axis_in_degrees, new_point_at_distance)
+    new_point_at_distance)
 
 #------------------------------------------------------------------------------
 class  EdgeViewer(object):
@@ -57,7 +57,7 @@ def _gen_point(p1, p2, new_distance):
     else:
         return None
 
-    angle = angle_to_x_axis_in_degrees(p2, p1)
+    angle = getangle(p1, p2)
 
     new = new_point_at_distance(p1, distance, angle)
     return new
