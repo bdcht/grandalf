@@ -96,7 +96,7 @@ class  Vertex(vertex_core):
 #------------------------------------------------------------------------------
 class  Edge(edge_core):
     counter=0
-    def __init__(self,x,y,w=1,data=None):
+    def __init__(self,x,y,w=1,data=None,connect=False):
         edge_core.__init__(self,x,y)
         self.index=Edge.counter
         Edge.counter += 1
@@ -104,6 +104,10 @@ class  Edge(edge_core):
         self.w = w
         self.data = data
         self.feedback = False
+        if connect and (x.c==None or y.c==None):
+            c = x.c or y.c
+            c.add_edge(self)
+
     @classmethod
     def count(cls):
         return cls.counter
