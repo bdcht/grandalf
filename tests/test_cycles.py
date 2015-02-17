@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from grandalf import *
-from tests.helpers import get_samples_file
+from helpers import get_samples_file
 
 
 def test_cycles():

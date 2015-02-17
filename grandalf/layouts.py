@@ -105,7 +105,7 @@ class Layer(list):
     __x    = 1.
     ccount = None
 
-    def __repr__(self):
+    def __str__(self):
         s  = '<Layer %d'%self.__r
         s += ', len=%d'%len(self)
         xc = self.ccount or '?'
@@ -198,12 +198,12 @@ class Layer(list):
     # this method provides the Vertex and DummyVertex adjacent to v in the
     # upper or lower layer (depending on layout.dirv state).
     def _neighbors(self,v):
+        assert self.layout.dag
         dirv = self.layout.dirv
         grxv=self.layout.grx[v]
         try: #(cache)
             return grxv.nvs[dirv]
         except AttributeError:
-            assert self.layout.dag
             grxv.nvs={-1:v.N(-1),+1:v.N(+1)}
             if grxv.dummy: return grxv.nvs[dirv]
             # v is real, v.N are graph neigbors but we need layers neighbors
@@ -419,6 +419,7 @@ class  SugiyamaLayout(object):
         try:
             self.layers[r].append(v)
         except IndexError:
+            assert r==len(self.layers)
             self.layers.append(Layer([v]))
 
     def dummyctrl(self,r,ctrl):
@@ -440,6 +441,8 @@ class  SugiyamaLayout(object):
             assert e in self.alt_e
             v0,v1 = v1,v0
             r0,r1 = r1,r0
+        elif r0==r1:
+            raise ValueError,'bad ranking'
         spanover=xrange(r0+1,r1)
         if (r1-r0)>1:
             # "dummy vertices" are stored in the edge ctrl dict,

@@ -5,7 +5,7 @@ import  pdb
 from  grandalf.graphs  import *
 from  grandalf.layouts import *
 from  grandalf.utils   import Dot
-from tests.helpers import get_samples_file
+from helpers import get_samples_file
 
 mypdb  = pdb.Pdb()
 
