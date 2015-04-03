@@ -182,6 +182,12 @@ class  graph_core(object):
             else:
                 v.c = self
 
+    def roots(self):
+        return filter(lambda v:len(v.e_in())==0, self.sV)
+
+    def leaves(self):
+        return filter(lambda v:len(v.e_out())==0, self.sV)
+
     # allow a graph_core to hold a single vertex:
     def add_single_vertex(self,v):
         if len(self.sE)==0 and len(self.sV)==0:
