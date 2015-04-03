@@ -320,20 +320,15 @@ class  graph_core(object):
         from heapq import heappop, heappush
         if x not in self.sV: return None
         if f_io!=0: assert self.directed==True
-        # take a shallow copy of the set of vertices containing those for which
-        # the shortest path to x needs to be computed:
-        S = self.sV.copy()
         # initiate with path to itself...
         v = x
         # D is the returned vector of distances:
         D = defaultdict(lambda :None)
         D[v] = 0.0
         L = [(D[v],v)]
-        while len(S)>0:
-            #pdb.set_trace()
+        while len(L)>0:
             l,u = heappop(L)
-            S.remove(u)
-            for e in u.e:
+            for e in u.e_dir(f_io):
                 v = e.v[0] if (u is e.v[1]) else e.v[1]
                 Dv = l+e.w
                 if D[v]!=None:
