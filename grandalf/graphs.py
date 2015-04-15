@@ -212,7 +212,7 @@ class  graph_core(object):
     # remove Edge :
     # this procedure checks that the resulting graph is connex.
     def remove_edge(self,e):
-        if e.deg==0: return
+        if e.deg==0 or not e in self.sE: return
         e.detach()
         # check if still connected (path is not oriented here):
         if not self.path(e.v[0],e.v[1]):
@@ -226,6 +226,7 @@ class  graph_core(object):
     # remove Vertex:
     # this procedure checks that the resulting graph is connex.
     def remove_vertex(self,x):
+        if x not in self.sV: return
         V = x.N() #get all neighbor vertices to check paths
         E = x.detach() #remove the edges from x and neighbors list
         # now we need to check if all neighbors are still connected,
