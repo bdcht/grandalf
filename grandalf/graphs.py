@@ -221,7 +221,8 @@ class  graph_core(object):
             # exit with exception!
             raise ValueError,e
         else:
-            self.sE.remove(e)
+            res = self.sE.remove(e)
+            return res
 
     # remove Vertex:
     # this procedure checks that the resulting graph is connex.
@@ -240,8 +241,9 @@ class  graph_core(object):
                 raise ValueError,x
         # remove edges and vertex from internal sets:
         for e in E: self.sE.remove(e)
-        self.sV.remove(x)
+        res = self.sV.remove(x)
         x.c = None
+        return res
 
     # generates an iterator over vertices, with optional filter
     def V(self,cond=None):
@@ -513,11 +515,12 @@ class  Graph(object):
         cx = x.c
         cy = y.c
         # add edge:
-        cy.add_edge(e)
+        n = cy.add_edge(e)
         # connect (union) the graphs:
         if cx!=cy:
             cx.union_update(cy)
             self.C.remove(cy)
+        return n
 
     def get_vertices_count(self):
         total = 0
