@@ -23,7 +23,7 @@ class  Poset(object):
         self.o = []
         s = set()
         for obj in L:
-            if not obj in s:
+            if not obj in self.o:
                 self.o.append(obj)
                 s.add(obj)
             else:
@@ -42,14 +42,18 @@ class  Poset(object):
         return '\n'.join(s)
 
     def add(self,obj):
-        if obj not in self.s:
+        if obj not in self.o:
             self.o.append(obj)
             self.s.add(obj)
+            return 1
+        return 0
 
     def remove(self,obj):
-        if obj in self.s:
+        if obj in self.o:
             self.o.remove(obj)
             self.s.remove(obj)
+            return 1
+        return0
 
     def index(self,obj):
         return self.o.index(obj)
@@ -109,7 +113,7 @@ class  Poset(object):
         return Poset(self.s-other.s)
 
     def __contains__(self,obj):
-        return (obj in self.s)
+        return (obj in self.o)
 
     def issubset(self,other):
         return (self.s.issubset(other.s))
