@@ -197,17 +197,17 @@ class  graph_core(object):
     # add edge e. At least one of its vertex must belong to the graph,
     # the other being added automatically.
     def add_edge(self,e):
-        if e not in self.sE:
-            x = e.v[0]
-            y = e.v[1]
-            if not ((x in self.sV) or (y in self.sV)):
-                raise ValueError,'unconnected edge'
-            self.sV.add(x)
-            self.sV.add(y)
-            e.attach()
-            self.sE.add(e)
-            x.c = self
-            y.c = self
+        x = e.v[0]
+        y = e.v[1]
+        if not ((x in self.sV) or (y in self.sV)):
+            raise ValueError,'unconnected edge'
+        self.sV.add(x)
+        self.sV.add(y)
+        e.attach()
+        res = self.sE.add(e)
+        x.c = self
+        y.c = self
+        return res
 
     # remove Edge :
     # this procedure checks that the resulting graph is connex.
