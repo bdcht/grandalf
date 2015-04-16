@@ -17,6 +17,10 @@ except ImportError:
     _has_ply = False
 
 #------------------------------------------------------------------------------
+# Poset class implements a set but allows to interate over the elements in a
+# deterministic way and to get specific objects in the set.
+# Membership operator defaults to comparing __hash__  of objects but Poset
+# allows to check for __cmp__/__eq__ membership by using contains__cmp__(obj)
 class  Poset(object):
 
     def __init__(self,L):
@@ -36,21 +40,29 @@ class  Poset(object):
         return '\n'.join(s)
 
     def add(self,obj):
-        if obj not in self:
+        if obj in self:
+            return self.get(obj)
+        else:
             self.o.append(obj)
             self.s.add(obj)
-            return 1
-        return 0
+            return obj
 
     def remove(self,obj):
         if obj in self:
+            res = self.get(obj)
             self.o.remove(obj)
             self.s.remove(obj)
-            return 1
-        return 0
+            return res
+        return None
 
     def index(self,obj):
         return self.o.index(obj)
+
+    def get(self,obj):
+        try:
+            return self.o[self.index(obj)]
+        except ValueError:
+            return None
 
     def __len__(self):
         return len(self.o)
@@ -107,6 +119,9 @@ class  Poset(object):
 
     def __contains__(self,obj):
         return (obj in self.s)
+
+    def contains__cmp__(self,obj):
+        return (obj in self.o)
 
     def issubset(self,other):
         return (self.s.issubset(other.s))
