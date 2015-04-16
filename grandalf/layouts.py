@@ -11,10 +11,10 @@
 #  e.g. "dummy" node insertion, edge reversal for making the graph
 #  acyclic and so on, are all kept inside the layout object.
 #
-from  numpy   import array,matrix
-from .utils   import rand_ortho1,median_wh
-from  sys     import getrecursionlimit,setrecursionlimit
 from  bisect  import bisect
+from  sys     import getrecursionlimit,setrecursionlimit
+
+from grandalf.utils import *
 
 try:
     xrange
@@ -26,21 +26,21 @@ try:
 except:
     izip = zip
 
-#  the VertexViewer class is responsible of providing
-#  graphical attributes associated with a Vertex.
-#  Instance of VertexViewer are generally created from
-#  Vertex.data and then embedded in the 'view' field.
-#  It is used by the layout algorithms the get vertex dimensions.
+# the VertexViewer class is used as the default class
+# for providing the Vertex dimensions (w,h) and position (xy)
+# in its view attribute.
+# The view object can however be instanciated from any ui widgets
+# library as long as it provides the w,h,xy interface, allowing
+# grandalf to get dimensions and set position directly from the widget.
 class  VertexViewer(object):
     def __init__(self,w=2,h=2,data=None):
         self.w = w
         self.h = h
+        self.data = data
+        self.xy = None
 
     def __str__(self, *args, **kwargs):
-        if hasattr(self, 'xy'):
-            return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
-
-        return 'VertexViewer (xy: None) w: %s h: %s' % (self.w, self.h)
+        return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
 
 
 #  SUGIYAMA LAYOUT
@@ -614,6 +614,7 @@ class  SugiyamaLayout(object):
                 g[v].shift = inf
                 g[v].X = None
 
+    # TODO: rewrite in iterative form to avoid recursion limit...
     def __place_block(self,v):
         g = self.grx
         if g[v].X==None:
