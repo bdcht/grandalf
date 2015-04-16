@@ -810,7 +810,7 @@ class  DigcoLayout(object):
         # translate and normalize:
         x = x-x[0]
         y = y-y[0]
-        sfactor = 1.0/max(y.max(),x.max())
+        sfactor = 1.0/max(map(abs,y)+map(abs,x))
         return matrix(zip(x*sfactor,y*sfactor))
 
     # provide the diagonal of the Laplacian matrix of g
