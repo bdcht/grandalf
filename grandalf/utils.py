@@ -21,15 +21,9 @@ class  Poset(object):
 
     def __init__(self,L):
         self.o = []
-        s = set()
+        self.s = set()
         for obj in L:
-            if not obj in self.o:
-                self.o.append(obj)
-                s.add(obj)
-            else:
-                print('warning: obj was already added in poset at index %d' \
-                      %s.index(obj))
-        self.s = s
+            self.add(obj)
 
     def __repr__(self):
         return 'poset(%r)' % (self.o,)
@@ -42,18 +36,18 @@ class  Poset(object):
         return '\n'.join(s)
 
     def add(self,obj):
-        if obj not in self.o:
+        if obj not in self:
             self.o.append(obj)
             self.s.add(obj)
             return 1
         return 0
 
     def remove(self,obj):
-        if obj in self.o:
+        if obj in self:
             self.o.remove(obj)
             self.s.remove(obj)
             return 1
-        return0
+        return 0
 
     def index(self,obj):
         return self.o.index(obj)
@@ -91,8 +85,7 @@ class  Poset(object):
 
     def update(self,other):
         for obj in other:
-            if obj not in self:
-                self.add(obj)
+            self.add(obj)
 
     def __and__(self,other):
         return self.intersection(other)
@@ -113,7 +106,7 @@ class  Poset(object):
         return Poset(self.s-other.s)
 
     def __contains__(self,obj):
-        return (obj in self.o)
+        return (obj in self.s)
 
     def issubset(self,other):
         return (self.s.issubset(other.s))
