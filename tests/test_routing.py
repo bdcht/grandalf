@@ -10,7 +10,7 @@ def test_splines():
     gr  = graph_core(*G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
-    sug.init_all(roots=[gr.sV.o[0]],inverted_edges=[])
+    sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     i=0
     for  s in sug.draw_step():
         print '--- step %d '%i +'-'*20
@@ -35,7 +35,7 @@ def test_rounded_corners():
     gr  = graph_core(*G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
-    sug.init_all(roots=[gr.sV.o[0]],inverted_edges=[])
+    sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     i=0
     for  s in sug.draw_step():
         print '--- step %d '%i +'-'*20

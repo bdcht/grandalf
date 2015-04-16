@@ -1,6 +1,5 @@
 from grandalf.graphs import Vertex, Edge, Graph
-from grandalf.nx import convert_grandalf_graph_to_networkx_graph,\
-    convert_nextworkx_graph_to_grandalf
+from grandalf.utils.nx import *
 
 
 def test_networkx():

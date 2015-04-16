@@ -10,7 +10,7 @@ def test_layouts():
     gr  = graph_core(*G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
-    sug.init_all(roots=[gr.sV.o[0]],inverted_edges=[])
+    sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     i=0
     for  s in sug.draw_step():
         print '--- step %d '%i +'-'*20
@@ -27,7 +27,6 @@ def test_layouts():
 def create_scenario():
     '''
     Create something as:
-    
     v4      v0
      \     / |
       \   v1 |
@@ -76,15 +75,14 @@ def create_scenario():
     G = Graph(vertices, E)
     assert len(G.C) == 1
     gr = G.C[0]
-    
+
     # not needed anymore...
     #r = filter(lambda x: len(x.e_in()) == 0, gr.sV)
     #if len(r) == 0:
-    #    r = [gr.sV.o[0]]
+    #    r = [gr.sV[0]]
     return gr, data_to_vertex
 
 class CustomRankingSugiyamaLayout(SugiyamaLayout):
-    
 
     def init_all(self, roots=None, inverted_edges=None, cons=False, initial_ranking=None):
         '''
@@ -96,12 +94,12 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
             assert 0 in initial_ranking
             nblayers = max(initial_ranking.keys())+1
             self.layers = [Layer([]) for l in range(nblayers)]
-            
+
         SugiyamaLayout.init_all(self, roots=roots, inverted_edges=inverted_edges, cons=cons)
-        
+
     def _rank_init(self,unranked):
         assert self.dag
-        
+
         if not hasattr(self, 'initial_ranking'):
             SugiyamaLayout._rank_init(self, unranked)
         else:
@@ -120,15 +118,12 @@ def _compute_rank_to_data(sug):
                 continue
             data.append(v.data)
     return rank_to_data
-    
 
 def test_sugiyama_ranking():
     gr, data_to_vertex = create_scenario()
-    
     sug = SugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
     sug.init_all()
-            
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -140,29 +135,26 @@ def test_sugiyama_ranking():
     # rank 4:     v3
     rank_to_data = _compute_rank_to_data(sug)
     assert rank_to_data == {
-        0: ['v4', 'v0'], 
-        1: ['v1'], 
-        2: ['v5'], 
-        3: ['v2'], 
-        4: ['v3'], 
+        0: ['v4', 'v0'],
+        1: ['v1'],
+        2: ['v5'],
+        3: ['v2'],
+        4: ['v3'],
     }
     sug.draw(N=10)
-    
+
 def test_sugiyama_custom_ranking():
     gr, data_to_vertex = create_scenario()
-    
     sug = CustomRankingSugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
-    
     rank_to_data = {
-        0: [data_to_vertex['v4'], data_to_vertex['v0']], 
-        1: [data_to_vertex['v1']], 
-        2: [data_to_vertex['v5']], 
-        3: [data_to_vertex['v2']], 
-        4: [data_to_vertex['v3']], 
+        0: [data_to_vertex['v4'], data_to_vertex['v0']],
+        1: [data_to_vertex['v1']],
+        2: [data_to_vertex['v5']],
+        3: [data_to_vertex['v2']],
+        4: [data_to_vertex['v3']],
     }
     sug.init_all(initial_ranking=rank_to_data)
-            
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -174,25 +166,23 @@ def test_sugiyama_custom_ranking():
     # rank 4:     v3
     rank_to_data = _compute_rank_to_data(sug)
     assert rank_to_data == {
-        0: ['v4', 'v0'], 
-        1: ['v1'], 
-        2: ['v5'], 
-        3: ['v2'], 
-        4: ['v3'], 
+        0: ['v4', 'v0'],
+        1: ['v1'],
+        2: ['v5'],
+        3: ['v2'],
+        4: ['v3'],
     }
     sug.draw(N=10)
-    
+
 def test_sugiyama_custom_ranking2():
     gr, data_to_vertex = create_scenario()
-    
     sug = CustomRankingSugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
-    
     rank_to_data = {
-        0: [data_to_vertex['v4'], data_to_vertex['v0']], 
-        1: [data_to_vertex['v5'], data_to_vertex['v1']], 
-        2: [data_to_vertex['v2']], 
-        3: [data_to_vertex['v3']], 
+        0: [data_to_vertex['v4'], data_to_vertex['v0']],
+        1: [data_to_vertex['v5'], data_to_vertex['v1']],
+        2: [data_to_vertex['v2']],
+        3: [data_to_vertex['v3']],
     }
     try:
         sug.init_all(initial_ranking=rank_to_data)
