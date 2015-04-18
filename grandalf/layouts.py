@@ -563,7 +563,7 @@ class  SugiyamaLayout(object):
                     if g[um].dummy and um.controlled and not g[vk].dummy:
                         continue
                     # if vk is "free" align it with um's root
-                    if g[vk].align == vk:
+                    if g[vk].align is vk:
                         if dirv==1: vpair = (vk,um)
                         else:       vpair = (um,vk)
                         # if vk<->um link is used for alignment
@@ -586,7 +586,7 @@ class  SugiyamaLayout(object):
         # recursive placement of blocks:
         for l in L:
             for v in l[::dirh]:
-                if g[v].root==v:
+                if g[v].root is v:
                     self.__place_block(v)
         setrecursionlimit(limit)
         # mirror all nodes if right-aligned:
@@ -632,7 +632,7 @@ class  SugiyamaLayout(object):
                     u = g[wprec].root
                     self.__place_block(u)
                     # set sink as sink of prec-block root
-                    if g[v].sink==v:
+                    if g[v].sink is v:
                         g[v].sink = g[u].sink
                     if g[v].sink<>g[u].sink:
                         s = g[u].sink
@@ -643,7 +643,7 @@ class  SugiyamaLayout(object):
                 # take next node to align in block:
                 w = g[w].align
                 # quit if self aligned
-                if w==v: break
+                if w is v: break
 
     # Basic edge routing applied only for edges with dummy points.
     # Enhanced edge routing can be performed by using the apropriate
