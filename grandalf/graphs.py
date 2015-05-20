@@ -366,7 +366,7 @@ class  graph_core(object):
     # The Feedback Acyclic Set of edge to be removed/reversed is provided by
     # marking the edges with a "feedback" flag.
     # Complexity is O(V+E).
-    def get_scs_with_feedback(self,roots):
+    def get_scs_with_feedback(self,roots=None):
         from  sys import getrecursionlimit,setrecursionlimit
         limit=getrecursionlimit()
         N=self.norm()+10
@@ -394,6 +394,7 @@ class  graph_core(object):
                 #print "unstacked %s"%('-'.join([x.data[1:13] for x in l]))
                 L.append(l)
             v.mark=False
+        if roots is None: roots=self.roots()
         self.tstack=[]
         scs = []
         Vertex.ncur=1
