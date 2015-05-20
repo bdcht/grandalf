@@ -120,7 +120,7 @@ class  Poset(object):
         s2 = set(other.o.values())
         return Poset(s1.difference(s2))
 
-    def difference(self,other):
+    def difference(self,*args):
         p = self
         for other in args:
             p = p - other
