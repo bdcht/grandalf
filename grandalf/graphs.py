@@ -416,6 +416,32 @@ class  graph_core(object):
         setrecursionlimit(limit)
         return scs
 
+    def partition(self):
+        V = self.sV.copy()
+        R = self.roots()
+        for r in R: V.remove(r)
+        parts = []
+        while len(R)>0:
+            v = R.pop(0)
+            p = Poset([v])
+            l = v.N(+1)
+            while len(l)>0:
+                x = l.pop(0)
+                if x in p: continue
+                if all([(y in p) for y in x.N(-1)]):
+                    p.add(x)
+                    if x in R:
+                        R.remove(x)
+                    else:
+                        V.remove(x)
+                    l.extend(x.N(+1))
+                else:
+                    if x in V:
+                        V.remove(x)
+                        R.append(x)
+            parts.append(list(p))
+        return parts
+
     # returns neighbours of a vertex v:
     # f_io=-1 : parent nodes
     # f_io=+1 : child nodes
