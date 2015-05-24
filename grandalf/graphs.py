@@ -217,10 +217,10 @@ class  graph_core(object):
     # remove Edge :
     # this procedure checks that the resulting graph is connex.
     def remove_edge(self,e):
-        if e.deg==0 or (not e in self.sE): return
+        if (not e in self.sE): return
         e.detach()
         # check if still connected (path is not oriented here):
-        if not self.path(e.v[0],e.v[1]):
+        if e.deg==1 and not self.path(e.v[0],e.v[1]):
             # return to inital state by reconnecting everything:
             e.attach()
             # exit with exception!
