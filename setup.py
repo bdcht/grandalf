@@ -2,18 +2,36 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-here = path.abspath(path.dirname(__file__))
+long_descr = '''
+Grandalf is a python package made for experimentations with graphs and drawing
+algorithms. It is written in pure python, and implements two layouts: the Sugiyama
+hierarchical layout and the force-driven or energy minimization approach.
+While not as fast or featured as *graphviz* or other libraries like *OGDF* (C++),
+*GDToolkit* (C), *tulip* (Java), it provides a way to draw and navigate graphs
+no larger than thousands of nodes, while keeping the source code simple enough
+to make it possible to easily tweak and hack any part of it for experimental purpose.
+With a total of about 1500 lines of python, the code involved in
+drawing the Sugiyama (dot) layout fits in less than 600 lines.
+The energy minimization approach is comprised of only 250 lines!
 
-# Get the long description from the relevant file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
+Grandalf does only two not-so-simple things:
+
+- computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
+  chosen layout)
+- routing the edges with lines or nurbs
+
+It doesn't depend on any GTK/Qt/whatever graphics toolkit.
+This means that it will help you find *where* to
+draw things like nodes and edges, but it's up to you to actually draw things with
+your favorite graphics toolkit.
+'''
 
 setup(
-    name='Grandalf',
+    name='grandalf',
     version='0.555',
 
     description='Graph and drawing algorithms framework',
-    long_description=long_description,
+    long_description=long_descr,
 
     # The project's main homepage.
     url='https://github.com/bdcht/grandalf',
@@ -35,12 +53,9 @@ setup(
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Graph Drawings',
-        'Topic :: Software Development :: Libraries :: Python Modules',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-        'License :: OSI Approved :: Eclipse Public License v1 (EPLv1)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -49,6 +64,7 @@ setup(
 
     # What does your project relate to?
     keywords='graphviz networkx development',
+
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
