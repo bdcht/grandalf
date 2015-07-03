@@ -1,3 +1,5 @@
+import pytest
+
 from grandalf.graphs import *
 
 V = [Vertex("b%d"%n) for n in range(1,16)]

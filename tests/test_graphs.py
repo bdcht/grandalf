@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+import pytest
 
 from  grandalf.graphs import *
 
@@ -108,5 +108,4 @@ def  test_cycles():
     assert [v.data for v in scs[0]] == ['g', 'f']
     assert [v.data for v in scs[1]] == ['c', 'd', 'h']
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
-    return g1
 

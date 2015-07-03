@@ -1,4 +1,6 @@
 *.pyc
 *.swp
 build/
+dist/
+*.egg-info
 tests/samples/priv/

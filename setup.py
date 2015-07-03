@@ -1,26 +1,87 @@
-#!/usr/bin/env python
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
 
-import sys
+here = path.abspath(path.dirname(__file__))
 
-v = sys.version_info
-if v.major!=2:
-    print 'grandalf requires python 2.x'
-    sys.exit(1)
-if v.minor<7:
-    print 'grandalf requires python>=2.7'
-    sys.exit(1)
-
-from distutils.core import setup
+# Get the long description from the relevant file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
-    name = 'Grandalf',
-    version = '0.555',
+    name='Grandalf',
+    version='0.555',
+
+    description='Graph and drawing algorithms framework',
+    long_description=long_description,
+
+    # The project's main homepage.
+    url='https://github.com/bdcht/grandalf',
+
+    # Author details
+    author='Axel Tillequin',
+    author_email='bdcht3@gmail.com',
+
+    # Choose your license
+    license='GPLv2 | EPLv1',
+
+    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[
+        # How mature is this project? Common values are
+        #   3 - Alpha
+        #   4 - Beta
+        #   5 - Production/Stable
+        'Development Status :: 3 - Alpha',
+
+        # Indicate who your project is intended for
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Graph Drawings',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+
+        # Pick your license as you wish (should match "license" above)
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'License :: OSI Approved :: Eclipse Public License v1 (EPLv1)',
+
+        # Specify the Python versions you support here. In particular, ensure
+        # that you indicate whether you support Python 2, Python 3 or both.
+        'Programming Language :: Python :: 2.7',
+    ],
+
+    # What does your project relate to?
+    keywords='graphviz networkx development',
+
+    # You can just specify the packages manually here if your project is
+    # simple. Or you can use find_packages().
     packages=['grandalf','grandalf/utils'],
-    # Metadata
-    author = 'Axel Tillequin',
-    author_email = 'bdcht3@gmail.com',
-    description = 'Dynamic 2D graph placement library',
-    license = 'GPLv2 | EPLv1',
-    keywords = 'graphs',
-    url = 'https://github.com/bdcht/grandalf',
+
+    # List run-time dependencies here.  These will be installed by pip when
+    # your project is installed. For an analysis of "install_requires" vs pip's
+    # requirements files see:
+    # https://packaging.python.org/en/latest/requirements.html
+    install_requires=[],
+
+    # List additional groups of dependencies here (e.g. development
+    # dependencies). You can install these using the following syntax,
+    # for example:
+    # $ pip install -e .[dev,test]
+    extras_require={
+    },
+
+    # If there are data files included in your packages that need to be
+    # installed, specify them here.  If using Python 2.6 or less, then these
+    # have to be included in MANIFEST.in as well.
+    package_data={
+    },
+
+    # Although 'package_data' is the preferred approach, in some case you may
+    # need to place data files outside of your packages. See:
+    # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa
+    # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
+    data_files=[],
+
+    # To provide executable scripts, use entry points in preference to the
+    # "scripts" keyword. Entry points provide cross-platform support and allow
+    # pip to create the appropriate form of executable for the target platform.
+    entry_points={
+    },
 )

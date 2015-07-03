@@ -1,11 +1,9 @@
-#!/usr/bin/env python
+import pytest
 
 from grandalf import *
-from helpers import get_samples_file
 
-
-def test_cycles():
-    g = utils.Dot().read(get_samples_file('cycles.dot'))[0]
+def test_cycles(sample_cycle):
+    g = utils.Dot().read(sample_cycle)[0]
     V = {}
     for k,v in g.nodes.iteritems():
         V[k]=graphs.Vertex(k)
@@ -15,13 +13,29 @@ def test_cycles():
         E.append(graphs.Edge(V[e.n1.name],V[e.n2.name]))
 
     G = graphs.Graph(V.values(),E)
-
+    assert len(G.C)==1
     sg = layouts.SugiyamaLayout(G.C[0])
     gr = sg.g
 
-    r = filter(lambda x: len(x.e_in())==0, gr.sV)
-    L = gr.get_scs_with_feedback(r)
+    r = gr.roots()
+    assert len(r)==2
+    assert V['A1'] in r
+    assert V['A2'] in r
 
-    print 'roots',[x.data for x in r]
+    L = gr.get_scs_with_feedback(r)
+    assert len(L)==5
     for s in L:
-        print [x.data for x in s]
+        if V['A1'] in s:
+            assert len(s)==1
+        if V['A2'] in s:
+            assert len(s)==1
+        if V['B1'] in s:
+            assert len(s)==1
+        if V['B2'] in s:
+            assert len(s)==1
+        if len(s)>1:
+            assert V['C1'] in s
+            assert V['C2'] in s
+            assert V['D1'] in s
+            assert V['D2'] in s
+            assert len(s)==4
