@@ -840,7 +840,7 @@ class  DigcoLayout(object):
     def _cg_Lw(self,Lw,z,b):
         scal = lambda U,V: float(U.transpose()*V)
         r = b - Lw*z
-        p = matrix(r,copy=True)
+        p = r.copy()
         rr = scal(r,r)
         for k in xrange(self._cg_max_iter):
             if rr<self._cg_tolerance: break
@@ -880,11 +880,6 @@ class  DigcoLayout(object):
 
     # returns vector -L^Z.Z:
     def __Lij_Z_Z(self,Z):
-        from math import sqrt
-        scal = lambda U,V: float(U.transpose()*V)
-        def dist(Zi,Zk):
-            v = (Zi-Zk).transpose()
-            return sqrt(scal(v,v))
         n = self.g.order()
         # init:
         lzz = Z.copy()*0.0 # lzz has dim Z (n x 2)
@@ -893,7 +888,8 @@ class  DigcoLayout(object):
         for i in xrange(n):
             iterk_except_i = (k for k in xrange(n) if k<>i)
             for k in iterk_except_i:
-                liz[0,k] = 1.0/(self.Dij[i,k]*dist(Z[i],Z[k]))
+                v = Z[i]-Z[k]
+                liz[0,k] = 1.0/(self.Dij[i,k]*sqrt(v*v.transpose()))
             liz[0,i] = 0.0 # forced, otherwise next liz.sum() is wrong !
             liz[0,i] = -liz.sum()
             # now that we have the i-th row of L^Z, just dotprod with Z:
@@ -901,7 +897,6 @@ class  DigcoLayout(object):
         return lzz
 
     def _optimize(self,Z,limit=100):
-        scal = lambda U,V: float(U.transpose()*V)
         Lw = self.__Lij_w_()
         K = self.g.order()*(self.g.order()-1.0)/2.0
         stress = float('inf')
