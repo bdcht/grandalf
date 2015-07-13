@@ -115,11 +115,5 @@ ROUND_AT_DISTANCE = 40
 
 def route_with_rounded_corners(e, pts):
     route_with_lines(e, pts)
-
-    try:
-        new_pts = _round_corners(pts, round_at_distance=ROUND_AT_DISTANCE)
-    except:
-        import traceback;traceback.print_exc()
+    new_pts = _round_corners(pts, round_at_distance=ROUND_AT_DISTANCE)
     pts[:] = new_pts[:]
-
-
