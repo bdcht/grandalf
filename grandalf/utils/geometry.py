@@ -17,7 +17,7 @@ try:
 except ImportError:
     has_numpy = False
     from math import cos,sin,pi
-    deg2rad = lambda x: (x*math.pi/180.)
+    deg2rad = lambda x: (x*pi/180.)
     from .linalg import array,matrix
 
 #  rand_ortho1 returns a numpy.array representing
