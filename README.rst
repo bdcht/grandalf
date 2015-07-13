@@ -5,6 +5,9 @@ Grandalf
 Graph and drawing algorithms framework
 --------------------------------------
 
+.. image:: https://travis-ci.org/bdcht/grandalf.svg?branch=master
+    :target: https://travis-ci.org/bdcht/grandalf
+
 +-----------+--------------------------------------+
 | Status:   | Under Development                    |
 +-----------+--------------------------------------+
