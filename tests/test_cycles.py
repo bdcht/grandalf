@@ -2,6 +2,7 @@ import pytest
 
 from grandalf import *
 
+@pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module to parse dot input file")
 def test_cycles(sample_cycle):
     g = utils.Dot().read(sample_cycle)[0]
     V = {}

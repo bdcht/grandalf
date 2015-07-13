@@ -1,19 +1,21 @@
-#!/usr/bin/env python
+import pytest
 
 from  grandalf.graphs  import *
 from  grandalf.layouts import *
 from grandalf.routing import EdgeViewer, route_with_rounded_corners
 
-def test_layouts(sample_G02):
+def test_001_Sugiyama(sample_G02):
     gr  = graph_core(*sample_G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
     sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
-    i=0
     for  s in sug.draw_step():
         for v,x in sug.grx.iteritems():
             print x, v.view.xy
-        i+=1
+
+def test_002_Digco(sample_G02):
+    gr  = graph_core(*sample_G02)
+    for  v in gr.V(): v.view = VertexViewer(10,10)
     dig  = DigcoLayout(gr)
     dig.init_all()
     dig.draw()

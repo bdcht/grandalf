@@ -1,13 +1,12 @@
 import pytest
 
-from  grandalf.graphs  import *
-from  grandalf.layouts import *
-from  grandalf.utils   import Dot
+from  grandalf import *
 
+@pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module")
 def test_001_lexer(capsys):
-    dot = Dot()
-    dot.lexer.build()
-    dot.lexer.test('''
+    d = utils.Dot()
+    d.lexer.build()
+    d.lexer.test('''
     strict diGRAPH "test" {
       NODE [color="red"]
       a b "c" ;
@@ -30,11 +29,13 @@ def test_001_lexer(capsys):
     assert len(lines)==78
     assert all([x.startswith('LexToken') for x in lines])
 
+@pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module")
 def test_002_parser(sample_dot):
-    print Dot().read(sample_dot)
+    print utils.Dot().read(sample_dot)
 
+@pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module")
 def test_003_dg10(sample_dg10):
-    L  = Dot().read(sample_dg10)
+    L  = utils.Dot().read(sample_dg10)
     assert len(L)==10
     dglen = [49,51,52,52,49,51,78,20,76,9]
     for i in range(10):
@@ -46,19 +47,19 @@ def test_003_dg10(sample_dg10):
         E = []
         for k,x in ast.nodes.iteritems():
             try:
-                v = Vertex(x.attr['label'])
+                v = graphs.Vertex(x.attr['label'])
             except (KeyError,AttributeError):
-                v = Vertex(x.name)
-            v.view = VertexViewer(10,10)
+                v = graphs.Vertex(x.name)
+            v.view = layouts.VertexViewer(10,10)
             V[x.name] = v
         edgelist = []
         for e in ast.edges: edgelist.append(e)
         for edot in edgelist:
             v1 = V[edot.n1.name]
             v2 = V[edot.n2.name]
-            E.append(Edge(v1,v2))
-        G.append(Graph(V.values(),E))
+            E.append(graphs.Edge(v1,v2))
+        G.append(graphs.Graph(V.values(),E))
         for gr in G[-1].C:
-            sug = SugiyamaLayout(gr)
+            sug = layouts.SugiyamaLayout(gr)
             sug.init_all()
             sug.draw()
