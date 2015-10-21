@@ -7,6 +7,8 @@ Graph and drawing algorithms framework
 
 .. image:: https://travis-ci.org/bdcht/grandalf.svg?branch=master
     :target: https://travis-ci.org/bdcht/grandalf
+.. image:: https://img.shields.io/pypi/dm/grandalf.svg
+    :target: https://pypi.python.org/pypi/grandalf
 
 +-----------+--------------------------------------+
 | Status:   | Under Development                    |
