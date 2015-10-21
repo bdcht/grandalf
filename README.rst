@@ -1,15 +1,17 @@
 ========
 Grandalf
 ========
---------------------------------------
 
+--------------------------------------
 Graph and drawing algorithms framework
 --------------------------------------
 
 .. image:: https://travis-ci.org/bdcht/grandalf.svg?branch=master
     :target: https://travis-ci.org/bdcht/grandalf
+
 .. image:: https://img.shields.io/pypi/dm/grandalf.svg
     :target: https://pypi.python.org/pypi/grandalf
+
 .. image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/bdcht/grandalf
    :target: https://gitter.im/bdcht/grandalf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
