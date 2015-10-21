@@ -3,9 +3,6 @@ Grandalf
 ========
 --------------------------------------
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/bdcht/grandalf
-   :target: https://gitter.im/bdcht/grandalf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 Graph and drawing algorithms framework
 --------------------------------------
 
@@ -13,6 +10,9 @@ Graph and drawing algorithms framework
     :target: https://travis-ci.org/bdcht/grandalf
 .. image:: https://img.shields.io/pypi/dm/grandalf.svg
     :target: https://pypi.python.org/pypi/grandalf
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/bdcht/grandalf
+   :target: https://gitter.im/bdcht/grandalf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 +-----------+--------------------------------------+
 | Status:   | Under Development                    |
