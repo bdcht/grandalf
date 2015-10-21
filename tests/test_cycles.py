@@ -40,3 +40,20 @@ def test_cycles(sample_cycle):
             assert V['D1'] in s
             assert V['D2'] in s
             assert len(s)==4
+
+def test_longcycle():
+    V = {}
+    for x in 'abcdefgh':
+        v = graphs.Vertex(x)
+        v.view = layouts.VertexViewer()
+        V[x] = v
+    E = []
+    for e in ('ab','bc','cd','de','eb','bf','dg','gh','fh'):
+        E.append(graphs.Edge(V[e[0]],V[e[1]]))
+    G = graphs.Graph(V.values(),E)
+    l = layouts.SugiyamaLayout(G.C[0])
+    l.init_all()
+    assert len(l.alt_e)==1
+    assert l.alt_e[0] == E[4]
+    assert l.grx[V['e']].rank == 4
+    assert sum((v.dummy for v in l.grx.values()))==4
