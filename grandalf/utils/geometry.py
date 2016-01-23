@@ -188,43 +188,6 @@ def setroundcorner(e,pts):
     return splines or [[P[0],P[-1]]]
 
 #------------------------------------------------------------------------------
-class Point(object):
-    '''
-    Helper class representing a point.
-    '''
-
-    def __init__(self, *pts):
-        self.x, self.y = pts
-
-    def __getitem__(self, i):
-        if i == 0:
-            return self.x
-
-        if i == 1:
-            return self.y
-
-        raise AssertionError('For 2d point can only get 0 or 1 (trying to get: %s)' % (i,))
-
-    def __len__(self):
-        return 2
-
-    def __iter__(self):
-        yield self.x
-        yield self.y
-
-    def distance(self, p2):
-        x1, y1 = self
-        x2, y2 = p2
-        dist = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        return dist
-
-    def __str__(self):
-        return '(%s, %s)' % (self.x, self.y)
-
-    def __repr__(self):
-        return 'Point(%s, %s)' % (self.x, self.y)
-
-#------------------------------------------------------------------------------
 def new_point_at_distance(pt, distance, angle):
     # angle in radians
     distance = float(distance)
