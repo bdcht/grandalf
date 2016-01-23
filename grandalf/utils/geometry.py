@@ -225,54 +225,10 @@ class Point(object):
         return 'Point(%s, %s)' % (self.x, self.y)
 
 #------------------------------------------------------------------------------
-def angle_between_360_degrees(angle):
-    while angle >= 360.0:
-        angle -= 360.0
-    while angle < 0.0:
-        angle += 360.0
-    if angle == 360.0:
-        angle = 0.0
-
-    return angle
-
-#------------------------------------------------------------------------------
-def angle_to_x_axis_in_degrees(pt0, pt1):
-    base_p0 = (0.0, 0.0)
-    base_p1 = (1.0, 0.0)
-
-    line1 = (pt0[0] - pt1[0], pt0[1] - pt1[1])
-    line2 = (base_p1[0] - base_p0[0], base_p1[1] - base_p0[1])
-
-    x1 = float(line1[0])
-    y1 = float(line1[1])
-    x2 = float(line2[0])
-    y2 = float(line2[1])
-    divide_by = (abs(x1 * x2) + abs(y1 * y2))
-
-    if divide_by == 0.0:
-        if pt0[1] > pt1[1]:
-            return 90.0
-        else:
-            return 270.0
-    else:
-        tg = ((x1 * y2) - (x2 * y1)) / divide_by
-        tan_degrees = degrees(atan(tg))
-
-        if pt0[0] > pt1[0]:
-            tan_degrees = -tan_degrees
-        else:
-            tan_degrees += 180.0
-
-        angle = tan_degrees
-        angle = angle_between_360_degrees(angle)
-
-        return angle
-
-#------------------------------------------------------------------------------
 def new_point_at_distance(pt, distance, angle):
-    angle = float(angle)
+    # angle in radians
+    distance = float(distance)
     x, y = pt[0], pt[1]
-    x += float(distance) * cos(deg2rad(angle))
-    y += float(distance) * sin(deg2rad(angle))
-    return float(x), float(y)
-
+    x += distance * cos(angle)
+    y += distance * sin(angle)
+    return x, y
