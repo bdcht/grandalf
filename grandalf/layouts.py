@@ -11,10 +11,10 @@
 #  e.g. "dummy" node insertion, edge reversal for making the graph
 #  acyclic and so on, are all kept inside the layout object.
 #
-from  numpy   import array,matrix
-from .utils   import rand_ortho1,median_wh
-from  sys     import getrecursionlimit,setrecursionlimit
 from  bisect  import bisect
+from  sys     import getrecursionlimit,setrecursionlimit
+
+from grandalf.utils import *
 
 try:
     xrange
@@ -26,21 +26,21 @@ try:
 except:
     izip = zip
 
-#  the VertexViewer class is responsible of providing
-#  graphical attributes associated with a Vertex.
-#  Instance of VertexViewer are generally created from
-#  Vertex.data and then embedded in the 'view' field.
-#  It is used by the layout algorithms the get vertex dimensions.
+# the VertexViewer class is used as the default class
+# for providing the Vertex dimensions (w,h) and position (xy)
+# in its view attribute.
+# The view object can however be instanciated from any ui widgets
+# library as long as it provides the w,h,xy interface, allowing
+# grandalf to get dimensions and set position directly from the widget.
 class  VertexViewer(object):
     def __init__(self,w=2,h=2,data=None):
         self.w = w
         self.h = h
+        self.data = data
+        self.xy = None
 
     def __str__(self, *args, **kwargs):
-        if hasattr(self, 'xy'):
-            return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
-
-        return 'VertexViewer (xy: None) w: %s h: %s' % (self.w, self.h)
+        return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
 
 
 #  SUGIYAMA LAYOUT
@@ -105,7 +105,7 @@ class Layer(list):
     __x    = 1.
     ccount = None
 
-    def __repr__(self):
+    def __str__(self):
         s  = '<Layer %d'%self.__r
         s += ', len=%d'%len(self)
         xc = self.ccount or '?'
@@ -198,12 +198,12 @@ class Layer(list):
     # this method provides the Vertex and DummyVertex adjacent to v in the
     # upper or lower layer (depending on layout.dirv state).
     def _neighbors(self,v):
+        assert self.layout.dag
         dirv = self.layout.dirv
         grxv=self.layout.grx[v]
         try: #(cache)
             return grxv.nvs[dirv]
         except AttributeError:
-            assert self.layout.dag
             grxv.nvs={-1:v.N(-1),+1:v.N(+1)}
             if grxv.dummy: return grxv.nvs[dirv]
             # v is real, v.N are graph neigbors but we need layers neighbors
@@ -419,6 +419,7 @@ class  SugiyamaLayout(object):
         try:
             self.layers[r].append(v)
         except IndexError:
+            assert r==len(self.layers)
             self.layers.append(Layer([v]))
 
     def dummyctrl(self,r,ctrl):
@@ -440,6 +441,8 @@ class  SugiyamaLayout(object):
             assert e in self.alt_e
             v0,v1 = v1,v0
             r0,r1 = r1,r0
+        elif r0==r1:
+            raise ValueError,'bad ranking'
         spanover=xrange(r0+1,r1)
         if (r1-r0)>1:
             # "dummy vertices" are stored in the edge ctrl dict,
@@ -560,7 +563,7 @@ class  SugiyamaLayout(object):
                     if g[um].dummy and um.controlled and not g[vk].dummy:
                         continue
                     # if vk is "free" align it with um's root
-                    if g[vk].align == vk:
+                    if g[vk].align is vk:
                         if dirv==1: vpair = (vk,um)
                         else:       vpair = (um,vk)
                         # if vk<->um link is used for alignment
@@ -583,7 +586,7 @@ class  SugiyamaLayout(object):
         # recursive placement of blocks:
         for l in L:
             for v in l[::dirh]:
-                if g[v].root==v:
+                if g[v].root is v:
                     self.__place_block(v)
         setrecursionlimit(limit)
         # mirror all nodes if right-aligned:
@@ -611,6 +614,7 @@ class  SugiyamaLayout(object):
                 g[v].shift = inf
                 g[v].X = None
 
+    # TODO: rewrite in iterative form to avoid recursion limit...
     def __place_block(self,v):
         g = self.grx
         if g[v].X==None:
@@ -628,7 +632,7 @@ class  SugiyamaLayout(object):
                     u = g[wprec].root
                     self.__place_block(u)
                     # set sink as sink of prec-block root
-                    if g[v].sink==v:
+                    if g[v].sink is v:
                         g[v].sink = g[u].sink
                     if g[v].sink<>g[u].sink:
                         s = g[u].sink
@@ -639,7 +643,7 @@ class  SugiyamaLayout(object):
                 # take next node to align in block:
                 w = g[w].align
                 # quit if self aligned
-                if w==v: break
+                if w is v: break
 
     # Basic edge routing applied only for edges with dummy points.
     # Enhanced edge routing can be performed by using the apropriate
@@ -806,7 +810,7 @@ class  DigcoLayout(object):
         # translate and normalize:
         x = x-x[0]
         y = y-y[0]
-        sfactor = 1.0/max(y.max(),x.max())
+        sfactor = 1.0/max(map(abs,y)+map(abs,x))
         return matrix(zip(x*sfactor,y*sfactor))
 
     # provide the diagonal of the Laplacian matrix of g
@@ -836,7 +840,7 @@ class  DigcoLayout(object):
     def _cg_Lw(self,Lw,z,b):
         scal = lambda U,V: float(U.transpose()*V)
         r = b - Lw*z
-        p = matrix(r,copy=True)
+        p = r.copy()
         rr = scal(r,r)
         for k in xrange(self._cg_max_iter):
             if rr<self._cg_tolerance: break
@@ -876,11 +880,6 @@ class  DigcoLayout(object):
 
     # returns vector -L^Z.Z:
     def __Lij_Z_Z(self,Z):
-        from math import sqrt
-        scal = lambda U,V: float(U.transpose()*V)
-        def dist(Zi,Zk):
-            v = (Zi-Zk).transpose()
-            return sqrt(scal(v,v))
         n = self.g.order()
         # init:
         lzz = Z.copy()*0.0 # lzz has dim Z (n x 2)
@@ -889,7 +888,8 @@ class  DigcoLayout(object):
         for i in xrange(n):
             iterk_except_i = (k for k in xrange(n) if k<>i)
             for k in iterk_except_i:
-                liz[0,k] = 1.0/(self.Dij[i,k]*dist(Z[i],Z[k]))
+                v = Z[i]-Z[k]
+                liz[0,k] = 1.0/(self.Dij[i,k]*sqrt(v*v.transpose()))
             liz[0,i] = 0.0 # forced, otherwise next liz.sum() is wrong !
             liz[0,i] = -liz.sum()
             # now that we have the i-th row of L^Z, just dotprod with Z:
@@ -897,7 +897,6 @@ class  DigcoLayout(object):
         return lzz
 
     def _optimize(self,Z,limit=100):
-        scal = lambda U,V: float(U.transpose()*V)
         Lw = self.__Lij_w_()
         K = self.g.order()*(self.g.order()-1.0)/2.0
         stress = float('inf')

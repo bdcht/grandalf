@@ -1,16 +1,14 @@
-#!/usr/bin/env python
+import pytest
 
 from  grandalf.graphs  import *
 from  grandalf.layouts import *
 from  grandalf.routing import *
 
-from  samples.G0 import G02
-
-def test_splines():
-    gr  = graph_core(*G02)
+def test_splines(capsys,sample_G02):
+    gr  = graph_core(*sample_G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
-    sug.init_all(roots=[gr.sV.o[0]],inverted_edges=[])
+    sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     i=0
     for  s in sug.draw_step():
         print '--- step %d '%i +'-'*20
@@ -31,11 +29,11 @@ def test_splines():
     dig.draw()
     for  v in gr.sV: print v,v.view.xy
 
-def test_rounded_corners():
-    gr  = graph_core(*G02)
+def test_rounded_corners(capsys,sample_G02):
+    gr  = graph_core(*sample_G02)
     for  v in gr.V(): v.view = VertexViewer(10,10)
     sug  = SugiyamaLayout(gr)
-    sug.init_all(roots=[gr.sV.o[0]],inverted_edges=[])
+    sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     i=0
     for  s in sug.draw_step():
         print '--- step %d '%i +'-'*20

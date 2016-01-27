@@ -1,13 +1,28 @@
-=================================================
-Grandalf-"Graph and drawing algorithms framework"
-=================================================
- +-----------+--------------------------------------+
- | Status:   | Under Development                    |
- +-----------+--------------------------------------+
- | Location: | http://github.com/bdcht/grandalf     |
- +-----------+--------------------------------------+
- | Version:  | 0.5                                  |
- +-----------+--------------------------------------+
+========
+Grandalf
+========
+
+--------------------------------------
+Graph and drawing algorithms framework
+--------------------------------------
+
+.. image:: https://travis-ci.org/bdcht/grandalf.svg?branch=master
+    :target: https://travis-ci.org/bdcht/grandalf
+
+.. image:: https://img.shields.io/pypi/dm/grandalf.svg
+    :target: https://pypi.python.org/pypi/grandalf
+
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/bdcht/grandalf
+   :target: https://gitter.im/bdcht/grandalf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
++-----------+--------------------------------------+
+| Status:   | Under Development                    |
++-----------+--------------------------------------+
+| Location: | https://github.com/bdcht/grandalf    |
++-----------+--------------------------------------+
+| Version:  | 0.555                                |
++-----------+--------------------------------------+
 
 Description
 ===========
@@ -15,8 +30,8 @@ Description
 Grandalf is a python package made for experimentations with graphs and drawing
 algorithms. It is written in pure python, and implements two layouts: the Sugiyama
 hierarchical layout and the force-driven or energy minimization approach.
-While not as fast or featured as /graphviz/ or other libraries like /OGDF/ (C++),
-/GDToolkit/ (C), /tulip/ (Java), it provides a way to *draw* and *navigate* graphs
+While not as fast or featured as _graphviz_ or other libraries like _OGDF_ (C++),
+_GDToolkit_ (C), _tulip_ (Java), it provides a way to *draw* and *navigate* graphs
 no larger than thousands of nodes, while keeping the source code simple enough
 to make it possible to easily tweak and hack any part of it for experimental purpose.
 With a total of about 1500 lines of python, the code involved in
@@ -57,17 +72,10 @@ Links
 Install
 =======
 
-Grandalf requires the following python packages:
-
-- http://pypi.python.org/pypi/numpy
-
 Grandalf suggests the following python packages:
 
-- http://www.dabeaz.com/ply, for parsing Dot input files
-
-These packages are generally provided by any linux distribution (python-numpy,
-python-ply.) Numpy provides Windows installer and PLY is written in full python
-so it installs straightforwardly from sources.
+- http://pypi.python.org/pypi/numpy, for the directed-constrained layout
+- http://www.dabeaz.com/ply, for importing graphs from graphviz_ *dot* files.
 
 Quickstart
 ==========
@@ -326,11 +334,10 @@ Basically, a Poset is pair (set,list) that is kept synchronized.
 Dot.
 ~~~~
 This class contains a PLY lexer and parser for the graphviz dot format.
-The now parser supports all example graphs currently defined in the graphviz
-mercurial tree here:
-    ``graphviz/graphs/{directed,undirected}/*.gvi``
-  as well as the dg.dot and ug.dot databases (> 5000 graph defs parsed OK .)
-  This includes latin1 and utf8 support (see russian.gv or Latin1.gv).
+The parser reads all graphs currently defined in graphviz_
+``graphs/{directed,undirected}/*.gvi``
+as well as the dg.dot and ug.dot databases (> 5000 graphs parsed OK)
+including *latin1* and *utf8* support (see russian.gv or Latin1.gv).
 
 setcurve.
 ~~~~~~~~~
@@ -643,13 +650,13 @@ If you have installed masr_, just do:
 .. sourcecode:: python
 
  $ cd /path/to/grandalf
- $ ./masr-graph -digco -N 25 tests/samples/circle.dot
+ $ masr-graph -digco -N 25 tests/samples/circle.dot
 
 Or, you may visualize each step of the convergence by:
 
 .. sourcecode:: python
 
- $ ./masr-graph -digco -N 1 tests/samples/circle.dot
+ $ masr-graph -digco -N 1 tests/samples/circle.dot
 
 Now mouse-focus one of the nodes and press SPACE to see the next iteration.
 Check out the masr/plugins/graph code to see how it works!
@@ -665,13 +672,15 @@ FAQ
 ===
 1. Why is there no 'add_vertex()' method in the graph_core class ?
 
-  Because graph_core are connected graphs, only add_single_vertex() makes sense.
-  If you want to add a vertex directly into a graph_core, the vertex must be
-  connected with an edge to another vertex already in the graph_core
-  (use add_edge()).
-  However, if the graph is empty, the first vertex can be attached to the graph
-  by using add_single_vertex().
+ Because graph_core are connected graphs, only add_single_vertex() makes sense.
+ If you want to add a vertex directly into a graph_core, the vertex must be
+ connected with an edge to another vertex already in the graph_core
+ (use add_edge()).
+ However, if the graph is empty, the first vertex can be attached to the graph
+ by using add_single_vertex().
 
 .. _masr: http://github.com/bdcht/masr
 .. _Wiki: https://github.com/bdcht/grandalf/wiki
 .. _smiasm: http://code.google.com/p/smiasm
+.. _graphviz: http://github.com/ellson/graphviz
+

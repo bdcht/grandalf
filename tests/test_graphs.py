@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+import pytest
 
 from  grandalf.graphs import *
 
@@ -54,6 +54,8 @@ def  test_graph():
     assert g1.norm()==4
     p = g1.path(V[0],V[3])
     assert '->'.join([x.data for x in p])=='a->c->d'
+    assert len(g1.roots())==1
+    assert g1.roots()[0]==D['a']
     for v in g1.sV: v.detach()
     #---------
     g2 = Graph(V,E)
@@ -106,5 +108,4 @@ def  test_cycles():
     assert [v.data for v in scs[0]] == ['g', 'f']
     assert [v.data for v in scs[1]] == ['c', 'd', 'h']
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
-    return g1
 
