@@ -29,7 +29,7 @@ def  route_with_lines(e,pts):
     assert hasattr(e,'view')
     tail_pos = intersectR(e.v[0].view,topt=pts[1])
     head_pos = intersectR(e.v[1].view,topt=pts[-2])
-    pts[0]  = tail_pos
+    pts[0] = tail_pos
     pts[-1] = head_pos
     e.view.head_angle = getangle(pts[-2],pts[-1])
 
@@ -43,14 +43,15 @@ def route_with_splines(e,pts):
 
 
 def _gen_point(p1, p2, new_distance):
-    initial_distance = distance =  sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+    initial_distance = distance = sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
     if initial_distance < 1e-10:
         return None
     if distance > new_distance:
         distance = distance - new_distance
     else:
         return None
-    angle = angle_to_x_axis_in_degrees(p2, p1)
+    angle = getangle(p1, p2)
+
     new = new_point_at_distance(p1, distance, angle)
     return new
 
