@@ -149,7 +149,7 @@ class  graph_core(object):
         self.sV = Poset(V)
         self.sE = Poset([])
 
-        self.degenerated_edges=[]
+        self.degenerated_edges=set()
 
         if len(self.sV)==1:
             v = self.sV[0]
@@ -164,9 +164,7 @@ class  graph_core(object):
                 raise ValueError,'unknown Vertex (%s or %s)'%e.v
             e.v = (x,y)
             if e.deg==0:
-                e.detach()
-                self.degenerated_edges.append(e)
-                continue
+                self.degenerated_edges.add(e)
             e = self.sE.add(e)
             e.attach()
             if x.c is None: x.c=Poset([x])
@@ -212,6 +210,7 @@ class  graph_core(object):
         e = self.sE.add(e)
         x.c = self
         y.c = self
+        if e.deg==0: self.degenerated_edges.add(e)
         return e
 
     # remove Edge :
@@ -227,6 +226,8 @@ class  graph_core(object):
             raise ValueError,e
         else:
             e = self.sE.remove(e)
+            if e in self.degenerated_edges:
+                self.degenerated_edges.remove(e)
             return e
 
     # remove Vertex:

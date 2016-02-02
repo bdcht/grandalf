@@ -340,6 +340,14 @@ class  SugiyamaLayout(object):
             x,y = e.v
             e.v = (y,x)
         self.dag = not self.dag
+        if self.dag:
+            for e in self.g.degenerated_edges:
+                e.detach()
+                self.g.sE.remove(e)
+        else:
+            for e in self.g.degenerated_edges:
+                self.g.add_edge(e)
+
 
     # internal state for alignment policy:
     # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
