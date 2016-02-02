@@ -155,7 +155,7 @@ class Layer(list):
                 #sug.grx[v].bar = i*self.__x
             # try count resulting crossings:
             c = self._ordering_reduce_crossings()
-        self.layout._edge_inverter()
+        sug._edge_inverter()
         self.ccount = c
         return mvmt
 
@@ -299,12 +299,13 @@ class  SugiyamaLayout(object):
             assert hasattr(v,'view')
             self.grx[v] = _sugiyama_vertex_attr()
         self.dw,self.dh = median_wh([v.view for v in self.g.V()])
-        self.dw = 8
+        self.initdone = False
 
     # initialize the layout engine based on required
     #  -list of edges for making the graph_core acyclic
     #  -list of root nodes.
     def init_all(self,roots=None,inverted_edges=None,cons=False,optimize=False):
+        if self.initdone: return
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
@@ -321,6 +322,7 @@ class  SugiyamaLayout(object):
             self.setdummies(e,cons)
         # precompute some layers values:
         for l in self.layers: l.setup(self)
+        self.initdone = True
 
     # compute every node coordinates after converging to optimal ordering by N
     # rounds, and finally perform the edge routing.
@@ -450,15 +452,14 @@ class  SugiyamaLayout(object):
             v0,v1 = v1,v0
             r0,r1 = r1,r0
         elif r0==r1:
-            raise ValueError,'bad ranking'
-        spanover=xrange(r0+1,r1)
+            assert v0==v1
         if (r1-r0)>1:
             # "dummy vertices" are stored in the edge ctrl dict,
             # keyed by their rank in layers.
             ctrl=self.ctrls[e]={}
             ctrl[r0]=[v0]
             ctrl[r1]=[v1]
-            for r in spanover:
+            for r in xrange(r0+1,r1):
                 self.dummyctrl(r,ctrl)
             if e in self.alt_e and with_constraint:
                 dv0 = self.dummyctrl(r0,ctrl)
@@ -467,6 +468,22 @@ class  SugiyamaLayout(object):
                 dv1.constrainer=True
                 ctrl[r0+1][0].controlled=True
                 ctrl[r1-1][0].controlled=True
+        elif (r1-r0)==1:
+            if e in self.alt_e and with_constraint:
+                ctrl=self.ctrls[e]={}
+                dv0 = self.dummyctrl(r0,ctrl)
+                dv1 = self.dummyctrl(r1,ctrl)
+                dv0.constrainer=True
+                dv1.constrainer=True
+                ctrl[r0+1][0].controlled=True
+                ctrl[r1-1][0].controlled=True
+        else:
+            assert e.deg==0
+            ctrl=self.ctrls[e]={}
+            ctrl[r0]=[v0]
+            dv0 = self.dummyctrl(r0,ctrl)
+            dv0.constrainer=True
+
 
     # iterator that computes all node coordinates and edge routing after
     # just one step (one layer after the other from top to bottom to top).
