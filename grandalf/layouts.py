@@ -451,8 +451,6 @@ class  SugiyamaLayout(object):
             assert e in self.alt_e
             v0,v1 = v1,v0
             r0,r1 = r1,r0
-        elif r0==r1:
-            assert v0==v1
         if (r1-r0)>1:
             # "dummy vertices" are stored in the edge ctrl dict,
             # keyed by their rank in layers.
@@ -478,11 +476,11 @@ class  SugiyamaLayout(object):
                 ctrl[r0+1][0].controlled=True
                 ctrl[r1-1][0].controlled=True
         else:
-            assert e.deg==0
-            ctrl=self.ctrls[e]={}
-            ctrl[r0]=[v0]
-            dv0 = self.dummyctrl(r0,ctrl)
-            dv0.constrainer=True
+            if e.deg==0:
+                ctrl=self.ctrls[e]={}
+                ctrl[r0]=[v0]
+                dv0 = self.dummyctrl(r0,ctrl)
+                dv0.constrainer=True
 
 
     # iterator that computes all node coordinates and edge routing after
