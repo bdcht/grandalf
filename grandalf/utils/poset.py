@@ -146,9 +146,9 @@ class  Poset(object):
     __ge__ = issuperset
 
     def __lt__(self,other):
-        return (self<=other and len(self)<>len(other))
+        return (self<=other and len(self)!=len(other))
 
     def __gt__(self,other):
-        return (self>=other and len(self)<>len(other))
+        return (self>=other and len(self)!=len(other))
 
 

@@ -138,7 +138,7 @@ class Dot:
                     elif x.type=='edge' :
                         eattr.update(x.D)
                     else :
-                        raise TypeError,'invalid attribute type'
+                        raise TypeError('invalid attribute type')
                 elif isinstance(x,dict):
                     self.attr.update(x)
                 elif isinstance(x,Dot.node):

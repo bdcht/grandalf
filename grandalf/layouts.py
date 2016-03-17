@@ -23,7 +23,7 @@ except NameError:
 
 try:
     from itertools import izip
-except:
+except ImportError:
     izip = zip
 
 # the VertexViewer class is used as the default class
@@ -657,7 +657,7 @@ class  SugiyamaLayout(object):
                     # set sink as sink of prec-block root
                     if g[v].sink is v:
                         g[v].sink = g[u].sink
-                    if g[v].sink<>g[u].sink:
+                    if g[v].sink != g[u].sink:
                         s = g[u].sink
                         newshift = g[v].X-(g[u].X+delta)
                         g[s].shift = min(g[s].shift,newshift)
@@ -909,7 +909,7 @@ class  DigcoLayout(object):
         liz = matrix([0.0]*n) # liz is a row of L^Z (size n)
         # compute lzz = L^Z.Z while assembling L^Z by row (liz):
         for i in xrange(n):
-            iterk_except_i = (k for k in xrange(n) if k<>i)
+            iterk_except_i = (k for k in xrange(n) if k!=i)
             for k in iterk_except_i:
                 v = Z[i]-Z[k]
                 liz[0,k] = 1.0/(self.Dij[i,k]*sqrt(v*v.transpose()))
@@ -928,17 +928,17 @@ class  DigcoLayout(object):
         b  = self.__Lij_Z_Z(Z)
         while count<limit:
             if self.debug:
-                print "count %d"%count
-                print "Z = ",Z
-                print "b = ",b
+                print("count %d"%count)
+                print("Z = ",Z)
+                print("b = ",b)
             # find next Z by solving Lw.Z = b in every direction:
             x,xerr = self._cg_Lw(Lw[1:,1:],Z[1:,0],b[1:,0])
             y,yerr = self._cg_Lw(Lw[1:,1:],Z[1:,1],b[1:,1])
             Z[1:,0] = x
             Z[1:,1] = y
             if self.debug:
-                print " cg -> "
-                print Z,xerr,yerr
+                print(" cg -> ")
+                print(Z,xerr,yerr)
             # compute new stress:
             FZ = K-float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # precompute new b:
@@ -946,7 +946,7 @@ class  DigcoLayout(object):
             # update new stress:
             FZ += 2*float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # test convergence:
-            print 'stress=%.10f'%FZ
+            print('stress=%.10f'%FZ)
             if stress==0.0 : break
             elif abs((stress-FZ)/stress)<self._eps:
                 if deep==2:

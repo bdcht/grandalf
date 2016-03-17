@@ -4,9 +4,10 @@
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) and others
 # published under GPLv2 license or EPLv1 license
 # Contributor(s): Axel Tillequin, Fabio Zadrozny
+from __future__ import absolute_import
 
-from poset import *
-from dot import *
+from .poset import *
+from .dot import *
 
 from math import atan,atan2,degrees,sqrt
 from random import SystemRandom
@@ -33,7 +34,11 @@ def  rand_ortho1(n):
 #------------------------------------------------------------------------------
 #TODO:  this was imported here from masr, but since we have
 #  here access to numpy.array, we could use it for vectors operations.
-def  intersect2lines((x1,y1),(x2,y2),(x3,y3),(x4,y4)):
+def  intersect2lines(xy1, xy2, xy3, xy4):
+    (x1,y1) = xy1
+    (x2,y2) = xy2
+    (x3,y3) = xy3
+    (x4,y4) = xy4
     b = (x2-x1,y2-y1)
     d = (x4-x3,y4-y3)
     det = b[0]*d[1] - b[1]*d[0]
@@ -116,7 +121,7 @@ def median_wh(views):
 #  Wayne Tiller, Springer, 1997) and implements a local interpolation rather
 #  than a global interpolation.
 def setcurve(e,pts,tgs=None):
-    P = map(array,pts)
+    P = list(map(array,pts))
     n = len(P)
     # tangent estimation
     if tgs:
@@ -159,7 +164,7 @@ def tangents(P,n):
 
 #------------------------------------------------------------------------------
 def setroundcorner(e,pts):
-    P = map(array,pts)
+    P = list(map(array,pts))
     n = len(P)
     Q,T = tangents(P,n)
     c0 = P[0]

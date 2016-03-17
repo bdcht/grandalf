@@ -161,7 +161,7 @@ class  graph_core(object):
             x = self.sV.get(e.v[0])
             y = self.sV.get(e.v[1])
             if (x is None or y is None):
-                raise ValueError,'unknown Vertex (%s or %s)'%e.v
+                raise ValueError('unknown Vertex (%s or %s)'%e.v)
             e.v = (x,y)
             if e.deg==0:
                 self.degenerated_edges.add(e)
@@ -176,7 +176,7 @@ class  graph_core(object):
         #check if graph is connected:
         for v in self.V():
             if v.c is None or (v.c!=s):
-                raise ValueError,'unconnected Vertex %s'%v.data
+                raise ValueError('unconnected Vertex %s'%v.data)
             else:
                 v.c = self
 
@@ -202,7 +202,7 @@ class  graph_core(object):
         x = e.v[0]
         y = e.v[1]
         if not ((x in self.sV) or (y in self.sV)):
-            raise ValueError,'unconnected edge'
+            raise ValueError('unconnected edge')
         x = self.sV.add(x)
         y = self.sV.add(y)
         e.v = (x,y)
@@ -223,7 +223,7 @@ class  graph_core(object):
             # return to inital state by reconnecting everything:
             e.attach()
             # exit with exception!
-            raise ValueError,e
+            raise ValueError(e)
         else:
             e = self.sE.remove(e)
             if e in self.degenerated_edges:
@@ -244,7 +244,7 @@ class  graph_core(object):
             if not self.path(v0,v):
                 # repair everything and raise exception if not connected:
                 for e in E: e.attach()
-                raise ValueError,x
+                raise ValueError(x)
         # remove edges and vertex from internal sets:
         for e in E: self.sE.remove(e)
         x = self.sV.remove(x)
