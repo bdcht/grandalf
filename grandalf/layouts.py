@@ -12,7 +12,7 @@
 #  acyclic and so on, are all kept inside the layout object.
 #
 import sys
-
+from functools import cmp_to_key
 from  bisect  import bisect
 from  sys     import getrecursionlimit,setrecursionlimit
 
@@ -149,8 +149,11 @@ class Layer(list):
                 v = mvmt.pop()
                 v.bar = sug.grx[v.ctrl[self.__r][0]].bar
             # now resort layers l according to bar value:
-            self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
-
+            if sys.version_info < (3,):
+                self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
+            else:
+                _sugiyama_vertex_attr.__lt__ = lambda x,y:(sug.grx[x].bar > sug.grx[y].bar) - (sug.grx[x].bar < sug.grx[y].bar)
+                sorted(sug.grx)
             # assign new position in layer l:
             for i,v in enumerate(self):
                 if sug.grx[v].pos!=i: mvmt.append(v)
@@ -161,6 +164,10 @@ class Layer(list):
         sug._edge_inverter()
         self.ccount = c
         return mvmt
+
+    def custom_cmp(self, item):
+        _sugiyama_vertex_attr.__lt__ = lambda x,y:(item.grx[x].bar > item.grx[y].bar) - (item.grx[x].bar < item.grx[y].bar)
+
 
     # find new position of vertex v according to adjacency in prevlayer.
     # position is given by the mean value of adjacent positions.
@@ -263,7 +270,7 @@ class Layer(list):
             ni = [g[v].pos for v in self._neighbors(vi)]
             Xij=Xji=0
             for nj in [g[v].pos for v in self._neighbors(vj)]:
-                x = len(filter((lambda nx:nx>nj),ni))
+                x = len(list(filter((lambda nx:nx>nj),ni)))
                 Xij += x
                 Xji += len(ni)-x
             if Xji<Xij:
