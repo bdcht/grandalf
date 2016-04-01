@@ -12,7 +12,7 @@
 #  acyclic and so on, are all kept inside the layout object.
 #
 import sys
-from functools import cmp_to_key
+
 from  bisect  import bisect
 from  sys     import getrecursionlimit,setrecursionlimit
 
