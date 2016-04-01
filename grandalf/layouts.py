@@ -11,6 +11,8 @@
 #  e.g. "dummy" node insertion, edge reversal for making the graph
 #  acyclic and so on, are all kept inside the layout object.
 #
+import sys
+
 from  bisect  import bisect
 from  sys     import getrecursionlimit,setrecursionlimit
 
@@ -148,6 +150,7 @@ class Layer(list):
                 v.bar = sug.grx[v.ctrl[self.__r][0]].bar
             # now resort layers l according to bar value:
             self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
+
             # assign new position in layer l:
             for i,v in enumerate(self):
                 if sug.grx[v].pos!=i: mvmt.append(v)
@@ -309,10 +312,10 @@ class  SugiyamaLayout(object):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
-            roots = filter(lambda x: len(x.e_in())==0, self.g.sV)
+            roots = list(filter(lambda x: len(x.e_in())==0, self.g.sV))
         if inverted_edges==None:
             L = self.g.get_scs_with_feedback(roots)
-            inverted_edges = filter(lambda x:x.feedback, self.g.sE)
+            inverted_edges = list(filter(lambda x:x.feedback, self.g.sE))
         self.alt_e = inverted_edges
         # assign rank to all vertices:
         self.rank_all(roots,optimize)
@@ -385,7 +388,7 @@ class  SugiyamaLayout(object):
     # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots,optimize=False):
         self._edge_inverter()
-        r = filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV)
+        r = list(filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV))
         self._rank_init(roots+r)
         if optimize: self._rank_optimize()
         self._edge_inverter()
@@ -676,7 +679,7 @@ class  SugiyamaLayout(object):
             if hasattr(e,'view'):
                 l=[]
                 r0,r1 = None,None
-                if self.ctrls.has_key(e):
+                if e in self.ctrls:
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
                     if r0<r1:
@@ -766,13 +769,13 @@ class  DigcoLayout(object):
     # partition the nodes into levels:
     def part_to_levels(self,alpha,beta):
         opty,err = self.optimal_arrangement()
-        ordering = zip(opty,self.g.sV)
+        ordering = list(zip(opty,self.g.sV))
         eps = alpha*(opty.max()-opty.min())/(len(opty)-1)
         eps = max(beta,eps)
-        ordering.sort(reverse=True)
+        sorted(ordering, reverse=True)
         l = []
         self.levels.append(l)
-        for i in xrange(len(ordering)-1):
+        for i in xrange(len(list(ordering))-1):
             y,v = ordering[i]
             l.append(v)
             v.level = self.levels.index(l)
@@ -833,7 +836,7 @@ class  DigcoLayout(object):
         # translate and normalize:
         x = x-x[0]
         y = y-y[0]
-        sfactor = 1.0/max(map(abs,y)+map(abs,x))
+        sfactor = 1.0/max(list(map(abs,y))+list(map(abs,x)))
         return matrix(zip(x*sfactor,y*sfactor))
 
     # provide the diagonal of the Laplacian matrix of g
@@ -962,4 +965,3 @@ class  DigcoLayout(object):
 class  DwyerLayout(object):
     def __init__(self):
         raise NotImplementedError
-

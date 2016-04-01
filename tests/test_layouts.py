@@ -10,8 +10,8 @@ def test_001_Sugiyama(sample_G02):
     sug  = SugiyamaLayout(gr)
     sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
     for  s in sug.draw_step():
-        for v,x in sug.grx.iteritems():
-            print x, v.view.xy
+        for v,x in sug.grx.items():
+            print (x, v.view.xy)
 
 def test_002_Digco(sample_G02):
     gr  = graph_core(*sample_G02)
@@ -19,7 +19,7 @@ def test_002_Digco(sample_G02):
     dig  = DigcoLayout(gr)
     dig.init_all()
     dig.draw()
-    for  v in gr.sV: print v,v.view.xy
+    for  v in gr.sV: print (v,v.view.xy)
 
 def create_scenario():
     '''
@@ -100,7 +100,7 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
         if not hasattr(self, 'initial_ranking'):
             SugiyamaLayout._rank_init(self, unranked)
         else:
-            for rank, vertices in sorted(self.initial_ranking.iteritems()):
+            for rank, vertices in sorted(self.initial_ranking.items()):
                 for v in vertices:
                     self.grx[v].rank=rank
                     # add it to its layer:
@@ -183,5 +183,5 @@ def test_sugiyama_custom_ranking2():
     }
     try:
         sug.init_all(initial_ranking=rank_to_data)
-    except ValueError,e:
+    except ValueError as e:
         assert e.message == 'bad ranking'

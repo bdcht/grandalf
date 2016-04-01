@@ -19,10 +19,10 @@ class  vertex_core(object):
     def deg(self): return len(self.e)
 
     def e_in(self):
-        return filter( (lambda e:e.v[1]==self), self.e )
+        return list(filter((lambda e:e.v[1]==self), self.e ))
 
     def e_out(self):
-        return filter( (lambda e:e.v[0]==self), self.e )
+        return list(filter( (lambda e:e.v[0]==self), self.e ))
 
     def e_dir(self,dir):
         if dir>0: return self.e_out()
@@ -181,10 +181,10 @@ class  graph_core(object):
                 v.c = self
 
     def roots(self):
-        return filter(lambda v:len(v.e_in())==0, self.sV)
+        return list(filter(lambda v:len(v.e_in())==0, self.sV))
 
     def leaves(self):
-        return filter(lambda v:len(v.e_out())==0, self.sV)
+        return list(filter(lambda v:len(v.e_out())==0, self.sV))
 
     # allow a graph_core to hold a single vertex:
     def add_single_vertex(self,v):
@@ -313,7 +313,7 @@ class  graph_core(object):
         while (not p) and len(q)>0:
             c = q.pop(0)
             for n in c.N(f_io):
-                if not v.has_key(n):
+                if not n in v:
                     hook(n)
                     v[n] = c
                     if n==y: p = [n]
@@ -682,4 +682,3 @@ class  Graph(object):
     # contraction G\e
     def contract(self,e):
         raise NotImplementedError
-

@@ -21,6 +21,10 @@ except ImportError:
     deg2rad = lambda x: (x*pi/180.)
     from .linalg import array,matrix
 
+try:
+    xrange
+except NameError:
+    xrange = range
 #  rand_ortho1 returns a numpy.array representing
 #  a random normalized n-dimension vector orthogonal to (1,1,1,...,1).
 def  rand_ortho1(n):
@@ -111,7 +115,7 @@ def median_wh(views):
     mh = [v.h for v in views]
     mw.sort()
     mh.sort()
-    return (mw[len(mw)/2],mh[len(mh)/2])
+    return (mw[len(mw)//2],mh[len(mh)//2])
 
 #------------------------------------------------------------------------------
 #  setcurve returns the spline curve that path through the list of points P.
@@ -126,7 +130,7 @@ def setcurve(e,pts,tgs=None):
     # tangent estimation
     if tgs:
       assert len(tgs)==n
-      T = map(array,tgs)
+      T = list(map(array,tgs))
       Q = [ P[k+1]-P[k] for k in range(0,n-1)]
     else:
       Q,T = tangents(P,n)

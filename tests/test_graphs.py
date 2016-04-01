@@ -76,7 +76,7 @@ def  test_remove():
     try:
         cont = False
         g.remove_vertex(v1)
-    except ValueError,i:
+    except ValueError as i:
         cont = True
         assert i.args[0]==v1
     assert cont
@@ -108,4 +108,3 @@ def  test_cycles():
     assert [v.data for v in scs[0]] == ['g', 'f']
     assert [v.data for v in scs[1]] == ['c', 'd', 'h']
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
-

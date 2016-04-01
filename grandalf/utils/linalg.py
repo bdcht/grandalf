@@ -1,6 +1,9 @@
-from itertools import izip
+import sys
 from math import sqrt
 from array import array as _array
+
+if sys.version_info < (3,):
+    from itertools import izip
 
 
 def coerce_(types):
@@ -30,8 +33,12 @@ def make_ij_slices(f):
         return f(self,(I,J),*args)
     return wrapper
 
-constants = (int,long,float)
+if sys.version_info < (3,):
+    constants = (int,long,float)
 
+else:
+    long = int
+    constants = (int, long, float)
 # minimalistic numpy.array replacement class used as fallback
 # when numpy is not found in geometry module
 class array(object):
@@ -72,13 +79,13 @@ class array(object):
         if isinstance(v,constants):
             v = array([v]*self.dim)
         assert v.dim==self.dim
-        return array([x+y for (x,y) in izip(self.data,v.data)])
+        return array([x+y for (x,y) in zip(self.data,v.data)])
 
     def __sub__(self,v):
         if isinstance(v,constants):
             v = array([v]*self.dim)
         assert v.dim==self.dim
-        return array([x-y for (x,y) in izip(self.data,v.data)])
+        return array([x-y for (x,y) in zip(self.data,v.data)])
 
     def __neg__(self):
         return array([-x for x in self.data],dtype=self.dtype)
@@ -90,7 +97,7 @@ class array(object):
 
     def dot(self,v):
         assert v.dim==self.dim
-        return sum([x*y for (x,y) in izip(self.data,v.data)])
+        return sum([x*y for (x,y) in zip(self.data,v.data)])
 
     def __rmul__(self,k):
         return array([k*x for x in self.data])
@@ -167,7 +174,7 @@ class matrix(object):
         if t in constants:
             self.data = [array(data,dtype,copy)]
         else:
-            if transpose: data = izip(*data)
+            if transpose: data = zip(*data)
             self.data = [array(v,dtype,copy) for v in data]
         # define matrix sizes:
         self.n = len(self.data)
@@ -193,7 +200,7 @@ class matrix(object):
 
     def lvecs(self): return self.data
 
-    def cvecs(self): return [array(v,self.dtype) for v in izip(*self.data)]
+    def cvecs(self): return [array(v,self.dtype) for v in zip(*self.data)]
 
     def copy(self): return matrix(self.data,self.dtype)
 
@@ -230,14 +237,14 @@ class matrix(object):
             return matrix([u+m for u in self.data])
         else:
             assert self.shape == m.shape
-            return matrix([u+v for (u,v) in izip(self.data,m.data)])
+            return matrix([u+v for (u,v) in zip(self.data,m.data)])
 
     def __sub__(self,m):
         if isinstance(m,constants):
             return matrix([u-m for u in self.data])
         else:
             assert self.shape == m.shape
-            return matrix([u-v for (u,v) in izip(self.data,m.data)])
+            return matrix([u-v for (u,v) in zip(self.data,m.data)])
 
     def __neg__(self):
         return matrix([-x for x in self.data],dtype=self.dtype)

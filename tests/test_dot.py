@@ -31,7 +31,7 @@ def test_001_lexer(capsys):
 
 @pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module")
 def test_002_parser(sample_dot):
-    print utils.Dot().read(sample_dot)
+    print (utils.Dot().read(sample_dot))
 
 @pytest.mark.skipif(not utils.dot._has_ply,reason="requires ply module")
 def test_003_dg10(sample_dg10):
@@ -45,7 +45,7 @@ def test_003_dg10(sample_dg10):
     for  ast in L:
         V = {}
         E = []
-        for k,x in ast.nodes.iteritems():
+        for k,x in ast.nodes.items():
             try:
                 v = graphs.Vertex(x.attr['label'])
             except (KeyError,AttributeError):

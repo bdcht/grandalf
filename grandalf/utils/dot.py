@@ -2,6 +2,7 @@
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) and others
 # published under GPLv2 license or EPLv1 license
 # Contributor(s): Axel Tillequin
+import codecs
 
 try:
     import ply.lex as lex
@@ -397,7 +398,5 @@ class Dot:
         return L
 
     def read(self,filename):
-        f = file(filename,'rb') # As it'll try to decode later on with utf-8, read it binary at this point.
+        f = open(filename,'rb') # As it'll try to decode later on with utf-8, read it binary at this point.
         return self.parse(f.read())
-
-
