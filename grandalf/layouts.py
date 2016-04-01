@@ -837,7 +837,7 @@ class  DigcoLayout(object):
         x = x-x[0]
         y = y-y[0]
         sfactor = 1.0/max(list(map(abs,y))+list(map(abs,x)))
-        return matrix(zip(x*sfactor,y*sfactor))
+        return matrix(list(zip(x*sfactor,y*sfactor)))
 
     # provide the diagonal of the Laplacian matrix of g
     # the rest of L (sparse!) is already stored in every edges.

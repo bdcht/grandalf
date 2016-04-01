@@ -86,8 +86,12 @@ class  Vertex(vertex_core):
     @classmethod
     def count(cls):
         return cls.counter
+
     def __hash__(self):
         return self.index
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
 
 #------------------------------------------------------------------------------
 #  Edge class:
