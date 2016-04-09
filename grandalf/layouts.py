@@ -11,6 +11,8 @@
 #  e.g. "dummy" node insertion, edge reversal for making the graph
 #  acyclic and so on, are all kept inside the layout object.
 #
+import sys
+
 from  bisect  import bisect
 from  sys     import getrecursionlimit,setrecursionlimit
 
@@ -23,7 +25,7 @@ except NameError:
 
 try:
     from itertools import izip
-except:
+except ImportError:
     izip = zip
 
 # the VertexViewer class is used as the default class
@@ -147,7 +149,11 @@ class Layer(list):
                 v = mvmt.pop()
                 v.bar = sug.grx[v.ctrl[self.__r][0]].bar
             # now resort layers l according to bar value:
-            self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
+            if sys.version_info < (3,):
+                self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
+            else:
+                _sugiyama_vertex_attr.__lt__ = lambda x,y:(sug.grx[x].bar > sug.grx[y].bar) - (sug.grx[x].bar < sug.grx[y].bar)
+                sorted(sug.grx)
             # assign new position in layer l:
             for i,v in enumerate(self):
                 if sug.grx[v].pos!=i: mvmt.append(v)
@@ -158,6 +164,10 @@ class Layer(list):
         sug._edge_inverter()
         self.ccount = c
         return mvmt
+
+    def custom_cmp(self, item):
+        _sugiyama_vertex_attr.__lt__ = lambda x,y:(item.grx[x].bar > item.grx[y].bar) - (item.grx[x].bar < item.grx[y].bar)
+
 
     # find new position of vertex v according to adjacency in prevlayer.
     # position is given by the mean value of adjacent positions.
@@ -260,7 +270,7 @@ class Layer(list):
             ni = [g[v].pos for v in self._neighbors(vi)]
             Xij=Xji=0
             for nj in [g[v].pos for v in self._neighbors(vj)]:
-                x = len(filter((lambda nx:nx>nj),ni))
+                x = len(list(filter((lambda nx:nx>nj),ni)))
                 Xij += x
                 Xji += len(ni)-x
             if Xji<Xij:
@@ -309,10 +319,10 @@ class  SugiyamaLayout(object):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
-            roots = filter(lambda x: len(x.e_in())==0, self.g.sV)
+            roots = list(filter(lambda x: len(x.e_in())==0, self.g.sV))
         if inverted_edges==None:
             L = self.g.get_scs_with_feedback(roots)
-            inverted_edges = filter(lambda x:x.feedback, self.g.sE)
+            inverted_edges = list(filter(lambda x:x.feedback, self.g.sE))
         self.alt_e = inverted_edges
         # assign rank to all vertices:
         self.rank_all(roots,optimize)
@@ -385,7 +395,7 @@ class  SugiyamaLayout(object):
     # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots,optimize=False):
         self._edge_inverter()
-        r = filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV)
+        r = list(filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV))
         self._rank_init(roots+r)
         if optimize: self._rank_optimize()
         self._edge_inverter()
@@ -657,7 +667,7 @@ class  SugiyamaLayout(object):
                     # set sink as sink of prec-block root
                     if g[v].sink is v:
                         g[v].sink = g[u].sink
-                    if g[v].sink<>g[u].sink:
+                    if g[v].sink != g[u].sink:
                         s = g[u].sink
                         newshift = g[v].X-(g[u].X+delta)
                         g[s].shift = min(g[s].shift,newshift)
@@ -676,7 +686,7 @@ class  SugiyamaLayout(object):
             if hasattr(e,'view'):
                 l=[]
                 r0,r1 = None,None
-                if self.ctrls.has_key(e):
+                if e in self.ctrls:
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
                     if r0<r1:
@@ -766,13 +776,13 @@ class  DigcoLayout(object):
     # partition the nodes into levels:
     def part_to_levels(self,alpha,beta):
         opty,err = self.optimal_arrangement()
-        ordering = zip(opty,self.g.sV)
+        ordering = list(zip(opty,self.g.sV))
         eps = alpha*(opty.max()-opty.min())/(len(opty)-1)
         eps = max(beta,eps)
-        ordering.sort(reverse=True)
+        sorted(ordering, reverse=True)
         l = []
         self.levels.append(l)
-        for i in xrange(len(ordering)-1):
+        for i in xrange(len(list(ordering))-1):
             y,v = ordering[i]
             l.append(v)
             v.level = self.levels.index(l)
@@ -833,8 +843,8 @@ class  DigcoLayout(object):
         # translate and normalize:
         x = x-x[0]
         y = y-y[0]
-        sfactor = 1.0/max(map(abs,y)+map(abs,x))
-        return matrix(zip(x*sfactor,y*sfactor))
+        sfactor = 1.0/max(list(map(abs,y))+list(map(abs,x)))
+        return matrix(list(zip(x*sfactor,y*sfactor)))
 
     # provide the diagonal of the Laplacian matrix of g
     # the rest of L (sparse!) is already stored in every edges.
@@ -909,7 +919,7 @@ class  DigcoLayout(object):
         liz = matrix([0.0]*n) # liz is a row of L^Z (size n)
         # compute lzz = L^Z.Z while assembling L^Z by row (liz):
         for i in xrange(n):
-            iterk_except_i = (k for k in xrange(n) if k<>i)
+            iterk_except_i = (k for k in xrange(n) if k!=i)
             for k in iterk_except_i:
                 v = Z[i]-Z[k]
                 liz[0,k] = 1.0/(self.Dij[i,k]*sqrt(v*v.transpose()))
@@ -928,17 +938,17 @@ class  DigcoLayout(object):
         b  = self.__Lij_Z_Z(Z)
         while count<limit:
             if self.debug:
-                print "count %d"%count
-                print "Z = ",Z
-                print "b = ",b
+                print("count %d"%count)
+                print("Z = ",Z)
+                print("b = ",b)
             # find next Z by solving Lw.Z = b in every direction:
             x,xerr = self._cg_Lw(Lw[1:,1:],Z[1:,0],b[1:,0])
             y,yerr = self._cg_Lw(Lw[1:,1:],Z[1:,1],b[1:,1])
             Z[1:,0] = x
             Z[1:,1] = y
             if self.debug:
-                print " cg -> "
-                print Z,xerr,yerr
+                print(" cg -> ")
+                print(Z,xerr,yerr)
             # compute new stress:
             FZ = K-float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # precompute new b:
@@ -946,7 +956,7 @@ class  DigcoLayout(object):
             # update new stress:
             FZ += 2*float(x.transpose()*b[1:,0] + y.transpose()*b[1:,1])
             # test convergence:
-            print 'stress=%.10f'%FZ
+            print('stress=%.10f'%FZ)
             if stress==0.0 : break
             elif abs((stress-FZ)/stress)<self._eps:
                 if deep==2:
@@ -962,4 +972,3 @@ class  DigcoLayout(object):
 class  DwyerLayout(object):
     def __init__(self):
         raise NotImplementedError
-

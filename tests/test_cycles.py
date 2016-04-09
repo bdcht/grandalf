@@ -6,7 +6,7 @@ from grandalf import *
 def test_cycles(sample_cycle):
     g = utils.Dot().read(sample_cycle)[0]
     V = {}
-    for k,v in g.nodes.iteritems():
+    for k,v in g.nodes.items():
         V[k]=graphs.Vertex(k)
         V[k].view = layouts.VertexViewer(10,10)
     E = []

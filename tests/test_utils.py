@@ -1,5 +1,4 @@
 import pytest
-
 from grandalf.utils.linalg import *
 
 def test_linalg_001():
@@ -14,7 +13,10 @@ def test_linalg_001():
 def test_linalg_001():
     v1 = array([1,2,3])
     assert v1.dim==3
-    assert v1.typecode=='i'
+    if sys.version_info < (3,):
+        assert v1.typecode=='i'
+    else:
+        assert v1.typecode=='l'
     assert v1.dtype==int
     assert len(v1)==3
     assert v1[1]==2
@@ -23,13 +25,13 @@ def test_linalg_001():
     assert (v1*2)[2]==6
     assert sum(-v1+v1)==0
     assert v1.dot(v1) == 14
-    assert (v1/v1).max()==1
-    assert (v1/v1).min()==1
+    assert (v1//v1).max()==1
+    assert (v1//v1).min()==1
     assert v1.transpose().shape == (1,3)
 
 
 def test_linalg_002():
-    v1 = array([1,2.,3L])
+    v1 = array([1,2.,3])
     assert v1.typecode=='d'
     assert type(v1[0])==float
     assert v1[0]==1.

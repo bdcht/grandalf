@@ -19,10 +19,10 @@ class  vertex_core(object):
     def deg(self): return len(self.e)
 
     def e_in(self):
-        return filter( (lambda e:e.v[1]==self), self.e )
+        return list(filter((lambda e:e.v[1]==self), self.e ))
 
     def e_out(self):
-        return filter( (lambda e:e.v[0]==self), self.e )
+        return list(filter( (lambda e:e.v[0]==self), self.e ))
 
     def e_dir(self,dir):
         if dir>0: return self.e_out()
@@ -86,8 +86,12 @@ class  Vertex(vertex_core):
     @classmethod
     def count(cls):
         return cls.counter
+
     def __hash__(self):
         return self.index
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
 
 #------------------------------------------------------------------------------
 #  Edge class:
@@ -161,7 +165,7 @@ class  graph_core(object):
             x = self.sV.get(e.v[0])
             y = self.sV.get(e.v[1])
             if (x is None or y is None):
-                raise ValueError,'unknown Vertex (%s or %s)'%e.v
+                raise ValueError('unknown Vertex (%s or %s)'%e.v)
             e.v = (x,y)
             if e.deg==0:
                 self.degenerated_edges.add(e)
@@ -176,15 +180,15 @@ class  graph_core(object):
         #check if graph is connected:
         for v in self.V():
             if v.c is None or (v.c!=s):
-                raise ValueError,'unconnected Vertex %s'%v.data
+                raise ValueError('unconnected Vertex %s'%v.data)
             else:
                 v.c = self
 
     def roots(self):
-        return filter(lambda v:len(v.e_in())==0, self.sV)
+        return list(filter(lambda v:len(v.e_in())==0, self.sV))
 
     def leaves(self):
-        return filter(lambda v:len(v.e_out())==0, self.sV)
+        return list(filter(lambda v:len(v.e_out())==0, self.sV))
 
     # allow a graph_core to hold a single vertex:
     def add_single_vertex(self,v):
@@ -202,7 +206,7 @@ class  graph_core(object):
         x = e.v[0]
         y = e.v[1]
         if not ((x in self.sV) or (y in self.sV)):
-            raise ValueError,'unconnected edge'
+            raise ValueError('unconnected edge')
         x = self.sV.add(x)
         y = self.sV.add(y)
         e.v = (x,y)
@@ -223,7 +227,7 @@ class  graph_core(object):
             # return to inital state by reconnecting everything:
             e.attach()
             # exit with exception!
-            raise ValueError,e
+            raise ValueError(e)
         else:
             e = self.sE.remove(e)
             if e in self.degenerated_edges:
@@ -244,7 +248,7 @@ class  graph_core(object):
             if not self.path(v0,v):
                 # repair everything and raise exception if not connected:
                 for e in E: e.attach()
-                raise ValueError,x
+                raise ValueError(x)
         # remove edges and vertex from internal sets:
         for e in E: self.sE.remove(e)
         x = self.sV.remove(x)
@@ -313,7 +317,7 @@ class  graph_core(object):
         while (not p) and len(q)>0:
             c = q.pop(0)
             for n in c.N(f_io):
-                if not v.has_key(n):
+                if not n in v:
                     hook(n)
                     v[n] = c
                     if n==y: p = [n]
@@ -682,4 +686,3 @@ class  Graph(object):
     # contraction G\e
     def contract(self,e):
         raise NotImplementedError
-

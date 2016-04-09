@@ -23,7 +23,7 @@ class  Poset(object):
     def __str__(self):
         f='%%%dd'%len(str(len(self.o)))
         s=[]
-        for i,x in enumerate(self.o.itervalues()):
+        for i,x in enumerate(self.o.values()):
             s.append(f%i+'.| %s'%repr(x))
         return '\n'.join(s)
 
@@ -48,14 +48,18 @@ class  Poset(object):
         return self.o.get(obj,None)
 
     def __getitem__(self,i):
-        return self.o.values()[i]
+        return list(self.o.values())[i]
 
     def __len__(self):
         return len(self.o)
 
     def __iter__(self):
-        for obj in self.o.itervalues():
-            yield obj
+        try:
+            for obj in self.o.values():
+                yield obj
+        except:
+            for obj in self.o.values():
+                yield obj
 
     def __cmp__(self,other):
         s1 = set(other.o.values())
@@ -73,7 +77,7 @@ class  Poset(object):
         return s1!=s2
 
     def copy(self):
-        return Poset(self.o.itervalues())
+        return Poset(self.o.values())
 
     __copy__ = copy
     def deepcopy(self):
@@ -146,9 +150,7 @@ class  Poset(object):
     __ge__ = issuperset
 
     def __lt__(self,other):
-        return (self<=other and len(self)<>len(other))
+        return (self<=other and len(self)!=len(other))
 
     def __gt__(self,other):
-        return (self>=other and len(self)<>len(other))
-
-
+        return (self>=other and len(self)!=len(other))
