@@ -54,12 +54,8 @@ class  Poset(object):
         return len(self.o)
 
     def __iter__(self):
-        try:
-            for obj in self.o.values():
-                yield obj
-        except:
-            for obj in self.o.values():
-                yield obj
+        for obj in iter(self.o.values()):
+            yield obj
 
     def __cmp__(self,other):
         s1 = set(other.o.values())
