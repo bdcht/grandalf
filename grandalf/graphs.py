@@ -73,32 +73,29 @@ class  edge_core(object):
 #  data: anything else associated with the vertex.
 #------------------------------------------------------------------------------
 class  Vertex(vertex_core):
-    counter=0
     def __init__(self,data=None):
         vertex_core.__init__(self)
-        self.index=Vertex.counter
-        Vertex.counter += 1
         # by default, a new vertex belongs to its own component
         # but when the vertex is added to a graph, c points to the
         # connected component where it belongs.
         self.c = None
         self.data = data
+        self.__index = None
 
-    @classmethod
-    def count(cls):
-        return cls.counter
-
-    def __hash__(self):
-        return self.index
-
-    def __lt__(self, other):
-        return hash(self) < hash(other)
+    @property
+    def index(self):
+        if self.__index: return self.__index
+        elif isinstance(self.c,graph_core):
+            self.__index = self.c.sV.index(self)
+            return self.__index
+        else:
+            return None
 
     def __getstate__(self):
         return (self.index,self.data)
 
     def __setstate__(self,state):
-        self.index,self.data = state
+        self.__index,self.data = state
         self.c = None
         self.e = []
 
@@ -108,11 +105,8 @@ class  Vertex(vertex_core):
 #  data: anything else associated with the edge.
 #------------------------------------------------------------------------------
 class  Edge(edge_core):
-    counter=0
     def __init__(self,x,y,w=1,data=None,connect=False):
         edge_core.__init__(self,x,y)
-        self.index=Edge.counter
-        Edge.counter += 1
         # w is an optional weight associated with the edge.
         self.w = w
         self.data = data
@@ -120,12 +114,6 @@ class  Edge(edge_core):
         if connect and (x.c==None or y.c==None):
             c = x.c or y.c
             c.add_edge(self)
-
-    @classmethod
-    def count(cls):
-        return cls.counter
-    def __hash__(self):
-        return self.index
 
     def attach(self):
         if not self in self.v[0].e : self.v[0].e.append(self)
@@ -143,14 +131,13 @@ class  Edge(edge_core):
         return [self]
 
     def __getstate__(self):
-        return (self.index,self.data)
+        xi,yi = (self.v[0].index,self.v[1].index)
+        return (xi,yi,self.w,self.data,self.feedback)
 
     def __setstate__(self,state):
-        self.index,self.data = state
-        self.v = []
-        self.w = 1
-        self.feedback = False
-        self.deg = 0
+        xi,yi,self.w,self.data,self.feedback = state
+        self._v = [xi,yi]
+        self.deg = 0 if xi==yi else 1
 
 #------------------------------------------------------------------------------
 #  graph_core class: A connected graph of Vertex/Edge objects.
@@ -514,6 +501,17 @@ class  graph_core(object):
     def contract(self,e):
         raise NotImplementedError
 
+    def __getstate__(self):
+        V = [v for v in self.sV]
+        E = [e for e in self.sE]
+        return (V,E,self.directed)
+
+    def __setstate__(self,state):
+        V,E,directed=state
+        for e in E:
+            e.v = [V[x] for x in e._v]
+            del e._v
+        graph_core.__init__(self,V,E,directed)
 
 #------------------------------------------------------------------------------
 #  Graph class: Disjoint-set Graph.

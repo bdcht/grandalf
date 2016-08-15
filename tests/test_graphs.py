@@ -30,7 +30,8 @@ def  test_edge():
     pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
     x = pickler(e1)
     y = loads(x)
-    assert y.v[0].data=="a"
+    assert y.w==1
+    assert len(y._v)==2
 
 def  test_graph():
     v = ('a','b','c','d')
@@ -76,6 +77,8 @@ def  test_graph():
     pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
     x = pickler(g2)
     g3 = loads(x)
+    assert len(g3.C)==1
+    assert ''.join([v.data for v in g3.C[0].sV])=='abcd'
 
 def  test_remove():
     v1 = Vertex('a')
