@@ -83,6 +83,7 @@ class  Vertex(vertex_core):
         # connected component where it belongs.
         self.c = None
         self.data = data
+
     @classmethod
     def count(cls):
         return cls.counter
@@ -92,6 +93,14 @@ class  Vertex(vertex_core):
 
     def __lt__(self, other):
         return hash(self) < hash(other)
+
+    def __getstate__(self):
+        return (self.index,self.data)
+
+    def __setstate__(self,state):
+        self.index,self.data = state
+        self.c = None
+        self.e = []
 
 #------------------------------------------------------------------------------
 #  Edge class:
@@ -133,6 +142,15 @@ class  Edge(edge_core):
             assert self not in self.v[0].e
         return [self]
 
+    def __getstate__(self):
+        return (self.index,self.data)
+
+    def __setstate__(self,state):
+        self.index,self.data = state
+        self.v = []
+        self.w = 1
+        self.feedback = False
+        self.deg = 0
 
 #------------------------------------------------------------------------------
 #  graph_core class: A connected graph of Vertex/Edge objects.
@@ -270,6 +288,10 @@ class  graph_core(object):
         for e in E:
             if cond(e):
                 yield e
+
+    def M(self,cond=None):
+        mat = []
+
 
     # vertex/edge properties :
     #-------------------------
