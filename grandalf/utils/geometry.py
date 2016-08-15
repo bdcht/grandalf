@@ -4,8 +4,6 @@
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) and others
 # published under GPLv2 license or EPLv1 license
 # Contributor(s): Axel Tillequin, Fabio Zadrozny
-from __future__ import absolute_import
-
 from .poset import *
 from .dot import *
 
@@ -13,31 +11,11 @@ from math import atan,atan2,degrees,sqrt
 from random import SystemRandom
 
 try:
-    from numpy import array,matrix,cos,sin,deg2rad
-    has_numpy = True
-except ImportError:
-    has_numpy = False
-    from math import cos,sin,pi
-    deg2rad = lambda x: (x*pi/180.)
-    from .linalg import array,matrix
-
-try:
     xrange
 except NameError:
     xrange = range
-#  rand_ortho1 returns a numpy.array representing
-#  a random normalized n-dimension vector orthogonal to (1,1,1,...,1).
-def  rand_ortho1(n):
-    r = SystemRandom()
-    pos = [r.random() for x in xrange(n)]
-    s = sum(pos)
-    v = array(pos,dtype=float)-(s/float(n))
-    norm = sqrt(sum(v*v))
-    return v/norm
 
 #------------------------------------------------------------------------------
-#TODO:  this was imported here from masr, but since we have
-#  here access to numpy.array, we could use it for vectors operations.
 def  intersect2lines(xy1, xy2, xy3, xy4):
     (x1,y1) = xy1
     (x2,y2) = xy2
@@ -55,7 +33,6 @@ def  intersect2lines(xy1, xy2, xy3, xy4):
     x = x1 + t*b[0]
     y = y1 + t*b[1]
     return (x,y)
-
 
 #------------------------------------------------------------------------------
 #  intersectR returns the intersection point between the Rectangle
@@ -90,13 +67,40 @@ def  intersectR(view,topt):
     # inside the bb !
     raise ValueError('no intersection found (point inside ?!). view: %s topt: %s' % (view, topt))
 
-
 #------------------------------------------------------------------------------
 def  getangle(p1,p2):
     x1,y1 = p1
     x2,y2 = p2
     theta = atan2(y2-y1,x2-x1)
     return theta
+
+#------------------------------------------------------------------------------
+def median_wh(views):
+    mw = [v.w for v in views]
+    mh = [v.h for v in views]
+    mw.sort()
+    mh.sort()
+    return (mw[len(mw)//2],mh[len(mh)//2])
+
+#------------------------------------------------------------------------------
+try:
+    from numpy import array,matrix,cos,sin,deg2rad
+    has_numpy = True
+except ImportError:
+    has_numpy = False
+    from math import cos,sin,pi
+    deg2rad = lambda x: (x*pi/180.)
+    from .linalg import array,matrix
+
+#  rand_ortho1 returns a numpy.array representing
+#  a random normalized n-dimension vector orthogonal to (1,1,1,...,1).
+def  rand_ortho1(n):
+    r = SystemRandom()
+    pos = [r.random() for x in xrange(n)]
+    s = sum(pos)
+    v = array(pos,dtype=float)-(s/float(n))
+    norm = sqrt(sum(v*v))
+    return v/norm
 
 #------------------------------------------------------------------------------
 #  intersectC returns the intersection point between the Circle
@@ -108,14 +112,6 @@ def  intersectC(view, r, topt):
     y = int(sin(theta)*r)
     return (x,y)
 
-
-#------------------------------------------------------------------------------
-def median_wh(views):
-    mw = [v.w for v in views]
-    mh = [v.h for v in views]
-    mw.sort()
-    mh.sort()
-    return (mw[len(mw)//2],mh[len(mh)//2])
 
 #------------------------------------------------------------------------------
 #  setcurve returns the spline curve that path through the list of points P.
@@ -204,3 +200,4 @@ def new_point_at_distance(pt, distance, angle):
     x += distance * cos(angle)
     y += distance * sin(angle)
     return x, y
+

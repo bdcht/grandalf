@@ -12,6 +12,7 @@
 #  acyclic and so on, are all kept inside the layout object.
 #
 import sys
+import importlib
 
 from  bisect  import bisect
 from  sys     import getrecursionlimit,setrecursionlimit
@@ -289,6 +290,7 @@ class Layer(list):
 #------------------------------------------------------------------------------
 class  SugiyamaLayout(object):
     def __init__(self,g):
+        from grandalf.utils.geometry import median_wh
         # drawing parameters:
         self.dirvh=0
         self.order_iter = 8
@@ -720,6 +722,7 @@ class  SugiyamaLayout(object):
 #  DIRECTED GRAPH WITH CONSTRAINTS LAYOUT
 #------------------------------------------------------------------------------
 class  DigcoLayout(object):
+    linalg = importlib.import_module('grandalf.utils.geometry')
     def __init__(self,g):
         # drawing parameters:
         self.xspace = 10
@@ -796,13 +799,13 @@ class  DigcoLayout(object):
 
     def optimal_arrangement(self):
         b = self.balance()
-        y = rand_ortho1(self.g.order())
+        y = DigcoLayout.linalg.rand_ortho1(self.g.order())
         return self._conjugate_gradient_L(y,b)
 
     # balance vector is assembled in finite-element way...
     # this is faster than computing b[i] for each i.
     def balance(self):
-        b = array([0.0]*self.g.order(),dtype=float)
+        b = DigcoLayout.linalg.array([0.0]*self.g.order(),dtype=float)
         for e in self.g.E():
             s = e.v[0]
             d = e.v[1]
@@ -817,7 +820,7 @@ class  DigcoLayout(object):
     def _conjugate_gradient_L(self,y,b):
         Lii = self.__Lii_()
         r = b - self.__L_pk(Lii,y)
-        p = array(r,copy=True)
+        p = DigcoLayout.linalg.array(r,copy=True)
         rr = sum(r*r)
         for k in xrange(self._cg_max_iter):
             try:
@@ -838,13 +841,13 @@ class  DigcoLayout(object):
     # better convergence in constrained stress majorization
     def _xyinit(self,y=None):
         if y is None:
-            y = rand_ortho1(self.g.order())
-        x = rand_ortho1(self.g.order())
+            y = DigcoLayout.linalg.rand_ortho1(self.g.order())
+        x = DigcoLayout.linalg.rand_ortho1(self.g.order())
         # translate and normalize:
         x = x-x[0]
         y = y-y[0]
         sfactor = 1.0/max(list(map(abs,y))+list(map(abs,x)))
-        return matrix(list(zip(x*sfactor,y*sfactor)))
+        return DigcoLayout.linalg.matrix(list(zip(x*sfactor,y*sfactor)))
 
     # provide the diagonal of the Laplacian matrix of g
     # the rest of L (sparse!) is already stored in every edges.
@@ -852,7 +855,7 @@ class  DigcoLayout(object):
         Lii = []
         for v in self.g.V():
             Lii.append(sum([e.w for e in v.e]))
-        return array(Lii,dtype=float)
+        return DigcoLayout.linalg.array(Lii,dtype=float)
 
     # we don't compute the L.Pk matrix/vector product here since
     # L is sparse (order of |E| not |V|^2 !) so we let each edge
@@ -895,7 +898,7 @@ class  DigcoLayout(object):
             Dji.append(Di)
         # at this point  D is stored by rows,
         # but anymway it's a symmetric matrix
-        return matrix(Dji,dtype=float)
+        return DigcoLayout.linalg.matrix(Dji,dtype=float)
 
     # returns matrix -L^w
     def __Lij_w_(self):
@@ -916,13 +919,13 @@ class  DigcoLayout(object):
         n = self.g.order()
         # init:
         lzz = Z.copy()*0.0 # lzz has dim Z (n x 2)
-        liz = matrix([0.0]*n) # liz is a row of L^Z (size n)
+        liz = DigcoLayout.linalg.matrix([0.0]*n) # liz is a row of L^Z (size n)
         # compute lzz = L^Z.Z while assembling L^Z by row (liz):
         for i in xrange(n):
             iterk_except_i = (k for k in xrange(n) if k!=i)
             for k in iterk_except_i:
                 v = Z[i]-Z[k]
-                liz[0,k] = 1.0/(self.Dij[i,k]*sqrt(v*v.transpose()))
+                liz[0,k] = 1.0/(self.Dij[i,k]*DigcoLayout.linalg.sqrt(v*v.transpose()))
             liz[0,i] = 0.0 # forced, otherwise next liz.sum() is wrong !
             liz[0,i] = -liz.sum()
             # now that we have the i-th row of L^Z, just dotprod with Z:

@@ -13,7 +13,7 @@
 #  shall be performed by the drawing engine associated with 'views'.
 #  (e.g. look at intersectC when the node shape is a circle)
 
-from grandalf.utils import *
+from grandalf.utils.geometry import intersectR,getangle,sqrt
 
 #------------------------------------------------------------------------------
 class  EdgeViewer(object):
@@ -37,12 +37,14 @@ def  route_with_lines(e,pts):
 #  enhanced edge routing where 'corners' of the above polyline route are
 #  rounded with a bezier curve.
 def route_with_splines(e,pts):
+    from grandalf.utils.geometry import setroundcorner
     route_with_lines(e,pts)
     splines = setroundcorner(e,pts)
     e.view.splines = splines
 
 
 def _gen_point(p1, p2, new_distance):
+    from grandalf.utils.geometry import new_point_at_distance
     initial_distance = distance = sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
     if initial_distance < 1e-10:
         return None
@@ -51,7 +53,6 @@ def _gen_point(p1, p2, new_distance):
     else:
         return None
     angle = getangle(p1, p2)
-
     new = new_point_at_distance(p1, distance, angle)
     return new
 
