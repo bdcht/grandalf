@@ -179,8 +179,9 @@ class  graph_core(object):
             if x.c is None: x.c=Poset([x])
             if y.c is None: y.c=Poset([y])
             if id(x.c)!=id(y.c):
+                x,y = (x,y) if len(x.c)>len(y.c) else (y,x)
                 x.c.update(y.c)
-                y.c=x.c
+                for v in y.c: v.c=x.c
             s=x.c
         #check if graph is connected:
         for v in self.V():
