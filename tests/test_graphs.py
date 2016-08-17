@@ -1,5 +1,8 @@
 import pytest
+
 from pickle import dumps,loads,HIGHEST_PROTOCOL
+pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
+
 from  grandalf.graphs import *
 
 def  test_vertex():
@@ -10,7 +13,6 @@ def  test_vertex():
     assert v2.data=="v2"
     assert v1.e_to(v2) is None
     assert v1.c is None and v2.c is None
-    pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
     x = pickler(v2)
     y = loads(x)
     assert y.data=="v2"
@@ -27,7 +29,6 @@ def  test_edge():
     assert len(v1.N(-1))==0
     assert len(v2.N(+1))==0
     assert v2.e_from(v1)==e1
-    pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
     x = pickler(e1)
     y = loads(x)
     assert y.w==1
@@ -74,7 +75,6 @@ def  test_graph():
     g2.add_edge(Edge(D['d'],D['a'],data='da'))
     rete = V[0].e_from(D['d'])
     assert p == g2.path(V[0],V[3],1)
-    pickler = lambda x: dumps(x,HIGHEST_PROTOCOL)
     x = pickler(g2)
     g3 = loads(x)
     assert len(g3.C)==1
@@ -108,7 +108,10 @@ def  test_remove():
     assert len(g.C)==2
     assert ''.join([v.data for v in g.C[0].sV])=='b'
     assert [v.data for v in g.C[1].sV]==['c',4,5]
-
+    x = pickler(g)
+    y = loads(x)
+    assert len(y.C)==2
+    assert [v.data for v in y.C[1].sV]==['c',4,5]
 
 def  test_cycles():
     v = ('a','b','c','d','e','f','g','h')
