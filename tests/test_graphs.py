@@ -34,6 +34,11 @@ def  test_edge():
     assert y.w==1
     assert len(y._v)==2
 
+def test_graph_core(sample_G08):
+    V,E = sample_G08
+    g = graph_core(V,E)
+    assert g.order()==3
+
 def  test_graph():
     v = ('a','b','c','d')
     V = [Vertex(x) for x in v]

@@ -116,3 +116,13 @@ def sample_G07():
         ]
     E = [Edge(D[x],D[y]) for x,y in e]
     return (V,E)
+
+@pytest.fixture
+def sample_G08():
+    v = 'abc'
+    V = [Vertex(x) for x in v]
+    D = dict(zip(v,V))
+    e = ['bc','ac']
+    E = [Edge(D[xy[0]],D[xy[1]]) for xy in e]
+    return (V,E)
+
