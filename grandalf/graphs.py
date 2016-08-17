@@ -277,8 +277,19 @@ class  graph_core(object):
                 yield e
 
     def M(self,cond=None):
+        from array import array
         mat = []
-
+        for v in self.V(cond):
+            vec = array('b',[0]*self.order())
+            mat.append(vec)
+            for e in v.e_in():
+                v0 = e.v[0]
+                if v0.index==v.index: continue
+                vec[v0.index] = -e.w
+            for e in v.e_out():
+                v1 = e.v[1]
+                vec[v1.index] = e.w
+        return mat
 
     # vertex/edge properties :
     #-------------------------

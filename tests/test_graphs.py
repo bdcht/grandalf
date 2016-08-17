@@ -122,3 +122,14 @@ def  test_cycles():
     assert [v.data for v in scs[0]] == ['g', 'f']
     assert [v.data for v in scs[1]] == ['c', 'd', 'h']
     assert [v.data for v in scs[2]] == ['a', 'b', 'e']
+
+def test_Matrix(sample_G06):
+    V,E = sample_G06
+    G = Graph(V,E,directed=True)
+    assert len(G.C)==1
+    g = G.C[0]
+    M = g.M()
+    from grandalf.utils.linalg import matrix
+    M = matrix(M)
+    S = M+M.transpose()
+    assert S.sum()==0
