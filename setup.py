@@ -28,7 +28,7 @@ your favorite graphics toolkit.
 
 setup(
     name='grandalf',
-    version='0.555',
+    version='0.5555',
 
     description='Graph and drawing algorithms framework',
     long_description=long_descr,
