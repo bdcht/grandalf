@@ -42,7 +42,7 @@ class  Poset(object):
         return None
 
     def index(self,obj):
-        return self.o.values().index(obj)
+        return list(self.o.values()).index(obj)
 
     def get(self,obj):
         return self.o.get(obj,None)
