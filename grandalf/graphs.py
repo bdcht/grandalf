@@ -91,6 +91,9 @@ class  Vertex(vertex_core):
         else:
             return None
 
+    def __lt__(self,v):
+        return 0
+
     def __getstate__(self):
         return (self.index,self.data)
 
@@ -129,6 +132,9 @@ class  Edge(edge_core):
             if self in self.v[0].e: self.v[0].e.remove(self)
             assert self not in self.v[0].e
         return [self]
+
+    def __lt__(self,v):
+        return 0
 
     def __getstate__(self):
         xi,yi = (self.v[0].index,self.v[1].index)

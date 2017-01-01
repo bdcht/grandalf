@@ -38,7 +38,7 @@ if sys.version_info < (3,):
 
 else:
     long = int
-    constants = (int, long, float)
+    constants = (int,long,float)
 # minimalistic numpy.array replacement class used as fallback
 # when numpy is not found in geometry module
 class array(object):
@@ -108,13 +108,13 @@ class array(object):
         assert v.dim==self.dim
         return array([x*y for (x,y) in zip(self.data,v.data)])
 
-    def __div__(self,v):
+    def __truediv__(self,v):
         if isinstance(v,constants):
             v = array([v]*self.dim)
         assert v.dim==self.dim
         return array([x/y for (x,y) in zip(self.data,v.data)])
 
-    def __rdiv__(self,v):
+    def __rtruediv__(self,v):
         if isinstance(v,constants):
             v = array([v]*self.dim)
         assert v.dim==self.dim

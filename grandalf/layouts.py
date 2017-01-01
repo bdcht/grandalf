@@ -86,6 +86,8 @@ class  DummyVertex(_sugiyama_vertex_attr):
             return False
         except AttributeError:
             return False
+    def __lt__(self,v):
+        return 0
     def __str__(self):
         s="(%3d,%3d) x=%s"%(self.rank,self.pos,str(self.x))
         if self.dummy: s="[d] %s"%s
@@ -271,7 +273,7 @@ class Layer(list):
             ni = [g[v].pos for v in self._neighbors(vi)]
             Xij=Xji=0
             for nj in [g[v].pos for v in self._neighbors(vj)]:
-                x = len(list(filter((lambda nx:nx>nj),ni)))
+                x = len([nx for nx in ni if nx>nj])
                 Xij += x
                 Xji += len(ni)-x
             if Xji<Xij:
@@ -321,10 +323,10 @@ class  SugiyamaLayout(object):
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
         if roots==None:
-            roots = list(filter(lambda x: len(x.e_in())==0, self.g.sV))
+            roots = [v for v in self.g.sV if len(v.e_in())==0]
         if inverted_edges==None:
             L = self.g.get_scs_with_feedback(roots)
-            inverted_edges = list(filter(lambda x:x.feedback, self.g.sE))
+            inverted_edges = [x for x in self.g.sE if x.feedback]
         self.alt_e = inverted_edges
         # assign rank to all vertices:
         self.rank_all(roots,optimize)
@@ -397,7 +399,7 @@ class  SugiyamaLayout(object):
     # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots,optimize=False):
         self._edge_inverter()
-        r = list(filter(lambda x: len(x.e_in())==0 and x not in roots, self.g.sV))
+        r = [x for x in self.g.sV if (len(x.e_in())==0 and x not in roots)]
         self._rank_init(roots+r)
         if optimize: self._rank_optimize()
         self._edge_inverter()

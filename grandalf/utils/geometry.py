@@ -45,9 +45,9 @@ def  intersectR(view,topt):
     # endpoint in view's coord:
     x2,y2 = topt[0]-view.xy[0],topt[1]-view.xy[1]
     # bounding box:
-    bbx2 = view.w/2
+    bbx2 = view.w//2
     bbx1 = -bbx2
-    bby2 = view.h/2
+    bby2 = view.h//2
     bby1 = -bby2
     # all 4 segments of the bb:
     S = [((x1,y1),(x2,y2),(bbx1,bby1),(bbx2,bby1)),
