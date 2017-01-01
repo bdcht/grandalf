@@ -2,10 +2,6 @@ import sys
 from math import sqrt
 from array import array as _array
 
-if sys.version_info < (3,):
-    from itertools import izip
-
-
 def coerce_(types):
     if types is None: types = []
     if str in types: raise TypeError
@@ -113,12 +109,14 @@ class array(object):
             v = array([v]*self.dim)
         assert v.dim==self.dim
         return array([x/y for (x,y) in zip(self.data,v.data)])
+    __div__ = __truediv__
 
     def __rtruediv__(self,v):
         if isinstance(v,constants):
             v = array([v]*self.dim)
         assert v.dim==self.dim
         return array([x/y for (x,y) in zip(v.data,self.data)])
+    __rdiv__ = __rtruediv__
 
     def __floordiv__(self,v):
         if isinstance(v,constants):
