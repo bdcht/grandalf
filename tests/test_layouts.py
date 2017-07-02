@@ -81,7 +81,7 @@ def create_scenario():
 
 class CustomRankingSugiyamaLayout(SugiyamaLayout):
 
-    def init_all(self, roots=None, inverted_edges=None, cons=False, initial_ranking=None):
+    def init_all(self, roots=None, inverted_edges=None, initial_ranking=None):
         '''
         :param dict{vertex:int} initial_ranking:
             The initial ranking of each vertex if passed
@@ -92,7 +92,7 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
             nblayers = max(initial_ranking.keys())+1
             self.layers = [Layer([]) for l in range(nblayers)]
 
-        SugiyamaLayout.init_all(self, roots=roots, inverted_edges=inverted_edges, cons=cons)
+        SugiyamaLayout.init_all(self, roots=roots, inverted_edges=inverted_edges)
 
     def _rank_init(self,unranked):
         assert self.dag

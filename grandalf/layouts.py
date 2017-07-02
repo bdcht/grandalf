@@ -1,21 +1,26 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+.. _layouts:
+
+layouts.py
+==========
+Layouts are classes that provide graph drawing algorithms.
+
+These classes all take a :class:`graph_core` argument. The graph
+topology will never be permanently modified by the drawing algorithm:
+e.g. "dummy" node insertion, edge reversal for making the graph
+acyclic and so on, are all kept inside the layout object.
+"""
 
 # This code is part of Grandalf
 # Copyright (C) 2010-2012 Axel Tillequin (bdcht3@gmail.com)
 # published under the GPLv2 license or EPLv1 license
 
-#  Layouts are classes that provide graph drawing algorithms.
-#
-#  These classes all take a graph_core argument. The graph_core
-#  topology will never be permanently modified by the drawing algorithm:
-#  e.g. "dummy" node insertion, edge reversal for making the graph
-#  acyclic and so on, are all kept inside the layout object.
-#
-import sys
 import importlib
-
-from  bisect  import bisect
-from  sys     import getrecursionlimit,setrecursionlimit
+from bisect import bisect
+from sys import getrecursionlimit,setrecursionlimit
+from operator import attrgetter
 
 from grandalf.utils import *
 
@@ -29,13 +34,16 @@ try:
 except ImportError:
     izip = zip
 
-# the VertexViewer class is used as the default class
-# for providing the Vertex dimensions (w,h) and position (xy)
-# in its view attribute.
-# The view object can however be instanciated from any ui widgets
-# library as long as it provides the w,h,xy interface, allowing
-# grandalf to get dimensions and set position directly from the widget.
+#------------------------------------------------------------------------------
+
 class  VertexViewer(object):
+    """
+    The VertexViewer class is used as the default provider of
+    Vertex dimensions (w,h) and position (xy).
+    In most cases it should be replaced by *view* instances associated
+    with a ui widgets library, allowing to get dimensions and 
+    set position directly on the widget.
+    """
     def __init__(self,w=2,h=2,data=None):
         self.w = w
         self.h = h
@@ -45,64 +53,110 @@ class  VertexViewer(object):
     def __str__(self, *args, **kwargs):
         return 'VertexViewer (xy: %s) w: %s h: %s' % (self.xy, self.w, self.h)
 
-
-#  SUGIYAMA LAYOUT
 #------------------------------------------------------------------------------
-#  The Sugiyama layout is the traditional "layered" graph layout
-#  named 'dot' in graphviz.
-#  This layout is quite efficient but heavily relies on drawing
-#  heuristics. Adaptive drawing is limited to
-#  extending the leaves only, but since the algorithm is quite fast
-#  redrawing the entire graph (up to about a thousand nodes) gives
-#  usually better results in less than a second.
 
 class  _sugiyama_vertex_attr(object):
+    """
+    The sugiyama layout adds new attributes to vertices.
+    These attributes are stored in an internal _sugimyama_vertex_attr object.
+
+    Attributes:
+        rank (int): the rank number is the index of the layer that
+                    contains this vertex.
+        dummy (0/1): a flag indicating if the vertex is *dummy*
+        pos (int): the index of the vertex in the layer
+        x (list(float)): the list of computed horizontal coordinates of the vertex
+        bar (float): the current *barycenter* of the vertex 
+    """
     def __init__(self,r=None,d=0):
         self.rank=r
         self.dummy=d
         self.pos=None
         self.x=0
         self.bar=None
+
     def __str__(self):
         s="(%3d,%3d) x=%s"%(self.rank,self.pos,str(self.x))
         if self.dummy: s="[d] %s"%s
         return s
 
+    #def __eq__(self,x):
+    #    return self.bar == x.bar
+    #def __ne__(self,x):
+    #    return self.bar != x.bar
+    #def __lt__(self,x):
+    #    return self.bar < x.bar
+    #def __le__(self,x):
+    #    return self.bar <= x.bar
+    #def __gt__(self,x):
+    #    return self.bar > x.bar
+    #def __ge__(self,x):
+    #    return self.bar >= x.bar
+
+#------------------------------------------------------------------------------
+
 class  DummyVertex(_sugiyama_vertex_attr):
+    """
+    The DummyVertex class is used by the sugiyama layout to represent
+    *long* edges, i.e. edges that span over several ranks.
+    For these edges, a DummyVertex is inserted in every inner layer.
+
+    Attributes:
+        view (viewclass): since a DummyVertex is acting as a Vertex, it
+                          must have a view.
+        ctrl (list[_sugiyama_attr]): the list of associated dummy vertices
+
+    Methods:
+        N(dir): reflect the Vertex method and returns the list of adjacent
+                 vertices (possibly dummy) in the given direction.
+        inner(dir): return True if a neighbor in the given direction is *dummy*.
+    """
     def __init__(self,r=None,viewclass=VertexViewer):
         self.view = viewclass()
         self.ctrl = None
-        self.constrainer = False
-        self.controlled = False
         _sugiyama_vertex_attr.__init__(self,r,d=1)
+
     def N(self,dir):
         assert dir==+1 or dir==-1
-        return self.ctrl.get(self.rank+dir,[])
+        v = self.ctrl.get(self.rank+dir,None)
+        return [v] if v is not None else []
+
     def inner(self,dir):
         assert dir==+1 or dir==-1
         try:
-            return self.ctrl[self.rank+dir][-1].dummy==1
+            return any([x.dummy==1 for x in self.N(dir)])
         except KeyError:
             return False
         except AttributeError:
             return False
-    def __lt__(self,v):
-        return 0
+
     def __str__(self):
         s="(%3d,%3d) x=%s"%(self.rank,self.pos,str(self.x))
         if self.dummy: s="[d] %s"%s
-        if self.constrainer: s="[c] %s"%s
         return s
 
 #------------------------------------------------------------------------------
-# Layer is where Sugiyama layout organises nodes in hierarchical lists.
-# The placement of nodes is done by the Sugiyama class, but it highly relies on
-# the 'ordering' of nodes in each layer to reduce crossings.
-# This ordering depends on the neighbors found in the upper or lower layers.
-# WARNING: methods HIGHLY depend on layout.dirv state.
-# TODO: see if grx dict can be stored inside Layers or needs to stay in layout.
-#------------------------------------------------------------------------------
+
 class Layer(list):
+    """
+    Layer is where Sugiyama layout organises vertices in hierarchical lists.
+    The placement of a vertex is done by the Sugiyama class, but it highly relies on
+    the *ordering* of vertices in each layer to reduce crossings.
+    This ordering depends on the neighbors found in the upper or lower layers.
+
+    Attributes:
+        layout (SugiyamaLayout): a reference to the sugiyama layout instance that
+                                 contains this layer
+        upper (Layer): a reference to the *upper* layer (rank-1)
+        lower (Layer): a reference to the *lower* layer (rank+1)
+        ccount (int) : number of crossings detected in this layer
+
+    Methods:
+        setup (layout): set initial attributes values from provided layout
+        nextlayer(): returns *next* layer in the current layout's direction parameter.
+        prevlayer(): returns *previous* layer in the current layout's direction parameter.
+        order(): compute *optimal* ordering of vertices within the layer.
+    """
     __r    = None
     layout = None
     upper  = None
@@ -139,65 +193,42 @@ class Layer(list):
     def order(self):
         sug = self.layout
         sug._edge_inverter()
-        mvmt=[]
         c = self._cc()
         if c>0:
-            for v in self:
-                if sug.grx[v].dummy and v.constrainer:
-                    mvmt.append(v)
-                    continue
-                bar = self._meanvalueattr(v,sug.order_attr)
-                sug.grx[v].bar=bar
-            while len(mvmt)>0:
-                v = mvmt.pop()
-                v.bar = sug.grx[v.ctrl[self.__r][0]].bar
+            for v in self: sug.grx[v].bar = self._meanvalueattr(v)
             # now resort layers l according to bar value:
-            if sys.version_info < (3,):
-                self.sort(cmp=(lambda x,y: cmp(sug.grx[x].bar,sug.grx[y].bar)))
-            else:
-                _sugiyama_vertex_attr.__lt__ = lambda x,y:(sug.grx[x].bar > sug.grx[y].bar) - (sug.grx[x].bar < sug.grx[y].bar)
-                sorted(sug.grx)
+            self.sort(key=lambda x: sug.grx[x].bar)
+            # reduce & count crossings:
+            c = self._ordering_reduce_crossings()
             # assign new position in layer l:
             for i,v in enumerate(self):
-                if sug.grx[v].pos!=i: mvmt.append(v)
                 sug.grx[v].pos = i
-                #sug.grx[v].bar = i*self.__x
-            # try count resulting crossings:
-            c = self._ordering_reduce_crossings()
+                sug.grx[v].bar = i*self.__x
         sug._edge_inverter()
         self.ccount = c
-        return mvmt
+        return c
 
-    def custom_cmp(self, item):
-        _sugiyama_vertex_attr.__lt__ = lambda x,y:(item.grx[x].bar > item.grx[y].bar) - (item.grx[x].bar < item.grx[y].bar)
-
-
-    # find new position of vertex v according to adjacency in prevlayer.
-    # position is given by the mean value of adjacent positions.
-    # experiments show that meanvalue heuristic performs better than median.
-    def _meanvalueattr(self,v,att='bar'):
+    def _meanvalueattr(self,v):
+        """
+        find new position of vertex v according to adjacency in prevlayer.
+        position is given by the mean value of adjacent positions.
+        experiments show that meanvalue heuristic performs better than median.
+        """
         sug = self.layout
-        if sug.grx[v].dummy and v.constrainer:
-            return v.ctrl[self.__r][0].bar
-        if not self.prevlayer():
-            return getattr(sug.grx[v],att)
-        pos = [getattr(sug.grx[x],att) for x in self._neighbors(v)]
-        if len(pos)==0:
-            return getattr(sug.grx[v],att)
-        return float(sum(pos))/len(pos)
+        if not self.prevlayer(): return sug.grx[v].bar
+        bars = [sug.grx[x].bar for x in self._neighbors(v)]
+        return sug.grx[v].bar if len(bars)==0 else float(sum(bars))/len(bars)
 
-    # find new position of vertex v according to adjacency in layer l+dir.
-    # position is given by the median value of adjacent positions.
-    # median heuristic is proven to achieve at most 3 times the minimum
-    # of crossings (while barycenter achieve in theory the order of |V|)
     def _medianindex(self,v):
+        """
+        find new position of vertex v according to adjacency in layer l+dir.
+        position is given by the median value of adjacent positions.
+        median heuristic is proven to achieve at most 3 times the minimum
+        of crossings (while barycenter achieve in theory the order of |V|)
+        """
         assert self.prevlayer()!=None
         N = self._neighbors(v)
         g=self.layout.grx
-        if g[v].dummy and v.controlled:
-            for x in N:
-                if g[x].dummy and x.constrainer:
-                    return [g[x].pos]
         pos = [g[x].pos for x in N]
         lp = len(pos)
         if lp==0: return []
@@ -206,14 +237,16 @@ class Layer(list):
         i,j = divmod(lp-1,2)
         return [pos[i]] if j==0 else [pos[i],pos[i+j]]
 
-    # neighbors refer to upper/lower adjacent nodes.
-    # remember that v.N() provides neighbors of v within the graph, while
-    # this method provides the Vertex and DummyVertex adjacent to v in the
-    # upper or lower layer (depending on layout.dirv state).
     def _neighbors(self,v):
+        """
+        neighbors refer to upper/lower adjacent nodes.
+        Note that v.N() provides neighbors of v in the graph, while
+        this method provides the Vertex and DummyVertex adjacent to v in the
+        upper or lower layer (depending on layout.dirv state).
+        """
         assert self.layout.dag
         dirv = self.layout.dirv
-        grxv=self.layout.grx[v]
+        grxv = self.layout.grx[v]
         try: #(cache)
             return grxv.nvs[dirv]
         except AttributeError:
@@ -225,16 +258,18 @@ class Layer(list):
                 for i,x in enumerate(v.N(d)):
                     if self.layout.grx[x].rank==tr:continue
                     e=v.e_with(x)
-                    dum = self.layout.ctrls[e][tr][-1]
+                    dum = self.layout.ctrls[e][tr]
                     grxv.nvs[d][i]=dum
             return grxv.nvs[dirv]
 
-    # counts (inefficently but at least accurately) the number of
-    # crossing edges between layer l and l+dirv.
-    # P[i][j] counts the number of crossings from j-th edge of vertex i.
-    # The total count of crossings is the sum of flattened P:
-    # x = sum(sum(P,[]))
     def _crossings(self):
+        """
+        counts (inefficently but at least accurately) the number of
+        crossing edges between layer l and l+dirv.
+        P[i][j] counts the number of crossings from j-th edge of vertex i.
+        The total count of crossings is the sum of flattened P:
+        x = sum(sum(P,[]))
+        """
         g=self.layout.grx
         P=[]
         for v in self:
@@ -246,9 +281,11 @@ class Layer(list):
             del candidates
         return P
 
-    # implementation of the efficient bilayer cross counting by insert-sort
-    # (see Barth & Mutzel paper "Simple and Efficient Bilayer Cross Counting")
     def _cc(self):
+        """
+        implementation of the efficient bilayer cross counting by insert-sort
+        (see Barth & Mutzel paper "Simple and Efficient Bilayer Cross Counting")
+        """
         g=self.layout.grx
         P=[]
         for v in self:
@@ -270,14 +307,13 @@ class Layer(list):
         for i,j in izip(xrange(N-1),xrange(1,N)):
             vi = self[i]
             vj = self[j]
-            ni = [g[v].pos for v in self._neighbors(vi)]
+            ni = [g[v].bar for v in self._neighbors(vi)]
             Xij=Xji=0
-            for nj in [g[v].pos for v in self._neighbors(vj)]:
+            for nj in [g[v].bar for v in self._neighbors(vj)]:
                 x = len([nx for nx in ni if nx>nj])
                 Xij += x
                 Xji += len(ni)-x
             if Xji<Xij:
-                g[vi].pos,g[vj].pos = g[vj].pos,g[vi].pos
                 self[i] = vj
                 self[j] = vi
                 X += Xji
@@ -286,11 +322,35 @@ class Layer(list):
         return X
 
 #------------------------------------------------------------------------------
-#  The Sugiyama Layout Class takes as input a core_graph object and implements
-#  an efficient drawing algorithm based on nodes dimensions provided through
-#  a user-defined 'view' property in each vertex (see README.txt).
-#------------------------------------------------------------------------------
+
 class  SugiyamaLayout(object):
+    """
+    The Sugiyama layout is the traditional "layered" graph layout called
+    *dot* in graphviz. This layout is quite efficient but heavily relies 
+    on drawing heuristics. Adaptive drawing is limited to
+    extending the leaves only, but since the algorithm is quite fast
+    redrawing the entire graph (up to about a thousand nodes) gives
+    usually good results in less than a second.
+
+    The Sugiyama Layout Class takes as input a core_graph object and implements
+    an efficient drawing algorithm based on nodes dimensions provided through
+    a user-defined *view* property in each vertex.
+
+    Attributes:
+        dirvh (int): the current aligment state
+        order_inter (int): the default number of layer placement iterations
+        order_attr (str): set attribute name used for layer ordering
+        xspace (int): horizontal space between vertices in a layer
+        yspace (int): vertical space between layers
+        dw (int): default width of a vertex
+        dh (int): default height of a vertex
+        g (graph_core): the graph component reference
+        layers (list[Layer]): the list of layers
+        grx (dict): associate vertex (possibly dummy) with their sugiyama attributes
+        ctrls (dict): associate edge with all its vertices (including dummies)
+        dag (bool): the current acyclic state 
+        initdone (bool): True if state is initialized (see init_all).
+    """
     def __init__(self,g):
         from grandalf.utils.geometry import median_wh
         # drawing parameters:
@@ -315,10 +375,16 @@ class  SugiyamaLayout(object):
         self.dw,self.dh = median_wh([v.view for v in self.g.V()])
         self.initdone = False
 
-    # initialize the layout engine based on required
-    #  -list of edges for making the graph_core acyclic
-    #  -list of root nodes.
-    def init_all(self,roots=None,inverted_edges=None,cons=False,optimize=False):
+    def init_all(self,roots=None,inverted_edges=None,optimize=False):
+        """initializes the layout algorithm by computing roots (unless provided),
+           inverted edges (unless provided), vertices ranks and creates all dummy
+           vertices and layers. 
+             
+             Parameters:
+                roots (list[Vertex]): set *root* vertices (layer 0)
+                inverted_edges (list[Edge]): set edges to invert to have a DAG.
+                optimize (bool): optimize ranking if True (default False)
+        """
         if self.initdone: return
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
@@ -331,16 +397,16 @@ class  SugiyamaLayout(object):
         # assign rank to all vertices:
         self.rank_all(roots,optimize)
         # add dummy vertex/edge for 'long' edges:
-        self.ctrls['cons']=cons  # use "constrained edges" ?
         for e in self.g.E():
-            self.setdummies(e,cons)
+            self.setdummies(e)
         # precompute some layers values:
         for l in self.layers: l.setup(self)
         self.initdone = True
 
-    # compute every node coordinates after converging to optimal ordering by N
-    # rounds, and finally perform the edge routing.
     def draw(self,N=1.5):
+        """compute every node coordinates after converging to optimal ordering by N
+           rounds, and finally perform the edge routing.
+        """
         while N>0.5:
             for (l,mvmt) in self.ordering_step():
                 pass
@@ -384,20 +450,21 @@ class  SugiyamaLayout(object):
     @dirv.setter
     def dirv(self,dirv):
         assert dirv in (-1,+1)
-        dirvh = (dirv+1)+(1-self.__dirh)/2
+        dirvh = (dirv+1)+(1-self.__dirh)//2
         self.dirvh = dirvh
     @dirh.setter
     def dirh(self,dirh):
         assert dirh in (-1,+1)
-        dirvh = (self.__dirv+1)+(1-dirh)/2
+        dirvh = (self.__dirv+1)+(1-dirh)//2
         self.dirvh = dirvh
 
-    # rank all vertices.
-    # if list l is None, find initial rankable vertices (roots),
-    # otherwise update ranking from these vertices.
-    # The initial rank is based on precedence relationships,
-    # optimal ranking may be derived from network flow (simplex).
     def rank_all(self,roots,optimize=False):
+        """Computes rank of all vertices.
+        add provided roots to rank 0 vertices,
+        otherwise update ranking from provided roots.
+        The initial rank is based on precedence relationships,
+        optimal ranking may be derived from network flow (simplex).
+        """
         self._edge_inverter()
         r = [x for x in self.g.sV if (len(x.e_in())==0 and x not in roots)]
         self._rank_init(roots+r)
@@ -405,6 +472,11 @@ class  SugiyamaLayout(object):
         self._edge_inverter()
 
     def _rank_init(self,unranked):
+        """Computes rank of provided unranked list of vertices and all
+           their children. A vertex will be asign a rank when all its 
+           inward edges have been *scanned*. When a vertex is asigned
+           a rank, its outward edges are marked *scanned*.
+        """
         assert self.dag
         scan = {}
         # set rank of unranked based on its in-edges vertices ranks:
@@ -420,9 +492,11 @@ class  SugiyamaLayout(object):
                         if x not in l: l.append(x)
             unranked=l
 
-    # TODO: Network flow solver minimizing total edge length
-    # Also interesting: http://jgaa.info/accepted/2005/EiglspergerSiebenhallerKaufmann2005.9.3.pdf
     def _rank_optimize(self):
+        """optimize ranking by pushing long edges toward lower layers as much as possible.
+        see other interersting network flow solver to minimize total edge length
+        (http://jgaa.info/accepted/2005/EiglspergerSiebenhallerKaufmann2005.9.3.pdf)
+        """
         assert self.dag
         for l in reversed(self.layers):
             for v in l:
@@ -436,6 +510,9 @@ class  SugiyamaLayout(object):
 
 
     def setrank(self,v):
+        """set rank value for vertex v and add it to the corresponding layer.
+           The Layer is created if it is the first vertex with this rank.
+        """
         assert self.dag
         r=max([self.grx[x].rank for x in v.N(-1)]+[-1])+1
         self.grx[v].rank=r
@@ -447,18 +524,27 @@ class  SugiyamaLayout(object):
             self.layers.append(Layer([v]))
 
     def dummyctrl(self,r,ctrl):
+        """creates a DummyVertex at rank r inserted in the ctrl dict
+           of the associated edge and layer.
+
+           Arguments:
+              r (int): rank value
+              ctrl (dict): the edge's control vertices
+           
+           Returns:
+              DummyVertex : the created DummyVertex.
+        """
         dv = DummyVertex(r)
         dv.view.w,dv.view.h=self.dw,self.dh
         self.grx[dv] = dv
         dv.ctrl = ctrl
-        try:
-            ctrl[r].append(dv)
-        except KeyError:
-            ctrl[r] = [dv]
+        ctrl[r] = dv
         self.layers[r].append(dv)
         return dv
 
-    def setdummies(self,e,with_constraint=True):
+    def setdummies(self,e):
+        """creates and defines all needed dummy vertices for edge e.
+        """
         v0,v1 = e.v
         r0,r1 = self.grx[v0].rank,self.grx[v1].rank
         if r0>r1:
@@ -469,38 +555,16 @@ class  SugiyamaLayout(object):
             # "dummy vertices" are stored in the edge ctrl dict,
             # keyed by their rank in layers.
             ctrl=self.ctrls[e]={}
-            ctrl[r0]=[v0]
-            ctrl[r1]=[v1]
+            ctrl[r0]=v0
+            ctrl[r1]=v1
             for r in xrange(r0+1,r1):
                 self.dummyctrl(r,ctrl)
-            if e in self.alt_e and with_constraint:
-                dv0 = self.dummyctrl(r0,ctrl)
-                dv1 = self.dummyctrl(r1,ctrl)
-                dv0.constrainer=True
-                dv1.constrainer=True
-                ctrl[r0+1][0].controlled=True
-                ctrl[r1-1][0].controlled=True
-        elif (r1-r0)==1:
-            if e in self.alt_e and with_constraint:
-                ctrl=self.ctrls[e]={}
-                dv0 = self.dummyctrl(r0,ctrl)
-                dv1 = self.dummyctrl(r1,ctrl)
-                dv0.constrainer=True
-                dv1.constrainer=True
-                ctrl[r0+1][0].controlled=True
-                ctrl[r1-1][0].controlled=True
-        else:
-            if e.deg==0:
-                ctrl=self.ctrls[e]={}
-                ctrl[r0]=[v0]
-                dv0 = self.dummyctrl(r0,ctrl)
-                dv0.constrainer=True
 
-
-    # iterator that computes all node coordinates and edge routing after
-    # just one step (one layer after the other from top to bottom to top).
-    # Purely inefficient ! Use it only for "animation" or debugging purpose.
     def draw_step(self):
+        """iterator that computes all vertices coordinates and edge routing after
+           just one step (one layer after the other from top to bottom to top).
+           Purely inefficient ! Use it only for "animation" or debugging purpose.
+        """
         ostep = self.ordering_step()
         for s in ostep:
             self.setxy()
@@ -508,11 +572,15 @@ class  SugiyamaLayout(object):
             yield s
 
     def ordering_step(self,oneway=False):
+        """iterator that computes all vertices ordering in their layers
+           (one layer after the other from top to bottom, to top again unless
+           oneway is True).
+        """
         self.dirv=-1
         crossings = 0
         for l in self.layers:
             mvmt = l.order()
-            crossings += l.ccount
+            crossings += mvmt
             yield (l,mvmt)
         if oneway or (crossings == 0):
             return
@@ -522,8 +590,10 @@ class  SugiyamaLayout(object):
             yield (l,mvmt)
             l = l.nextlayer()
 
-    # algorithm by Brandes & Kopf:
     def setxy(self):
+        """computes all vertex coordinates (x,y) using
+        an algorithm by Brandes & Kopf.
+        """
         self._edge_inverter()
         self._detect_alignment_conflicts()
         inf = float('infinity')
@@ -555,12 +625,13 @@ class  SugiyamaLayout(object):
             Y += 2*dY+self.yspace
         self._edge_inverter()
 
-    # mark conflicts between edges:
-    # inner edges are edges between dummy nodes
-    # type 0 is regular crossing regular (or sharing vertex)
-    # type 1 is inner crossing regular (targeted crossings)
-    # type 2 is inner crossing inner (avoided by reduce_crossings phase)
     def _detect_alignment_conflicts(self):
+        """mark conflicts between edges:
+        inner edges are edges between dummy nodes
+        type 0 is regular crossing regular (or sharing vertex)
+        type 1 is inner crossing regular (targeted crossings)
+        type 2 is inner crossing inner (avoided by reduce_crossings phase)
+        """
         curvh = self.dirvh # save current dirvh value
         self.dirvh=0
         self.conflicts = []
@@ -586,8 +657,9 @@ class  SugiyamaLayout(object):
                     k0=k1
         self.dirvh = curvh # restore it
 
-    # vertical alignment highly depends on dirh/dirv state.
     def _coord_vertical_alignment(self):
+        """performs vertical alignment according to current dirvh internal state.
+        """
         dirh,dirv = self.dirh,self.dirv
         g = self.grx
         for l in self.layers[::-dirv]:
@@ -597,8 +669,6 @@ class  SugiyamaLayout(object):
                 for m in l._medianindex(vk):
                     # take the median node in dirv layer:
                     um = l.prevlayer()[m]
-                    if g[um].dummy and um.controlled and not g[vk].dummy:
-                        continue
                     # if vk is "free" align it with um's root
                     if g[vk].align is vk:
                         if dirv==1: vpair = (vk,um)
@@ -682,10 +752,11 @@ class  SugiyamaLayout(object):
                 # quit if self aligned
                 if w is v: break
 
-    # Basic edge routing applied only for edges with dummy points.
-    # Enhanced edge routing can be performed by using the apropriate
-    # route_with_ functions from routing.py in the edges' view.
     def draw_edges(self):
+        """Basic edge routing applied only for edges with dummy points.
+        Enhanced edge routing can be performed by using the apropriate
+        *route_with_xxx* functions from :ref:routing_ in the edges' view.
+        """
         for e in self.g.E():
             if hasattr(e,'view'):
                 l=[]
@@ -696,24 +767,10 @@ class  SugiyamaLayout(object):
                     if r0<r1:
                         ranks = xrange(r0+1,r1)
                     else:
-                        if self.ctrls['cons']:
-                            ranks = xrange(r0,r1-1,-1)
-                        else:
-                            ranks = xrange(r0-1,r1,-1)
-                    l = [D[r][-1].view.xy for r in ranks]
+                        ranks = xrange(r0-1,r1,-1)
+                    l = [D[r].view.xy for r in ranks]
                 l.insert(0,e.v[0].view.xy)
                 l.append(e.v[1].view.xy)
-                if self.ctrls['cons'] and r0>r1:
-                    dy = e.v[0].view.h/2. + self.yspace/3.
-                    x,y = zip(l[0],l[1])
-                    y = max(y)+dy
-                    l.insert(1,(x[0],y))
-                    l.insert(2,(x[1],y))
-                    dy = e.v[1].view.h/2. + self.yspace/3.
-                    x,y = zip(l[-1],l[-2])
-                    y = min(y)-dy
-                    l.insert(-1,(x[0],y))
-                    l.insert(-2,(x[1],y))
                 try:
                     self.route_edge(e,l)
                 except AttributeError:
@@ -723,6 +780,7 @@ class  SugiyamaLayout(object):
 
 #  DIRECTED GRAPH WITH CONSTRAINTS LAYOUT
 #------------------------------------------------------------------------------
+
 class  DigcoLayout(object):
     linalg = importlib.import_module('grandalf.utils.geometry')
     def __init__(self,g):

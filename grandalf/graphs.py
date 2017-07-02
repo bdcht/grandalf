@@ -1,5 +1,15 @@
-#!/usr/bin/env python
-#
+# -*- coding: utf-8 -*-
+
+"""
+.. _graphs:
+
+graphs.py
+=========
+This module implements essential graph classes for representing
+vertices (nodes), edges (links), and graphs.
+
+"""
+
 # This code is part of Grandalf
 # Copyright (C) 2008-2011 Axel Tillequin (bdcht3@gmail.com)
 # published under GPLv2 license or EPLv1 license
@@ -8,10 +18,28 @@ from .utils import Poset
 from operator import attrgetter
 
 #------------------------------------------------------------------------------
-#  vertex_core class:
-#  e: list of edge_core objects.
-#------------------------------------------------------------------------------
+
 class  vertex_core(object):
+    """ The Vertex essentials attributes and methods.
+
+        Attributes:
+            e (list[Edge]): list of edges associated with this vertex.
+
+        Methods:
+            deg() : degree of the vertex (number of edges).
+            e_in() : list of edges directed toward this vertex.
+            e_out(): list of edges directed outward this vertex.
+            e_dir(int): either e_in, e_out or all edges depending on
+               provided direction parameter (>0 means outward).
+            N(f_io=0): list of neighbor vertices in all directions (default)
+               or in filtered f_io direction (>0 means outward).
+            e_to(v): returns the Edge from this vertex directed toward vertex v.
+            e_from(v): returns the Edge from vertex v directed toward this vertex.
+            e_with(v): return the Edge with both this vertex and vertex v
+            detach(): removes this vertex from all its edges and returns this list
+               of edges.
+    """
+
     def __init__(self):
         # will hold list of edges for this vertex (adjacency list)
         self.e = []
@@ -58,21 +86,32 @@ class  vertex_core(object):
 
 
 #------------------------------------------------------------------------------
-#  edge_core class:
-#  v = (x,y): a tuple of vertices (probably of type Vertex, see below)
-#------------------------------------------------------------------------------
+
 class  edge_core(object):
+    """The Edge essentials attributes.
+
+       Attributes:
+          v (list[Vertex]): list of vertices associated with this edge.
+          deg (int): degree of the edge (number of unique vertices).
+    """
+
     def __init__(self,x,y):
         self.deg = 0 if x==y else 1
         self.v = (x,y)
 
 
 #------------------------------------------------------------------------------
-#  Vertex class enhancing a vertex_core with
-#  c: the poset of connected vertices containing this vertex.
-#  data: anything else associated with the vertex.
-#------------------------------------------------------------------------------
+
 class  Vertex(vertex_core):
+    """Vertex class enhancing a vertex_core with graph-related features.
+       
+       Attributes:
+          c (graph_core): the component of connected vertices that contains this vertex.
+             By default a vertex belongs no component but when it is added in a
+             graph, c points to the connected component in this graph.
+          data (object) : an object associated with the vertex.
+    """
+
     def __init__(self,data=None):
         vertex_core.__init__(self)
         # by default, a new vertex belongs to its own component
@@ -103,11 +142,23 @@ class  Vertex(vertex_core):
         self.e = []
 
 #------------------------------------------------------------------------------
-#  Edge class:
-#  w: weight associated with the edge, defaults to 1.
-#  data: anything else associated with the edge.
-#------------------------------------------------------------------------------
+
 class  Edge(edge_core):
+    """Edge class enhancing edge_core with attributes and methods related to the graph.
+
+       Attributes:
+         w (int): a weight associated with the edge (default 1) used by Dijkstra to
+           find min-flow paths.
+         data (object): an object associated with the edge.
+         feedback (bool): indicates if the edge has been marked as a *feeback* edge
+           by the Tarjan algorithm which means that it is part of a cycle and that
+           inverting this edge would remove this cycle.
+
+       Methods:
+         attach(): add this edge in its vertices edge lists.
+         detach(): remove this edge from its vertices edge lists.
+    """
+
     def __init__(self,x,y,w=1,data=None,connect=False):
         edge_core.__init__(self,x,y)
         # w is an optional weight associated with the edge.
@@ -146,21 +197,58 @@ class  Edge(edge_core):
         self.deg = 0 if xi==yi else 1
 
 #------------------------------------------------------------------------------
-#  graph_core class: A connected graph of Vertex/Edge objects.
-#  self.sV: set of vertices
-#  self.sE: set of edges
-#  The graph is stored in edge list representation by self.sE,
-#  but since the vertex_core embbeds edges information, the adjacency list rep
-#  is straightforward from self.sV.
-#------------------------------------------------------------------------------
-class  graph_core(object):
-    def __init__(self,V=None,E=None,directed=True):
 
+class  graph_core(object):
+    """A connected graph of Vertex/Edge objects. A graph_core is a *component*
+       of a Graph that contains a connected set of Vertex and Edges.
+
+       Attributes:
+         sV (poset[Vertex]): the partially ordered set of vertices of the graph.
+         sE (poset[Edge]): the partially ordered set of edges of the graph.
+         degenerated_edges (set[Edge]): the set of *degenerated* edges (of degree 0).
+         directed (bool): indicates if the graph is considered *oriented* or not.
+
+       Methods:
+         V(cond=None): generates an iterator over vertices, with optional filter
+         E(cond=None): generates an iterator over edges, with optional filter
+         M(cond=None): returns the associativity matrix of the graph component
+         order(): the order of the graph (number of vertices)
+         norm(): the norm of the graph (number of edges)
+         deg_min(): the minimum degree of vertices
+         deg_max(): the maximum degree of vertices
+         deg_avg(): the average degree of vertices
+         eps(): the graph epsilon value (norm/order), average number of edges per vertex. 
+         path(x,y,f_io=0,hook=None): shortest path between vertices x and y by breadth-first descent,
+           contrained by f_io direction if provided. The path is returned as a list of Vertex objects.
+           If a *hook* function is provided, it is called at every vertex added to the path, passing
+           the vertex object as argument.
+         roots(): returns the list of *roots* (vertices with no inward edges).
+         leaves(): returns the list of *leaves* (vertices with no outward edges).
+         add_single_vertex(v): allow a graph_core to hold a single vertex.
+         add_edge(e): add edge e. At least one of its vertex must belong to the graph,
+           the other being added automatically.
+         remove_edge(e): remove Edge e, asserting that the resulting graph is still connex.
+         remove_vertex(x): remove Vertex x and all associated edges.
+         dijkstra(x,f_io=0,hook=None): shortest weighted-edges paths between x and all other vertices
+           by dijkstra's algorithm with heap used as priority queue.
+         get_scs_with_feedback(): returns the set of strongly connected components
+           ("scs") by using Tarjan algorithm.
+           These are maximal sets of vertices such that there is a path from each
+           vertex to every other vertex.
+           The algorithm performs a DFS from the provided list of root vertices.
+           A cycle is of course a strongly connected component,
+           but a strongly connected component can include several cycles.
+           The Feedback Acyclic Set of edge to be removed/reversed is provided by
+           marking the edges with a "feedback" flag.
+           Complexity is O(V+E).
+         partition(): returns a *partition* of the connected graph as a list of lists.
+         N(v): returns neighbours of a vertex v.
+    """
+
+    def __init__(self,V=None,E=None,directed=True):
         if V is None: V=[]
         if E is None: E=[]
-
         self.directed = directed
-
         self.sV = Poset(V)
         self.sE = Poset([])
 
@@ -202,7 +290,6 @@ class  graph_core(object):
     def leaves(self):
         return list(filter(lambda v:len(v.e_out())==0, self.sV))
 
-    # allow a graph_core to hold a single vertex:
     def add_single_vertex(self,v):
         if len(self.sE)==0 and len(self.sV)==0:
             v = self.sV.add(v)
@@ -210,8 +297,6 @@ class  graph_core(object):
             return v
         return None
 
-    # add edge e. At least one of its vertex must belong to the graph,
-    # the other being added automatically.
     def add_edge(self,e):
         if e in self.sE:
             return self.sE.get(e)
@@ -229,8 +314,6 @@ class  graph_core(object):
         if e.deg==0: self.degenerated_edges.add(e)
         return e
 
-    # remove Edge :
-    # this procedure checks that the resulting graph is connex.
     def remove_edge(self,e):
         if (not e in self.sE): return
         e.detach()
@@ -246,11 +329,9 @@ class  graph_core(object):
                 self.degenerated_edges.remove(e)
             return e
 
-    # remove Vertex:
-    # this procedure checks that the resulting graph is connex.
     def remove_vertex(self,x):
         if x not in self.sV: return
-        V = x.N() #get all neighbor vertices to check paths
+        V = x.N()      #get all neighbor vertices to check paths
         E = x.detach() #remove the edges from x and neighbors list
         # now we need to check if all neighbors are still connected,
         # and it is sufficient to check if one of them is connected to
@@ -267,7 +348,6 @@ class  graph_core(object):
         x.c = None
         return x
 
-    # generates an iterator over vertices, with optional filter
     def V(self,cond=None):
         V = self.sV
         if cond is None: cond=(lambda x:True)
@@ -275,7 +355,6 @@ class  graph_core(object):
             if cond(v):
                 yield v
 
-    # generates an iterator over edges, with optional filter
     def E(self,cond=None):
         E = self.sE
         if cond is None: cond=(lambda x:True)
@@ -298,33 +377,24 @@ class  graph_core(object):
                 vec[v1.index] = e.w
         return mat
 
-    # vertex/edge properties :
-    #-------------------------
-    # returns number of vertices
     def order(self):
         return len(self.sV)
 
-    # returns number of edges
     def norm(self):
         return len(self.sE)
 
-    # returns the minimum degree
     def deg_min(self):
         return min([v.deg() for v in self.sV])
 
-    # returns the maximum degree
     def deg_max(self):
         return max([v.deg() for v in self.sV])
 
-    # returns the average degree d(G)
     def deg_avg(self):
         return sum([v.deg() for v in self.sV])/float(self.order())
 
-    # returns the epsilon value (number of edges of G per vertex)
     def eps(self):
         return float(self.norm())/self.order()
 
-    # shortest path between vertices x and y by breadth-first descent
     def path(self,x,y,f_io=0,hook=None):
         assert x in self.sV
         assert y in self.sV
@@ -355,8 +425,6 @@ class  graph_core(object):
             p.insert(0,v[p[0]])
         return p
 
-    # shortest weighted-edges paths between x and all other vertices
-    # by dijkstra's algorithm with heap used as priority queue.
     def dijkstra(self,x,f_io=0,hook=None):
         from collections import defaultdict
         from heapq import heappop, heappush
@@ -388,16 +456,6 @@ class  graph_core(object):
                     heappush(L,(Dv,v))
         return D
 
-    # returns the set of strongly connected components
-    # ("scs") by using Tarjan algorithm.
-    # These are maximal sets of vertices such that there is a path from each
-    # vertex to every other vertex.
-    # The algorithm performs a DFS from the provided list of root vertices.
-    # A cycle is of course a strongly connected component,
-    # but a strongly connected component can include several cycles.
-    # The Feedback Acyclic Set of edge to be removed/reversed is provided by
-    # marking the edges with a "feedback" flag.
-    # Complexity is O(V+E).
     def get_scs_with_feedback(self,roots=None):
         from  sys import getrecursionlimit,setrecursionlimit
         limit=getrecursionlimit()
@@ -474,10 +532,6 @@ class  graph_core(object):
             parts.append(list(p))
         return parts
 
-    # returns neighbours of a vertex v:
-    # f_io=-1 : parent nodes
-    # f_io=+1 : child nodes
-    # f_io= 0 : all (default)
     def N(self,v,f_io=0):
         return v.N(f_io)
 
@@ -532,13 +586,34 @@ class  graph_core(object):
         graph_core.__init__(self,V,E,directed)
 
 #------------------------------------------------------------------------------
-#  Graph class: Disjoint-set Graph.
-#  V: list/set of vertices of type Vertex.
-#  E: list/set of edges of type Edge.
-#  The graph is stored in disjoint-sets holding each connex component
-#  in self.C as a list of graph_core objects.
-#------------------------------------------------------------------------------
+
 class  Graph(object):
+    """Disjoint-set Graph.
+       The graph is stored in disjoint-sets holding each connex component
+       in self.C as a list of graph_core objects.
+
+       Attributes:
+          C (list[graph_core]): list of graph_core components.
+
+       Methods:
+          add_vertex(v): add vertex v into the Graph as a new component
+          add_edge(e): add edge e and its vertices into the Graph possibly merging the
+            associated graph_core components
+          get_vertices_count(): see order()
+          V(): see graph_core
+          E(): see graph_core
+          remove_edge(e): remove edge e possibly spawning two new cores
+            if the graph_core that contained e gets disconnected.
+          remove_vertex(v): remove vertex v and all its edges.
+          order(): the order of the graph (number of vertices)
+          norm(): the norm of the graph (number of edges)
+          deg_min(): the minimum degree of vertices
+          deg_max(): the maximum degree of vertices
+          deg_avg(): the average degree of vertices
+          eps(): the graph epsilon value (norm/order), average number of edges per vertex. 
+          connected(): returns True if the graph is connected (i.e. it has only one component).
+          components(): returns self.C
+    """
     component_class = graph_core
 
     def __init__(self,V=None,E=None,directed=True):
@@ -574,7 +649,6 @@ class  Graph(object):
             for v in c: s.update(v.e)
             self.C.append(self.component_class(c,s,directed))
 
-    # add vertex v into the Graph as a new (unconnected) component
     def add_vertex(self,v):
         for c in self.C:
             if (v in c.sV): return c.sV.get(v)
@@ -583,8 +657,6 @@ class  Graph(object):
         self.C.append(g)
         return v
 
-    # add edge e and its vertices into the Graph possibly merging the
-    # associated graph_core components
     def add_edge(self,e):
         # take vertices:
         x = e.v[0]
@@ -605,19 +677,16 @@ class  Graph(object):
     def get_vertices_count(self):
         return sum([c.order() for c in self.C])
 
-    # generates an iterator over vertices
     def V(self):
         for c in self.C:
             V = c.sV
             for v in V: yield v
 
-    # generates an iterator over edges
     def E(self):
         for c in self.C:
             E = c.sE
             for e in E: yield e
 
-    # remove Edge from a core
     def remove_edge(self,e):
         # get the graph_core:
         c = e.v[0].c
@@ -636,7 +705,6 @@ class  Graph(object):
             self.C.extend(tmpg.C)
         return e
 
-    # remove a Vertex and all its edges from a core
     def remove_vertex(self,x):
         # get the graph_core:
         c = x.c
@@ -652,9 +720,6 @@ class  Graph(object):
             assert len(tmpg.C)==2
             self.C.extend(tmpg.C)
         return x
-
-    # vertex/edge properties :
-    #-------------------------
 
     def order(self):
         return sum([c.order() for c in self.C])
@@ -690,7 +755,6 @@ class  Graph(object):
         for c in self.C: r |= (G in c)
         return r
 
-    # returns True if Graph is connected
     def connected(self):
         return len(self.C)==1
 
