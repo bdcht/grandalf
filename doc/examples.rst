@@ -1,0 +1,6 @@
+Examples
+========
+
+.. contents::
+   :local:
+
