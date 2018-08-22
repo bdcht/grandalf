@@ -21,7 +21,7 @@ Graph and drawing algorithms framework
 +-----------+--------------------------------------+
 | Location: | https://github.com/bdcht/grandalf    |
 +-----------+--------------------------------------+
-| Version:  | 0.55555                              |
+| Version:  | 0.6                                  |
 +-----------+--------------------------------------+
 
 Description
