@@ -28,7 +28,7 @@ your favorite graphics toolkit.
 
 setup(
     name='grandalf',
-    version='0.55555',
+    version='0.6',
 
     description='Graph and drawing algorithms framework',
     long_description=long_descr,
@@ -75,14 +75,16 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=[],
+    setup_requires=['pytest-runner',],
+    tests_require=['pytest',],
+
+    install_requires=['pyparsing','future'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-      'test': ['pytest'],
       'full': ['numpy','ply'],
     },
 

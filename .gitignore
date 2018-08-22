@@ -2,6 +2,11 @@
 *.swp
 build/
 dist/
+doc/_build
 *.egg-info
 tests/samples/priv/
-.tox/
+tags
+tests/.cache
+.pytest_cache/
+tests/.pytest_cache/
+.eggs/

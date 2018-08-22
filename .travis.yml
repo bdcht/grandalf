@@ -3,12 +3,6 @@ python:
   - '2.7'
   - '3.6'
 install:
-  - pip install tox
+  - python setup.py install
 script:
-  - tox
-env:
-  - TOXENV=py27
-  - TOXENV=py27-full
-  - TOXENV=pypy
-  - TOXENV=py3
-  - TOXENV=py3-full
+  - python setup.py pytest
