@@ -68,6 +68,8 @@ Links
 - smiasm_, uses Grandalf to interactively
   render the control flow graph of a disassembled binary program
   on a Qt canvas.
+- `dvc <http://dvc.org/>`_, uses Grandalf to layout dependency graphs for data
+  pipelines and then renders them in ASCII.
 
 Install
 =======
