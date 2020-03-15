@@ -28,7 +28,7 @@ your favorite graphics toolkit.
 
 setup(
     name='grandalf',
-    version='0.6',
+    version='0.7',
 
     description='Graph and drawing algorithms framework',
     long_description=long_descr,
@@ -59,7 +59,6 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
 
@@ -78,7 +77,7 @@ setup(
     setup_requires=['pytest-runner',],
     tests_require=['pytest',],
 
-    install_requires=['pyparsing','future'],
+    install_requires=['pyparsing'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

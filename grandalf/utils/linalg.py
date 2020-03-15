@@ -2,12 +2,13 @@ import sys
 from math import sqrt
 from array import array as _array
 
+constants = (int,float)
+
 def coerce_(types):
     if types is None: types = []
     if str in types: raise TypeError
     if complex in types: raise TypeError
     dtype = ('i',int)
-    if long in types: dtype = ('l',long)
     if float in types: dtype = ('d',float)
     return dtype
 
@@ -29,12 +30,6 @@ def make_ij_slices(f):
         return f(self,(I,J),*args)
     return wrapper
 
-if sys.version_info < (3,):
-    constants = (int,long,float)
-
-else:
-    long = int
-    constants = (int,long,float)
 # minimalistic numpy.array replacement class used as fallback
 # when numpy is not found in geometry module
 class array(object):
@@ -142,7 +137,7 @@ class array(object):
         for x in self.data: yield x
 
     def __setitem__(self,i,v):
-        assert isinstance(i,(int,long))
+        assert isinstance(i,int)
         self.data[i] = self.dtype(v)
 
     def __getitem__(self,i):
@@ -279,3 +274,18 @@ class matrix(object):
         for l in self.data:
             for v in l:
                 yield v
+
+class SimplexMin(object):
+    def __init__(self,A,b,c):
+        self.A=A
+        self.b=b
+        self.c=c
+        self.tableau()
+
+    def tableau(self):
+        self.T=[]
+
+    def setup(self):
+        self.enter = []
+        delf.outer = []
+

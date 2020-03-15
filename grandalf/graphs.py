@@ -113,7 +113,7 @@ class  Vertex(vertex_core):
     """
 
     def __init__(self,data=None):
-        vertex_core.__init__(self)
+        super().__init__()
         # by default, a new vertex belongs to its own component
         # but when the vertex is added to a graph, c points to the
         # connected component where it belongs.
@@ -160,7 +160,7 @@ class  Edge(edge_core):
     """
 
     def __init__(self,x,y,w=1,data=None,connect=False):
-        edge_core.__init__(self,x,y)
+        super().__init__(x,y)
         # w is an optional weight associated with the edge.
         self.w = w
         self.data = data

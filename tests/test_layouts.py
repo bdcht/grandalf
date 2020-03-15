@@ -38,7 +38,7 @@ def create_scenario():
     data_to_vertex = {}
 
     vertices = []
-    for i in xrange(6):
+    for i in range(6):
         data = 'v%s' % (i,)
         v = Vertex(data)
         data_to_vertex[data] = v

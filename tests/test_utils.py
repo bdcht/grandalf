@@ -13,10 +13,7 @@ def test_linalg_001():
 def test_linalg_001():
     v1 = array([1,2,3])
     assert v1.dim==3
-    if sys.version_info < (3,):
-        assert v1.typecode=='i'
-    else:
-        assert v1.typecode=='l'
+    assert v1.typecode=='i'
     assert v1.dtype==int
     assert len(v1)==3
     assert v1[1]==2

@@ -24,16 +24,6 @@ from operator import attrgetter
 
 from grandalf.utils import *
 
-try:
-    xrange
-except NameError:
-    xrange = range
-
-try:
-    from itertools import izip
-except ImportError:
-    izip = zip
-
 #------------------------------------------------------------------------------
 
 class  VertexViewer(object):
@@ -114,7 +104,7 @@ class  DummyVertex(_sugiyama_vertex_attr):
     def __init__(self,r=None,viewclass=VertexViewer):
         self.view = viewclass()
         self.ctrl = None
-        _sugiyama_vertex_attr.__init__(self,r,d=1)
+        super().__init__(r,d=1)
 
     def N(self,dir):
         assert dir==+1 or dir==-1
@@ -304,7 +294,7 @@ class Layer(list):
         g = self.layout.grx
         N = len(self)
         X=0
-        for i,j in izip(xrange(N-1),xrange(1,N)):
+        for i,j in zip(range(N-1),range(1,N)):
             vi = self[i]
             vj = self[j]
             ni = [g[v].bar for v in self._neighbors(vi)]
@@ -338,6 +328,11 @@ class  SugiyamaLayout(object):
 
     Attributes:
         dirvh (int): the current aligment state
+                     for alignment policy:
+                     dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
+                     dirvh=1 -> dirh=-1, dirv=-1: rightmost upper
+                     dirvh=2 -> dirh=+1, dirv=+1: leftmost lower
+                     dirvh=3 -> dirh=-1, dirv=+1: rightmost lower
         order_inter (int): the default number of layer placement iterations
         order_attr (str): set attribute name used for layer ordering
         xspace (int): horizontal space between vertices in a layer
@@ -430,12 +425,6 @@ class  SugiyamaLayout(object):
             for e in self.g.degenerated_edges:
                 self.g.add_edge(e)
 
-
-    # internal state for alignment policy:
-    # dirvh=0 -> dirh=+1, dirv=-1: leftmost upper
-    # dirvh=1 -> dirh=-1, dirv=-1: rightmost upper
-    # dirvh=2 -> dirh=+1, dirv=+1: leftmost lower
-    # dirvh=3 -> dirh=-1, dirv=+1: rightmost lower
     @property
     def dirvh(self): return self.__dirvh
     @property
@@ -557,7 +546,7 @@ class  SugiyamaLayout(object):
             ctrl=self.ctrls[e]={}
             ctrl[r0]=v0
             ctrl[r1]=v1
-            for r in xrange(r0+1,r1):
+            for r in range(r0+1,r1):
                 self.dummyctrl(r,ctrl)
 
     def draw_step(self):
@@ -607,7 +596,7 @@ class  SugiyamaLayout(object):
                 self.grx[v].X     = None
                 self.grx[v].x     = [0.0]*4
         curvh = self.dirvh # save current dirvh value
-        for dirvh in xrange(4):
+        for dirvh in range(4):
             self.dirvh = dirvh
             self._coord_vertical_alignment()
             self._coord_horizontal_compact()
@@ -765,9 +754,9 @@ class  SugiyamaLayout(object):
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank
                     if r0<r1:
-                        ranks = xrange(r0+1,r1)
+                        ranks = range(r0+1,r1)
                     else:
-                        ranks = xrange(r0-1,r1,-1)
+                        ranks = range(r0-1,r1,-1)
                     l = [D[r].view.xy for r in ranks]
                 l.insert(0,e.v[0].view.xy)
                 l.append(e.v[1].view.xy)
@@ -820,7 +809,7 @@ class  DigcoLayout(object):
         self.draw_edges()
 
     def draw_step(self):
-        for x in xrange(self._cv_max_iter):
+        for x in range(self._cv_max_iter):
             self.draw(N=1)
             self.draw_edges()
             yield
@@ -845,7 +834,7 @@ class  DigcoLayout(object):
         sorted(ordering, reverse=True)
         l = []
         self.levels.append(l)
-        for i in xrange(len(list(ordering))-1):
+        for i in range(len(list(ordering))-1):
             y,v = ordering[i]
             l.append(v)
             v.level = self.levels.index(l)
@@ -882,7 +871,7 @@ class  DigcoLayout(object):
         r = b - self.__L_pk(Lii,y)
         p = DigcoLayout.linalg.array(r,copy=True)
         rr = sum(r*r)
-        for k in xrange(self._cg_max_iter):
+        for k in range(self._cg_max_iter):
             try:
                 Lp = self.__L_pk(Lii,p)
                 alpha = rr/sum(p*Lp)
@@ -938,7 +927,7 @@ class  DigcoLayout(object):
         r = b - Lw*z
         p = r.copy()
         rr = scal(r,r)
-        for k in xrange(self._cg_max_iter):
+        for k in range(self._cg_max_iter):
             if rr<self._cg_tolerance: break
             Lp = Lw*p
             alpha = rr/scal(p,Lp)
@@ -965,9 +954,9 @@ class  DigcoLayout(object):
         self.Dij = self.__Dij_()  # we keep D also for L^Z computations
         Lij = self.Dij.copy()
         n = self.g.order()
-        for i in xrange(n):
+        for i in range(n):
             d = 0
-            for j in xrange(n):
+            for j in range(n):
                 if j==i: continue
                 Lij[i,j] = 1.0/self.Dij[i,j]**2
                 d += Lij[i,j]
@@ -981,8 +970,8 @@ class  DigcoLayout(object):
         lzz = Z.copy()*0.0 # lzz has dim Z (n x 2)
         liz = DigcoLayout.linalg.matrix([0.0]*n) # liz is a row of L^Z (size n)
         # compute lzz = L^Z.Z while assembling L^Z by row (liz):
-        for i in xrange(n):
-            iterk_except_i = (k for k in xrange(n) if k!=i)
+        for i in range(n):
+            iterk_except_i = (k for k in range(n) if k!=i)
             for k in iterk_except_i:
                 v = Z[i]-Z[k]
                 liz[0,k] = 1.0/(self.Dij[i,k]*DigcoLayout.linalg.sqrt(v*v.transpose()))
@@ -1032,6 +1021,5 @@ class  DigcoLayout(object):
 
 
 #------------------------------------------------------------------------------
-class  DwyerLayout(object):
-    def __init__(self):
-        raise NotImplementedError
+class  DwyerLayout(DigcoLayout):
+    pass

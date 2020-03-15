@@ -12,6 +12,8 @@ try:
 except ImportError:
     _has_ply = False
 
+__all__ = ['_has_ply','Dot']
+
 #------------------------------------------------------------------------------
 # LALR(1) parser for Graphviz dot file format.
 class Dot:
