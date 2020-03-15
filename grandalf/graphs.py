@@ -15,7 +15,6 @@ vertices (nodes), edges (links), and graphs.
 # published under GPLv2 license or EPLv1 license
 
 from .utils import Poset
-from operator import attrgetter
 
 #------------------------------------------------------------------------------
 
@@ -133,6 +132,9 @@ class  Vertex(vertex_core):
     def __lt__(self,v):
         return 0
 
+    def __gt__(self,v):
+        return 0
+
     def __getstate__(self):
         return (self.index,self.data)
 
@@ -165,7 +167,7 @@ class  Edge(edge_core):
         self.w = w
         self.data = data
         self.feedback = False
-        if connect and (x.c==None or y.c==None):
+        if connect and (x.c is None or y.c is None):
             c = x.c or y.c
             c.add_edge(self)
 
@@ -185,6 +187,9 @@ class  Edge(edge_core):
         return [self]
 
     def __lt__(self,v):
+        return 0
+
+    def __gt__(self,v):
         return 0
 
     def __getstate__(self):

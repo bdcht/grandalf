@@ -1,6 +1,4 @@
-from setuptools import setup, find_packages
-from codecs import open
-from os import path
+from setuptools import setup
 
 long_descr = '''
 Grandalf is a python package made for experimentations with graphs and drawing

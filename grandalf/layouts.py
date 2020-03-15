@@ -20,7 +20,6 @@ acyclic and so on, are all kept inside the layout object.
 import importlib
 from bisect import bisect
 from sys import getrecursionlimit,setrecursionlimit
-from operator import attrgetter
 
 from grandalf.utils import *
 
@@ -153,6 +152,9 @@ class Layer(list):
     lower  = None
     __x    = 1.
     ccount = None
+
+    def __eq__(self,other):
+        return super().__eq__(other)
 
     def __str__(self):
         s  = '<Layer %d'%self.__r
@@ -383,10 +385,10 @@ class  SugiyamaLayout(object):
         if self.initdone: return
         # For layered sugiyama algorithm, the input graph must be acyclic,
         # so we must provide a list of root nodes and a list of inverted edges.
-        if roots==None:
+        if roots is None:
             roots = [v for v in self.g.sV if len(v.e_in())==0]
-        if inverted_edges==None:
-            L = self.g.get_scs_with_feedback(roots)
+        if inverted_edges is None:
+            _ = self.g.get_scs_with_feedback(roots)
             inverted_edges = [x for x in self.g.sE if x.feedback]
         self.alt_e = inverted_edges
         # assign rank to all vertices:
@@ -664,7 +666,7 @@ class  SugiyamaLayout(object):
                         else:       vpair = (um,vk)
                         # if vk<->um link is used for alignment
                         if (vpair not in self.conflicts) and \
-                           (r==None or dirh*r<dirh*m):
+                           ((r is None) or (dirh*r<dirh*m)):
                             g[um].align = vk
                             g[vk].root = g[um].root
                             g[vk].align = g[vk].root
@@ -713,7 +715,7 @@ class  SugiyamaLayout(object):
     # TODO: rewrite in iterative form to avoid recursion limit...
     def __place_block(self,v):
         g = self.grx
-        if g[v].X==None:
+        if g[v].X is None:
             # every block is initially placed at x=0
             g[v].X = 0.0
             # place block in which v belongs:
@@ -749,7 +751,6 @@ class  SugiyamaLayout(object):
         for e in self.g.E():
             if hasattr(e,'view'):
                 l=[]
-                r0,r1 = None,None
                 if e in self.ctrls:
                     D = self.ctrls[e]
                     r0,r1 = self.grx[e.v[0]].rank,self.grx[e.v[1]].rank

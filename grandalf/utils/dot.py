@@ -331,7 +331,7 @@ class Dot:
             try:
                 L = p[1]
                 L.append(Dot.edge(L[-1].n2,p[2]))
-            except:
+            except Exception:
                 L = []
                 L.append(Dot.edge(p[1],p[2]))
             p[0] = L
@@ -389,7 +389,7 @@ class Dot:
         except AttributeError:
             self.lexer.build(reflags=lex.re.UNICODE)
             self.parser.build()
-        except:
+        except Exception:
             print('unexpected error')
             return None
         try:

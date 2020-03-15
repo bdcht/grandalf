@@ -5,6 +5,8 @@
 
 from collections import OrderedDict
 
+__all__ = ['Poset']
+
 #------------------------------------------------------------------------------
 # Poset class implements a set but allows to interate over the elements in a
 # deterministic way and to get specific objects in the set.

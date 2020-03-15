@@ -96,8 +96,8 @@ def _round_corners(pts, round_at_distance):
                         continue
                 generated = _gen_smoother_middle_points_from_3_points(
                     [p1, p2, p3], calc_with_distance)
-                for i in generated:
-                    new_lst.append(i)
+                for j in generated:
+                    new_lst.append(j)
             new_lst.append(pts[-1])
             pts = new_lst
             calc_with_distance /= 2.

@@ -7,7 +7,7 @@
 from .poset import *
 from .dot import *
 
-from math import atan,atan2,degrees,sqrt
+from math import atan2,sqrt
 from random import SystemRandom
 
 #------------------------------------------------------------------------------

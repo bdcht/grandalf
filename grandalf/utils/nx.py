@@ -3,6 +3,10 @@
 # published under GPLv2 license or EPLv1 license
 # Contributor(s): Fabio Zadrozny
 
+__all__=['convert_grandalf_graph_to_networkx_graph',
+         'convert_nextworkx_graph_to_grandalf',
+        ]
+
 #Some utilities to interact with networkx.
 
 #Converts a grandalf graph to a networkx graph.

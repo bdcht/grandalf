@@ -20,7 +20,7 @@ def _mkslice(i,n):
 
 def make_ij_slices(f):
     def wrapper(self,ij,*args):
-        I = slice(0,self.n,1)
+        #I = slice(0,self.n,1)
         J = slice(0,self.p,1)
         if isinstance(ij,tuple):
             I = _mkslice(ij[0],self.n)

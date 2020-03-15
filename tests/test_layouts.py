@@ -81,7 +81,8 @@ def create_scenario():
 
 class CustomRankingSugiyamaLayout(SugiyamaLayout):
 
-    def init_all(self, roots=None, inverted_edges=None, initial_ranking=None):
+    def init_all(self, roots=None, inverted_edges=None, optimize=False,
+                 initial_ranking=None):
         '''
         :param dict{vertex:int} initial_ranking:
             The initial ranking of each vertex if passed
@@ -92,13 +93,13 @@ class CustomRankingSugiyamaLayout(SugiyamaLayout):
             nblayers = max(initial_ranking.keys())+1
             self.layers = [Layer([]) for l in range(nblayers)]
 
-        SugiyamaLayout.init_all(self, roots=roots, inverted_edges=inverted_edges)
+        super().init_all(roots, inverted_edges, False)
 
     def _rank_init(self,unranked):
         assert self.dag
 
         if not hasattr(self, 'initial_ranking'):
-            SugiyamaLayout._rank_init(self, unranked)
+            super()._rank_init(unranked)
         else:
             for rank, vertices in sorted(self.initial_ranking.items()):
                 for v in vertices:
@@ -120,7 +121,7 @@ def test_sugiyama_ranking():
     gr, data_to_vertex = create_scenario()
     sug = SugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
-    sug.init_all()
+    sug.init_all(None,None,False)
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -151,7 +152,7 @@ def test_sugiyama_custom_ranking():
         3: [data_to_vertex['v2']],
         4: [data_to_vertex['v3']],
     }
-    sug.init_all(initial_ranking=rank_to_data)
+    sug.init_all(None,None,False,initial_ranking=rank_to_data)
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -182,6 +183,6 @@ def test_sugiyama_custom_ranking2():
         3: [data_to_vertex['v3']],
     }
     try:
-        sug.init_all(initial_ranking=rank_to_data)
+        sug.init_all(None,None,False,initial_ranking=rank_to_data)
     except ValueError as e:
         assert e.message == 'bad ranking'
