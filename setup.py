@@ -1,27 +1,27 @@
 from setuptools import setup
 
 long_descr = '''
-Grandalf is a python package made for experimentations with graphs and drawing
-algorithms. It is written in pure python, and implements two layouts: the Sugiyama
-hierarchical layout and the force-driven or energy minimization approach.
+Grandalf is a python package made for experimentations with graphs drawing
+algorithms. It is written in pure python, and currently implements two layouts:
+the Sugiyama hierarchical layout and the force-driven or energy minimization approach.
 While not as fast or featured as *graphviz* or other libraries like *OGDF* (C++),
-*GDToolkit* (C), *tulip* (Java), it provides a way to draw and navigate graphs
+it provides a way to walk and draw graphs
 no larger than thousands of nodes, while keeping the source code simple enough
-to make it possible to easily tweak and hack any part of it for experimental purpose.
+to tweak and hack any part of it for experimental purpose.
 With a total of about 1500 lines of python, the code involved in
 drawing the Sugiyama (dot) layout fits in less than 600 lines.
 The energy minimization approach is comprised of only 250 lines!
 
-Grandalf does only two not-so-simple things:
+Grandalf does only 2 not-so-simple things:
 
-- computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
-  chosen layout)
+- computing the nodes (x,y) coordinates
+  (based on provided nodes dimensions, and a chosen layout)
 - routing the edges with lines or nurbs
 
 It doesn't depend on any GTK/Qt/whatever graphics toolkit.
 This means that it will help you find *where* to
 draw things like nodes and edges, but it's up to you to actually draw things with
-your favorite graphics toolkit.
+your favorite toolkit.
 '''
 
 setup(
@@ -61,7 +61,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='graphviz networkx development',
+    keywords='graph drawings graphviz networkx',
 
 
     # You can just specify the packages manually here if your project is

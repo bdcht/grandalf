@@ -21,55 +21,44 @@ Graph and drawing algorithms framework
 +-----------+--------------------------------------+
 | Location: | https://github.com/bdcht/grandalf    |
 +-----------+--------------------------------------+
-| Version:  | 0.6                                  |
+| Version:  | 0.7                                  |
 +-----------+--------------------------------------+
 
 Description
 ===========
 
-Grandalf is a python package made for experimentations with graphs and drawing
-algorithms. It is written in pure python, and implements two layouts: the Sugiyama
-hierarchical layout and the force-driven or energy minimization approach.
-While not as fast or featured as _graphviz_ or other libraries like _OGDF_ (C++),
-_GDToolkit_ (C), _tulip_ (Java), it provides a way to *draw* and *navigate* graphs
+Grandalf is a python package made for experimentations with graphs drawing
+algorithms. It is written in pure python, and currently implements two layouts:
+the Sugiyama hierarchical layout and the force-driven or energy minimization approach.
+While not as fast or featured as graphviz_ or other libraries like OGDF_ (C++),
+it provides a way to *walk* and *draw* graphs
 no larger than thousands of nodes, while keeping the source code simple enough
 to make it possible to easily tweak and hack any part of it for experimental purpose.
 With a total of about 1500 lines of python, the code involved in
 drawing the Sugiyama (dot) layout fits in less than 600 lines.
 The energy minimization approach is comprised of only 250 lines!
 
-Grandalf does only two not-so-simple things:
+Grandalf does only 2 not-so-simple things:
 
-- computing the nodes (x,y) coordinates (based on provided nodes dimensions, and a
-  chosen layout)
+- computing the nodes (x,y) coordinates
+  (based on provided nodes dimensions, and a chosen layout)
 - routing the edges with lines or nurbs
 
 It doesn't depend on any GTK/Qt/whatever graphics toolkit.
-This means that it will help you find _where_ to
+This means that it will help you find *where* to
 draw things like nodes and edges, but it's up to you to actually draw things with
 your favorite graphics toolkit.
-Take a look at masr_ (masr/plugins/graph/README) to see how Grandalf can be used to
-render some graphs on a GTK/cairo canvas.
 
 Screenshots and Videos
 ======================
 
 See examples listed in the Wiki_.
-All videos have been made with grandalf and the masr_ canvas application template.
 
 Here is a screenshot showing the result of rendering the control flow graph of
 a function:
 
 .. image:: https://raw.github.com/bdcht/grandalf/master/doc/screenshot-1.png
 
-Links
-=====
-
-- smiasm_, uses Grandalf to interactively
-  render the control flow graph of a disassembled binary program
-  on a Qt canvas.
-- `dvc <http://dvc.org/>`_, uses Grandalf to layout dependency graphs for data
-  pipelines and then renders them in ASCII.
 
 Install
 =======
@@ -82,9 +71,9 @@ Grandalf suggests the following python packages:
 Quickstart
 ==========
 
-Look for examples in ``tests/``. Here is a very simple example :
+Look for examples in ``tests/``. Here is a very simple example:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> from grandalf.graphs import Vertex,Edge,Graph
  >>> V = [Vertex(data) for data in range(10)]
@@ -167,7 +156,7 @@ Of course, unless a Vertex belongs to a graph, all properties are empty or
 None.
 Example:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> v1 = Vertex('a')
  >>> v2 = Vertex('b')
@@ -180,9 +169,7 @@ Edge.
 An Edge is defined by a pair of Vertex objects. If the graph is directed, the
 direction of the edge is induced by the e.v list order otherwise the order is
 irrelevant. See Usage section for details.
-Example:
-
-.. sourcecode:: python
+Example::
 
  >>> e1 = Edge(v1,v2)
  >>> e2 = Edge(v1,v3,w=2)
@@ -201,7 +188,7 @@ Use of the Graph class is preferable unless you really know that your graph
 is connected.
 Example:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g  = graph_core([v1,v2,v3],[e1,e2])
 
@@ -218,7 +205,7 @@ Sets" by processing the input lists of Vertex and Edge objects into a list of
 graph_core components.
 Example:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> v4,v5 = Vertex(4),Vertex(5)
  >>> g = Graph([v1,v2,v3,v4],[e1,e2])
@@ -372,7 +359,7 @@ Graph creation
 
 Lets start by creating an empty graph:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g = Graph()
 
@@ -380,7 +367,7 @@ Wether you first create the graph and add elements in it or create it after all
 Vertex and Edge objects have been defined, is up to you.
 For the moment the graph has no components :
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g.order()
  0
@@ -389,7 +376,7 @@ For the moment the graph has no components :
 
 Lets create some vertices now.
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> v1 = Vertex('a')
  >>> v2 = Vertex('b')
@@ -408,14 +395,14 @@ the reference to this graph_core is found in the 'c' field (component field).
 
 To insert a Vertex in a Graph object we do:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g.add_vertex(v1)
 
 or we can add a new edge, then any new vertex it the edge will be attached to
 the graph also:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> e1 = Edge(v1,v2)
  >>> e2 = Edge(v1,v3,w=2)
@@ -429,7 +416,7 @@ time. So you should never use the same Vertex/Edge into another graph without
 removing it first from the current one !
 Of course, removing a vertex also removes all edges linked to it.
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g.remove_vertex(v1)
  >>> e1 in g
@@ -440,7 +427,7 @@ Of course, removing a vertex also removes all edges linked to it.
 Removing v1 here has removed e1 and e2, and the graph g is now cut in 3
 components holding each one vertex only. Lets rebuild the graph and extend it:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g.add_edge(e1)
  >>> g.add_edge(e2)
@@ -449,7 +436,7 @@ components holding each one vertex only. Lets rebuild the graph and extend it:
 
 Now g has two graph_core objects in g.C, and if
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> g.add_edge(Edge(v5,v3))
 
@@ -545,7 +532,7 @@ edges, but if this set is empty (because the graph is cyclic) you will have to
 choose a preferred set :
 Hence,
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
  >>> if len(r)==0: r = [my_guessed_root_node]
@@ -560,7 +547,7 @@ you provide the list of "root" nodes.
 Its up to you to decide which nodes are the "roots", but the natural definition
 is as stated before :
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> gr = g.C[0]
  >>> r = filter(lambda x: len(x.e_in())==0, gr.sV)
@@ -573,7 +560,7 @@ the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
 Drawing the gr component by computing .view.xy coordinates just resumes to:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> sug = SugiyamaLayout(gr)
  >>> sug.init_all()
@@ -585,7 +572,7 @@ bottom layer and back to top. This may not be sufficient to reduce the edge
 crossings, so you can draw again or simply provide the number of pass to
 perform:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> sug.draw(3)
 
@@ -601,7 +588,7 @@ predefined functions in ``routing.py`` like ``route_with_lines`` or
 
 If you have installed masr_, just do:
 
-.. sourcecode:: python
+.. code-block:: python
 
  $ cd /path/to/grandalf
  $ ./masr-graph tests/samples/brandes.dot
@@ -615,7 +602,7 @@ The P key will cycle through the 4 internal alignment policies
 Optionally, inverted edges can be constrained to always start from the bottom
 of their init vertex, and end on the top of their terminal vertex.
 
-.. sourcecode:: python
+.. code-block:: python
 
  $ ./masr-graph tests/samples/manhattan1.dot -ce
 
@@ -632,7 +619,7 @@ the init_all() and draw() methods
 +++++++++++++++++++++++++++++++++
 Like for SugiyamaLayout, just do for example:
 
-.. sourcecode:: python
+.. code-block:: python
 
  >>> dco = DigcoLayout(gr)
  >>> dco.init_all()
@@ -649,14 +636,14 @@ account as additional constraints.
 
 If you have installed masr_, just do:
 
-.. sourcecode:: python
+.. code-block:: python
 
  $ cd /path/to/grandalf
  $ masr-graph -digco -N 25 tests/samples/circle.dot
 
 Or, you may visualize each step of the convergence by:
 
-.. sourcecode:: python
+.. code-block:: python
 
  $ masr-graph -digco -N 1 tests/samples/circle.dot
 
@@ -681,8 +668,8 @@ FAQ
  However, if the graph is empty, the first vertex can be attached to the graph
  by using add_single_vertex().
 
-.. _masr: http://github.com/bdcht/masr
+.. _graphviz: https://www.graphviz.org/
+.. _OGDF: https://ogdf.uos.de/
+.. _amoco: https://github.com/bdcht/amoco
 .. _Wiki: https://github.com/bdcht/grandalf/wiki
-.. _smiasm: http://code.google.com/p/smiasm
-.. _graphviz: http://github.com/ellson/graphviz
 

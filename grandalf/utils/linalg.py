@@ -1,4 +1,3 @@
-import sys
 from math import sqrt
 from array import array as _array
 

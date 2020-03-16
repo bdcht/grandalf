@@ -2,8 +2,6 @@
 # Copyright (C) 2008 Axel Tillequin (bdcht3@gmail.com) and others
 # published under GPLv2 license or EPLv1 license
 # Contributor(s): Axel Tillequin
-import codecs
-import sys
 
 try:
     import ply.lex as lex
@@ -164,7 +162,7 @@ class Dot:
                    id(self),
                    self.name,
                    len(self.nodes))
-            return u.encode('utf-8') if sys.version_info < (3,) else u
+            return u
 
     class attr(object):
         def __init__(self,type,D):

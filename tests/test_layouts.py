@@ -1,25 +1,23 @@
-import pytest
-
-from  grandalf.graphs  import *
-from  grandalf.layouts import *
+from  grandalf.graphs  import graph_core,Vertex,Edge,Graph
+from  grandalf.layouts import SugiyamaLayout,DigcoLayout,VertexViewer,Layer,DummyVertex
 from grandalf.routing import EdgeViewer, route_with_rounded_corners
 
 def test_001_Sugiyama(sample_G02):
-    gr  = graph_core(*sample_G02)
-    for  v in gr.V(): v.view = VertexViewer(10,10)
-    sug  = SugiyamaLayout(gr)
+    gr = graph_core(*sample_G02)
+    for v in gr.V(): v.view = VertexViewer(10,10)
+    sug = SugiyamaLayout(gr)
     sug.init_all(roots=[gr.sV[0]],inverted_edges=[])
-    for  s in sug.draw_step():
+    for _ in sug.draw_step():
         for v,x in sug.grx.items():
             print (x, v.view.xy)
 
 def test_002_Digco(sample_G02):
     gr  = graph_core(*sample_G02)
-    for  v in gr.V(): v.view = VertexViewer(10,10)
+    for v in gr.V(): v.view = VertexViewer(10,10)
     dig  = DigcoLayout(gr)
     dig.init_all()
     dig.draw()
-    for  v in gr.sV: print (v,v.view.xy)
+    for v in gr.sV: print (v,v.view.xy)
 
 def create_scenario():
     '''
@@ -81,19 +79,15 @@ def create_scenario():
 
 class CustomRankingSugiyamaLayout(SugiyamaLayout):
 
-    def init_all(self, roots=None, inverted_edges=None, optimize=False,
-                 initial_ranking=None):
+    def init_ranking(self,initial_ranking):
         '''
         :param dict{vertex:int} initial_ranking:
             The initial ranking of each vertex if passed
         '''
-        if initial_ranking is not None:
-            self.initial_ranking = initial_ranking
-            assert 0 in initial_ranking
-            nblayers = max(initial_ranking.keys())+1
-            self.layers = [Layer([]) for l in range(nblayers)]
-
-        super().init_all(roots, inverted_edges, False)
+        self.initial_ranking = initial_ranking
+        assert 0 in initial_ranking
+        nblayers = max(initial_ranking.keys())+1
+        self.layers = [Layer([]) for l in range(nblayers)]
 
     def _rank_init(self,unranked):
         assert self.dag
@@ -121,7 +115,7 @@ def test_sugiyama_ranking():
     gr, data_to_vertex = create_scenario()
     sug = SugiyamaLayout(gr)
     sug.route_edge = route_with_rounded_corners
-    sug.init_all(None,None,False)
+    sug.init_all()
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -152,7 +146,8 @@ def test_sugiyama_custom_ranking():
         3: [data_to_vertex['v2']],
         4: [data_to_vertex['v3']],
     }
-    sug.init_all(None,None,False,initial_ranking=rank_to_data)
+    sug.init_ranking(rank_to_data)
+    sug.init_all()
     # rank 0: v4      v0
     #          \     / |
     # rank 1:   \   v1 |
@@ -183,6 +178,7 @@ def test_sugiyama_custom_ranking2():
         3: [data_to_vertex['v3']],
     }
     try:
-        sug.init_all(None,None,False,initial_ranking=rank_to_data)
+        sug.init_ranking(rank_to_data)
+        sug.init_all()
     except ValueError as e:
         assert e.message == 'bad ranking'

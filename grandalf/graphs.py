@@ -135,6 +135,12 @@ class  Vertex(vertex_core):
     def __gt__(self,v):
         return 0
 
+    def __le__(self,v):
+        return 0
+
+    def __ge__(self,v):
+        return 0
+
     def __getstate__(self):
         return (self.index,self.data)
 
@@ -190,6 +196,12 @@ class  Edge(edge_core):
         return 0
 
     def __gt__(self,v):
+        return 0
+
+    def __le__(self,v):
+        return 0
+
+    def __ge__(self,v):
         return 0
 
     def __getstate__(self):
