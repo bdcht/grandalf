@@ -9,6 +9,10 @@ Graph and drawing algorithms framework
 .. image:: https://travis-ci.org/bdcht/grandalf.svg?branch=master
     :target: https://travis-ci.org/bdcht/grandalf
 
+.. image:: https://img.shields.io/lgtm/grade/python/g/bdcht/grandalf.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/bdcht/grandalf/context:python
+    :alt: Code Quality
+
 .. image:: https://img.shields.io/pypi/dm/grandalf.svg
     :target: https://pypi.python.org/pypi/grandalf
 
@@ -75,62 +79,71 @@ Look for examples in ``tests/``. Here is a very simple example:
 
 .. code-block:: python
 
- >>> from grandalf.graphs import Vertex,Edge,Graph
+ >>> from grandalf.graphs import Vertex,Edge,Graph,graph_core
  >>> V = [Vertex(data) for data in range(10)]
  >>> X = [(0,1),(0,2),(1,3),(2,3),(4,0),(1,4),(4,5),(5,6),(3,6),(3,7),(6,8),
   ... (7,8),(8,9),(5,9)]
  >>> E = [Edge(V[v],V[w]) for (v,w) in X]
  >>> g = Graph(V,E)
  >>> g.C
- [<grandalf.graphs.graph_core object at 0xb71531ec>]
- >>> print [v.data for v in g.path(V[1],V[9])]
+ [<grandalf.graphs.graph_core at 0x7fb23a95e4c0>]
+ >>> print([v.data for v in g.path(V[1],V[9])])
  [1, 4, 5, 9]
  >>> g.add_edge(Edge(V[9],Vertex(10)))
+ <grandalf.graphs.Edge object at 0x7fb23a95e3a0>
  >>> g.remove_edge(V[5].e_to(V[9]))
- >>> print [v.data for v in g.path(V[1],V[9])]
+ <grandalf.graphs.Edge object at 0x7fb23a95e0a0>
+ >>> print([v.data for v in g.path(V[1],V[9])])
  [1, 3, 6, 8, 9]
  >>> g.remove_vertex(V[8])
+ <grandalf.graphs.Vertex object at 0x7fb23a933dc0>
  >>> len(g.C)
  2
- >>> print g.path(V[1],V[9])
+ >>> print(g.path(V[1],V[9]))
  None
- >>> for e in g.C[1].E(): print "%s->%s"%(e.v[0].data,e.v[1].data)
- 9->10
+ >>> for e in g.C[1].E(): print("%s -> %s"%(e.v[0].data,e.v[1].data))
+ ...
+ 9 -> 10
  >>> from grandalf.layouts import SugiyamaLayout
  >>> class defaultview(object):
  ...   w,h = 10,10
+ ...
  >>> for v in V: v.view = defaultview()
+ ...
  >>> sug = SugiyamaLayout(g.C[0])
  >>> sug.init_all(roots=[V[0]],inverted_edges=[V[4].e_to(V[0])])
  >>> sug.draw()
- >>> for v in g.C[0].sV: print "%s: (%d,%d)"%(v.data,v.view.xy[0],v.view.xy[1])
- 0: (43,5)
- 1: (41,35)
- 2: (0,35)
- 3: (13,65)
- 4: (58,65)
- 5: (58,95)
- 6: (43,125)
- 7: (0,95)
+ >>> for v in g.C[0].sV: print("%s: (%d,%d)"%(v.data,v.view.xy[0],v.view.xy[1]))
+ ...
+ 4: (30,65)
+ 5: (30,95)
+ 0: (0,5)
+ 2: (-30,35)
+ 1: (15,35)
+ 3: (-15,65)
+ 7: (-30,95)
+ 6: (15,125)
  >>> for l in sug.layers:
- ...   for n in l: print n.view.xy,
- ...   print
- (43.0, 5)
- (0.0, 35) (41.0, 35) (69.0, 35)
- (13.0, 65) (58.0, 65)
- (0.0, 95) (26.0, 95) (58.0, 95)
- (43.0, 125)
+ ...   for n in l: print(n.view.xy,end='')
+ ...   print('')
+ ...
+ (0.0, 5.0)
+ (-30.0, 35.0)(15.0, 35.0)(45.0, 35.0)
+ (-15.0, 65.0)(30.0, 65.0)
+ (-30.0, 95.0)(0.0, 95.0)(30.0, 95.0)
+ (15.0, 125.0)
  >>> for e,d in sug.ctrls.items():
- ...   print 'long edge %s->%s points:'%(e.v[0].data,e.v[1].data)
- ...   for r,v in d.iteritems(): print v.view.xy,'at rank',r
- long edge 3->6 points:
- (13.0, 65) at rank 2
- (26.0, 95) at rank 3
- (43.0, 125) at rank 4
- long edge 0->4 points:
- (43.0, 5) at rank 0
- (69.0, 35) at rank 1
- (58.0, 65) at rank 2
+ ...   print('long edge %s --> %s points:'%(e.v[0].data,e.v[1].data))
+ ...   for r,v in d.items(): print("%s %s %s"%(v.view.xy,'at rank',r))
+ ...
+ long edge 3 --> 6 points:
+ (-15.0, 65.0) at rank 2
+ (15.0, 125.0) at rank 4
+ (0.0, 95.0) at rank 3
+ long edge 4 --> 0 points:
+ (0.0, 5.0) at rank 0
+ (30.0, 65.0) at rank 2
+ (45.0, 35.0) at rank 1
 
 Overview
 ========
@@ -169,7 +182,9 @@ Edge.
 An Edge is defined by a pair of Vertex objects. If the graph is directed, the
 direction of the edge is induced by the e.v list order otherwise the order is
 irrelevant. See Usage section for details.
-Example::
+Example:
+
+.. code-block:: python
 
  >>> e1 = Edge(v1,v2)
  >>> e2 = Edge(v1,v3,w=2)
@@ -588,7 +603,7 @@ predefined functions in ``routing.py`` like ``route_with_lines`` or
 
 If you have installed masr_, just do:
 
-.. code-block:: python
+.. code-block:: bash
 
  $ cd /path/to/grandalf
  $ ./masr-graph tests/samples/brandes.dot
@@ -602,7 +617,7 @@ The P key will cycle through the 4 internal alignment policies
 Optionally, inverted edges can be constrained to always start from the bottom
 of their init vertex, and end on the top of their terminal vertex.
 
-.. code-block:: python
+.. code-block:: bash
 
  $ ./masr-graph tests/samples/manhattan1.dot -ce
 
@@ -636,14 +651,14 @@ account as additional constraints.
 
 If you have installed masr_, just do:
 
-.. code-block:: python
+.. code-block:: bash
 
  $ cd /path/to/grandalf
  $ masr-graph -digco -N 25 tests/samples/circle.dot
 
 Or, you may visualize each step of the convergence by:
 
-.. code-block:: python
+.. code-block:: bash
 
  $ masr-graph -digco -N 1 tests/samples/circle.dot
 
@@ -671,5 +686,6 @@ FAQ
 .. _graphviz: https://www.graphviz.org/
 .. _OGDF: https://ogdf.uos.de/
 .. _amoco: https://github.com/bdcht/amoco
+.. _masr: https://github.com/bdcht/masr
 .. _Wiki: https://github.com/bdcht/grandalf/wiki
 
