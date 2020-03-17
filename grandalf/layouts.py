@@ -470,9 +470,10 @@ class SugiyamaLayout(object):
     def dirvh(self, dirvh):
         assert dirvh in range(4)
         self.__dirvh = dirvh
-        self.__dirh, self.__dirv = {0: (1, -1), 1: (-1, -1), 2: (1, 1), 3: (-1, 1)}[
-            dirvh
-        ]
+        self.__dirh, self.__dirv = {0: (1, -1),
+                                    1: (-1, -1),
+                                    2: (1, 1),
+                                    3: (-1, 1)}[dirvh]
 
     @dirv.setter
     def dirv(self, dirv):
