@@ -482,7 +482,7 @@ class graph_core(object):
             p.insert(0, v[p[0]])
         return p
 
-    def dijkstra(self, x, f_io=0, hook=None):
+    def dijkstra(self, x, f_io=0, hook=None, subset=None):
         from collections import defaultdict
         from heapq import heappop, heappush
 
@@ -500,6 +500,9 @@ class graph_core(object):
             l, u = heappop(L)
             for e in u.e_dir(f_io):
                 v = e.v[0] if (u is e.v[1]) else e.v[1]
+                if subset is not None:
+                    if v not in subset:
+                        continue
                 Dv = l + e.w
                 if D[v] != None:
                     # check if heap/D needs updating:
