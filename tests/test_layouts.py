@@ -20,7 +20,7 @@ def test_002_Digco(sample_G02):
     for v in gr.sV: print (v,v.view.xy)
 
 def create_scenario():
-    '''
+    r'''
     Create something as:
     v4      v0
      \     / |
