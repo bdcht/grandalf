@@ -15,6 +15,7 @@ __all__ = ["Poset"]
 class Poset(object):
     def __init__(self, L):
         self.o = OrderedDict()
+        self._unordered = set()
         for obj in L:
             self.add(obj)
 
@@ -32,12 +33,14 @@ class Poset(object):
         if obj in self:
             return self.get(obj)
         else:
+            self._unordered.add(obj)
             self.o[obj] = obj
             return obj
 
     def remove(self, obj):
-        if obj in self:
+        if obj in self._unordered:
             obj = self.get(obj)
+            self._unordered.discard(obj)
             del self.o[obj]
             return obj
         return None
@@ -59,19 +62,15 @@ class Poset(object):
             yield obj
 
     def __cmp__(self, other):
-        s1 = set(other.o.values())
-        s2 = set(self.o.values())
+        s1 = other._unordered
+        s2 = self._unordered
         return cmp(s1, s2)
 
     def __eq__(self, other):
-        s1 = set(other.o.values())
-        s2 = set(self.o.values())
-        return s1 == s2
+        return self._unordered == other._unordered
 
     def __ne__(self, other):
-        s1 = set(other.o.values())
-        s2 = set(self.o.values())
-        return s1 != s2
+        return not self == other
 
     def copy(self):
         return Poset(self.o.values())
@@ -97,8 +96,8 @@ class Poset(object):
         self.o.update(other.o)
 
     def __and__(self, other):
-        s1 = set(self.o.values())
-        s2 = set(other.o.values())
+        s1 = self._unordered
+        s2 = other._unordered
         return Poset(s1.intersection(s2))
 
     def intersection(self, *args):
@@ -108,8 +107,8 @@ class Poset(object):
         return p
 
     def __xor__(self, other):
-        s1 = set(self.o.values())
-        s2 = set(other.o.values())
+        s1 = self._unordered
+        s2 = other._unordered
         return Poset(s1.symmetric_difference(s2))
 
     def symmetric_difference(self, *args):
@@ -119,8 +118,8 @@ class Poset(object):
         return p
 
     def __sub__(self, other):
-        s1 = set(self.o.values())
-        s2 = set(other.o.values())
+        s1 = self._unordered
+        s2 = other._unordered
         return Poset(s1.difference(s2))
 
     def difference(self, *args):
@@ -133,16 +132,16 @@ class Poset(object):
         return obj in self.o
 
     def contains__cmp__(self, obj):
-        return obj in self.o.values()
+        return obj in self._unordered
 
     def issubset(self, other):
-        s1 = set(self.o.values())
-        s2 = set(other.o.values())
+        s1 = self._unordered
+        s2 = other._unordered
         return s1.issubset(s2)
 
     def issuperset(self, other):
-        s1 = set(self.o.values())
-        s2 = set(other.o.values())
+        s1 = self._unordered
+        s2 = other._unordered
         return s1.issuperset(s2)
 
     __le__ = issubset

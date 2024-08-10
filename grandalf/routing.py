@@ -28,8 +28,16 @@ class EdgeViewer(object):
 #  tail and head.
 def route_with_lines(e, pts):
     assert hasattr(e, "view")
-    tail_pos = intersectR(e.v[0].view, topt=pts[1])
-    head_pos = intersectR(e.v[1].view, topt=pts[-2])
+    try:
+        tail_pos = intersectR(e.v[0].view, topt=pts[1])
+    except ValueError:
+        # TODO: Create a test case to reproduce it and submit upstream.
+        tail_pos = pts[1]
+    try:
+        head_pos = intersectR(e.v[1].view, topt=pts[-2])
+    except ValueError:
+        # TODO: Create a test case to reproduce it and submit upstream.
+        head_pos = pts[-2]
     pts[0] = tail_pos
     pts[-1] = head_pos
     e.view.head_angle = getangle(pts[-2], pts[-1])
