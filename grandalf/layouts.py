@@ -976,7 +976,7 @@ class DigcoLayout(object):
     # so _cg_Lw should be called in all directions separately.
     # note that everything is a matrix here, (arrays are row vectors only)
     def _cg_Lw(self, Lw, z, b):
-        scal = lambda U, V: float(U.transpose() * V)
+        scal = lambda U, V: float((U.transpose() * V)[0, 0])
         r = b - Lw * z
         p = r.copy()
         rr = scal(r, r)
@@ -1030,7 +1030,8 @@ class DigcoLayout(object):
             for k in iterk_except_i:
                 v = Z[i] - Z[k]
                 liz[0, k] = 1.0 / (
-                    self.Dij[i, k] * DigcoLayout.linalg.sqrt(v * v.transpose())
+                    self.Dij[i, k]
+                    * DigcoLayout.linalg.sqrt((v * v.transpose())[0, 0])
                 )
             liz[0, i] = 0.0  # forced, otherwise next liz.sum() is wrong !
             liz[0, i] = -liz.sum()
@@ -1059,11 +1060,15 @@ class DigcoLayout(object):
                 print(" cg -> ")
                 print(Z, xerr, yerr)
             # compute new stress:
-            FZ = K - float(x.transpose() * b[1:, 0] + y.transpose() * b[1:, 1])
+            FZ = K - float(
+                (x.transpose() * b[1:, 0] + y.transpose() * b[1:, 1])[0, 0]
+            )
             # precompute new b:
             b = self.__Lij_Z_Z(Z)
             # update new stress:
-            FZ += 2 * float(x.transpose() * b[1:, 0] + y.transpose() * b[1:, 1])
+            FZ += 2 * float(
+                (x.transpose() * b[1:, 0] + y.transpose() * b[1:, 1])[0, 0]
+            )
             # test convergence:
             print("stress=%.10f" % FZ)
             if stress == 0.0:
